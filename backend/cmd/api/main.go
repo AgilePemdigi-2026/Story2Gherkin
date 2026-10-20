@@ -6,6 +6,10 @@ import (
 
 	"github.com/common-nighthawk/go-figure"
 	"github.com/gin-gonic/gin"
+	"github.com/samber/do"
+	"github.com/story2gherkin/middlewares"
+	"github.com/story2gherkin/modules/auth"
+	"github.com/story2gherkin/providers"
 )
 
 func run(server *gin.Engine) {
@@ -31,13 +35,20 @@ func run(server *gin.Engine) {
 }
 
 func main() {
-	server := gin.Default()
+	var (
+		injector = do.New()
+	)
 
-	server.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
+	providers.RegisterDependencies(injector)
+
+	server := gin.Default()
+	server.Use(middlewares.CORSMiddleware())
+
+	v1 := server.Group("api/v1")
+	{
+		auth.RegisterRoutes(v1, injector)
+		// modules lainnya
+	}
 
 	run(server)
 }
