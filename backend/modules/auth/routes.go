@@ -12,6 +12,7 @@ func RegisterRoutes(server *gin.RouterGroup, injector *do.Injector) {
 	authRoutes := server.Group("/auth")
 	{
 		authRoutes.POST("/register", authHandler.Register)
-		// Login, Logout, sama Forgot Password
+		authRoutes.POST("/login", authHandler.Login)
+		// Logout, sama Forgot Password
 	}
 }
