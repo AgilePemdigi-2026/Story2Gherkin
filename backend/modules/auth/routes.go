@@ -14,14 +14,16 @@ func RegisterRoutes(
 
 	authRoutes := server.Group("/auth")
 	{
+		// Register
 		authRoutes.POST("/register", authHandler.Register)
 
-		// Forgot Password
-		authRoutes.POST(
-			"/forgot-password",
-			authHandler.ForgotPassword,
-		)
+		// Login
+		authRoutes.POST("/login", authHandler.Login)
 
+		// Forgot Password
+		authRoutes.POST("/forgot-password", authHandler.ForgotPassword)
+
+		// Reset Password
 		authRoutes.POST("/reset-password", authHandler.ResetPassword)
 	}
 }

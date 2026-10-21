@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
@@ -21,6 +22,7 @@ type authHandler struct {
 
 type AuthHandler interface {
 	Register(ctx *gin.Context)
+	Login(ctx *gin.Context)
 	ForgotPassword(ctx *gin.Context)
 	ResetPassword(ctx *gin.Context)
 }
@@ -57,17 +59,86 @@ func (c *authHandler) Register(ctx *gin.Context) {
 	)
 
 	if err != nil {
+		if errors.Is(err, userDto.ErrEmailAlreadyExists) {
+			res := utils.BuildResponseFailed(
+				userDto.MESSAGE_FAILED_REGISTER_USER,
+				"Email sudah terdaftar.",
+				nil,
+			)
+			ctx.JSON(http.StatusConflict, res)
+			return
+		}
+
+		log.Printf("register gagal: %v", err)
+
 		res := utils.BuildResponseFailed(
 			userDto.MESSAGE_FAILED_REGISTER_USER,
-			err.Error(),
+			"Terjadi kesalahan pada server.",
 			nil,
 		)
-		ctx.JSON(http.StatusBadRequest, res)
+		ctx.JSON(http.StatusInternalServerError, res)
 		return
 	}
 
 	res := utils.BuildResponseSuccess(
 		userDto.MESSAGE_SUCCESS_REGISTER_USER,
+		result,
+	)
+
+	ctx.JSON(http.StatusCreated, res)
+}
+
+// Login menangani autentikasi pengguna.
+func (c *authHandler) Login(ctx *gin.Context) {
+	// Respons token tidak boleh disimpan oleh cache.
+	ctx.Header("Cache-Control", "no-store")
+
+	// Batasi ukuran request login menjadi 16 KiB.
+	ctx.Request.Body = http.MaxBytesReader(
+		ctx.Writer,
+		ctx.Request.Body,
+		16*1024,
+	)
+
+	var req authDto.LoginRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		res := utils.BuildResponseFailed(
+			userDto.MESSAGE_FAILED_LOGIN,
+			"Request harus berupa JSON dengan email valid dan password terisi.",
+			nil,
+		)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	result, err := c.authService.Login(
+		ctx.Request.Context(),
+		req,
+	)
+
+	if err != nil {
+		if errors.Is(err, service.ErrInvalidCredentials) {
+			res := utils.BuildResponseFailed(
+				userDto.MESSAGE_FAILED_LOGIN,
+				"Email atau password salah.",
+				nil,
+			)
+			ctx.JSON(http.StatusUnauthorized, res)
+			return
+		}
+
+		res := utils.BuildResponseFailed(
+			userDto.MESSAGE_FAILED_LOGIN,
+			"Terjadi kesalahan pada server.",
+			nil,
+		)
+		ctx.JSON(http.StatusInternalServerError, res)
+		return
+	}
+
+	res := utils.BuildResponseSuccess(
+		userDto.MESSAGE_SUCCESS_LOGIN,
 		result,
 	)
 
@@ -78,30 +149,26 @@ func (c *authHandler) Register(ctx *gin.Context) {
 func (c *authHandler) ForgotPassword(ctx *gin.Context) {
 	var req authDto.SendPasswordResetRequest
 
-	// Validasi JSON request
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		res := utils.BuildResponseFailed(
 			"Invalid forgot password request",
 			err.Error(),
 			nil,
 		)
-
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
 		return
 	}
 
-	// Jalankan proses Forgot Password
 	err := c.authService.ForgotPassword(
 		ctx.Request.Context(),
 		req.Email,
 	)
 
-	// Catat error internal tanpa membocorkan status akun
 	if err != nil {
 		log.Printf("Forgot password service error: %v", err)
 	}
 
-	// Respons umum untuk mencegah email enumeration
+	// Respons sama untuk email terdaftar maupun tidak.
 	res := utils.BuildResponseSuccess(
 		"If the email is registered, a password reset link will be sent.",
 		nil,
