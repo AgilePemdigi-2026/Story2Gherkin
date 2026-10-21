@@ -20,6 +20,9 @@ func RegisterRoutes(
 		// Login
 		authRoutes.POST("/login", authHandler.Login)
 
+		// Logout
+		authRoutes.POST("/logout", authHandler.Logout)
+
 		// Forgot Password
 		authRoutes.POST("/forgot-password", authHandler.ForgotPassword)
 
