@@ -43,7 +43,14 @@ func RegisterDependencies(injector *do.Injector) {
 
 	userRepository := userRepo.NewUserRepository(db)
 
-	authService := authService.NewAuthService(userRepository, jwtService, db)
+	mailer := authService.NewSMTPPasswordResetMailer()
+
+	authService := authService.NewAuthService(
+		userRepository,
+		jwtService,
+		db,
+		mailer,
+	)
 
 	do.Provide(
 		injector, func(i *do.Injector) (authHandler.AuthHandler, error) {
