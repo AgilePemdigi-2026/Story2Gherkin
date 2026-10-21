@@ -47,7 +47,6 @@ func main() {
 	v1 := server.Group("api/v1")
 	{
 		auth.RegisterRoutes(v1, injector)
-		// modules lainnya
 	}
 
 	run(server)
