@@ -23,6 +23,7 @@ type authHandler struct {
 type AuthHandler interface {
 	Register(ctx *gin.Context)
 	Login(ctx *gin.Context)
+	Logout(ctx *gin.Context)
 	ForgotPassword(ctx *gin.Context)
 	ResetPassword(ctx *gin.Context)
 }
@@ -140,6 +141,17 @@ func (c *authHandler) Login(ctx *gin.Context) {
 	res := utils.BuildResponseSuccess(
 		userDto.MESSAGE_SUCCESS_LOGIN,
 		result,
+	)
+
+	ctx.JSON(http.StatusOK, res)
+}
+
+func (c *authHandler) Logout(ctx *gin.Context) {
+	ctx.Header("Cache-Control", "no-store")
+
+	res := utils.BuildResponseSuccess(
+		"success logout",
+		nil,
 	)
 
 	ctx.JSON(http.StatusOK, res)
