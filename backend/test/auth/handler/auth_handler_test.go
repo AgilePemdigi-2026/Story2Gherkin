@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
+	"strings"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/do"
 	authDto "github.com/story2gherkin/modules/auth/dto"
@@ -208,5 +208,191 @@ func TestRegisterHandlerServiceError(t *testing.T) {
 	}
 	if res["error"] != "Terjadi kesalahan pada server." {
 		t.Errorf("error = %v, want %q", res["error"], "Terjadi kesalahan pada server.")
+	}
+}
+
+type loginHandlerStub struct {
+	service.AuthService
+
+	result authDto.LoginResponse
+	err    error
+	calls  int
+}
+
+func (s *loginHandlerStub) Login(
+	ctx context.Context,
+	req authDto.LoginRequest,
+) (authDto.LoginResponse, error) {
+	s.calls++
+	return s.result, s.err
+}
+
+func TestLoginHandler(t *testing.T) {
+	validBody := `{
+		"email": "orwin@example.com",
+		"password": "PasswordUji123!"
+	}`
+
+	tests := []struct {
+		name        string
+		body        string
+		serviceErr  error
+		wantStatus  int
+		wantSuccess bool
+		wantCalls   int
+	}{
+		{
+			name:        "login berhasil",
+			body:        validBody,
+			wantStatus:  http.StatusOK,
+			wantSuccess: true,
+			wantCalls:   1,
+		},
+		{
+			name:       "kredensial salah",
+			body:       validBody,
+			serviceErr: service.ErrInvalidCredentials,
+			wantStatus: http.StatusUnauthorized,
+			wantCalls:  1,
+		},
+		{
+			name:       "error internal",
+			body:       validBody,
+			serviceErr: errors.New("detail internal database"),
+			wantStatus: http.StatusInternalServerError,
+			wantCalls:  1,
+		},
+		{
+			name:       "email kosong",
+			body:       `{"password":"PasswordUji123!"}`,
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "password kosong",
+			body:       `{"email":"orwin@example.com"}`,
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "email tidak valid",
+			body:       `{"email":"bukan-email","password":"PasswordUji123!"}`,
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "JSON tidak valid",
+			body:       `{"email":`,
+			wantStatus: http.StatusBadRequest,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stub := &loginHandlerStub{
+				result: authDto.LoginResponse{
+					AccessToken: "token-uji",
+					TokenType:   "Bearer",
+					ExpiresIn:   900,
+					User: authDto.LoginUserResponse{
+						ID:    "user-uji",
+						Name:  "Orwin",
+						Email: "orwin@example.com",
+						Role:  "system_analyst",
+					},
+				},
+				err: tt.serviceErr,
+			}
+
+			h := newTestHandler(t, stub)
+
+			router := gin.New()
+			router.POST("/api/v1/auth/login", h.Login)
+
+			req := httptest.NewRequest(
+				http.MethodPost,
+				"/api/v1/auth/login",
+				strings.NewReader(tt.body),
+			)
+			req.Header.Set("Content-Type", "application/json")
+
+			recorder := httptest.NewRecorder()
+			router.ServeHTTP(recorder, req)
+
+			if recorder.Code != tt.wantStatus {
+				t.Fatalf(
+					"HTTP status: ingin %d, mendapat %d; body: %s",
+					tt.wantStatus,
+					recorder.Code,
+					recorder.Body.String(),
+				)
+			}
+
+			if stub.calls != tt.wantCalls {
+				t.Errorf(
+					"pemanggilan service: ingin %d, mendapat %d",
+					tt.wantCalls,
+					stub.calls,
+				)
+			}
+
+			if got := recorder.Header().Get("Cache-Control"); got != "no-store" {
+				t.Errorf(
+					"Cache-Control: ingin no-store, mendapat %q",
+					got,
+				)
+			}
+
+			var response struct {
+				Status  bool                   `json:"status"`
+				Message string                 `json:"message"`
+				Error   string                 `json:"error"`
+				Data    *authDto.LoginResponse `json:"data"`
+			}
+
+			if err := json.Unmarshal(
+				recorder.Body.Bytes(),
+				&response,
+			); err != nil {
+				t.Fatalf("respons bukan JSON valid: %v", err)
+			}
+
+			if response.Status != tt.wantSuccess {
+				t.Errorf(
+					"status body: ingin %v, mendapat %v",
+					tt.wantSuccess,
+					response.Status,
+				)
+			}
+
+			if tt.wantSuccess {
+				if response.Data == nil {
+					t.Fatal("data login tidak tersedia")
+				}
+
+				if response.Data.AccessToken != "token-uji" {
+					t.Error("access token dari service tidak diteruskan")
+				}
+
+				if response.Data.User.Email != "orwin@example.com" {
+					t.Error("data pengguna tidak sesuai")
+				}
+			}
+
+			if tt.wantStatus == http.StatusUnauthorized {
+				if response.Error != "Email atau password salah." {
+					t.Errorf(
+						"pesan kredensial salah tidak sesuai: %q",
+						response.Error,
+					)
+				}
+			}
+
+			if tt.wantStatus == http.StatusInternalServerError {
+				if strings.Contains(
+					recorder.Body.String(),
+					"detail internal database",
+				) {
+					t.Error("detail error internal bocor ke respons")
+				}
+			}
+		})
 	}
 }

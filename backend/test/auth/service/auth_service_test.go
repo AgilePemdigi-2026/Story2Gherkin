@@ -3,9 +3,11 @@ package service_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
-
+	authDto "github.com/story2gherkin/modules/auth/dto"
+	"github.com/google/uuid"
 	"github.com/story2gherkin/database/entities"
 	"github.com/story2gherkin/modules/auth/service"
 	userDto "github.com/story2gherkin/modules/user/dto"
@@ -188,5 +190,311 @@ func TestRegisterHashError(t *testing.T) {
 	}
 	if repo.registerCall != 0 {
 		t.Errorf("repository.Register dipanggil %d kali, want 0", repo.registerCall)
+	}
+}
+
+type loginJWTStub struct {
+	service.JWTService
+
+	generate func(string, string) (string, error)
+}
+
+func (j *loginJWTStub) GenerateAccessToken(
+	userID string,
+	role string,
+) (string, error) {
+	return j.generate(userID, role)
+}
+
+type loginTestContextKey struct{}
+
+func TestLoginService(t *testing.T) {
+	// Spasi sengaja digunakan untuk memastikan password tidak di-trim.
+	password := " PasswordUji123! "
+
+	hash, err := bcrypt.GenerateFromPassword(
+		[]byte(password),
+		bcrypt.MinCost,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	userID := uuid.MustParse(
+		"00000000-0000-4000-8000-000000000001",
+	)
+
+	dbErr := errors.New("database sedang bermasalah")
+	tokenErr := errors.New("penandatanganan JWT gagal")
+
+	validRequest := authDto.LoginRequest{
+		Email:    "  ORWIN@EXAMPLE.COM  ",
+		Password: password,
+	}
+
+	tests := []struct {
+		name          string
+		request       *authDto.LoginRequest
+		role          entities.Role
+		missingUser   bool
+		repositoryErr error
+		invalidHash   bool
+		jwtErr        error
+		wantErr       error
+		wantRepoCalls int
+		wantJWTCalls  int
+	}{
+		{
+			name:          "berhasil dan email dinormalisasi",
+			wantRepoCalls: 1,
+			wantJWTCalls:  1,
+		},
+		{
+			name:          "role QA diteruskan dari database",
+			role:          entities.RoleQA,
+			wantRepoCalls: 1,
+			wantJWTCalls:  1,
+		},
+		{
+			name:          "pengguna tidak ditemukan",
+			repositoryErr: gorm.ErrRecordNotFound,
+			wantErr:       service.ErrInvalidCredentials,
+			wantRepoCalls: 1,
+		},
+		{
+			name: "record not found dibungkus",
+			repositoryErr: fmt.Errorf(
+				"repository: %w",
+				gorm.ErrRecordNotFound,
+			),
+			wantErr:       service.ErrInvalidCredentials,
+			wantRepoCalls: 1,
+		},
+		{
+			name:          "pengguna tidak tersedia tanpa error",
+			missingUser:   true,
+			wantErr:       service.ErrInvalidCredentials,
+			wantRepoCalls: 1,
+		},
+		{
+			name:          "error database diteruskan",
+			repositoryErr: dbErr,
+			wantErr:       dbErr,
+			wantRepoCalls: 1,
+		},
+		{
+			name: "password salah",
+			request: &authDto.LoginRequest{
+				Email:    "orwin@example.com",
+				Password: "PasswordSalah123!",
+			},
+			wantErr:       service.ErrInvalidCredentials,
+			wantRepoCalls: 1,
+		},
+		{
+			name:          "hash password rusak",
+			invalidHash:   true,
+			wantErr:       bcrypt.ErrHashTooShort,
+			wantRepoCalls: 1,
+		},
+		{
+			name:          "error penerbitan token diteruskan",
+			jwtErr:        tokenErr,
+			wantErr:       tokenErr,
+			wantRepoCalls: 1,
+			wantJWTCalls:  1,
+		},
+		{
+			name: "email kosong",
+			request: &authDto.LoginRequest{
+				Email:    "   ",
+				Password: password,
+			},
+			wantErr: service.ErrInvalidCredentials,
+		},
+		{
+			name: "password kosong",
+			request: &authDto.LoginRequest{
+				Email:    "orwin@example.com",
+				Password: "",
+			},
+			wantErr: service.ErrInvalidCredentials,
+		},
+		{
+			name: "password UTF8 melebihi 72 byte",
+			request: &authDto.LoginRequest{
+				Email:    "orwin@example.com",
+				Password: strings.Repeat("界", 25),
+			},
+			wantErr: service.ErrInvalidCredentials,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			user := entities.User{
+				ID:       userID,
+				Name:     "Orwin",
+				Email:    "orwin@example.com",
+				Password: string(hash),
+				Role:     entities.RoleSystemAnalyst,
+			}
+
+			if tt.role != "" {
+				user.Role = tt.role
+			}
+
+			if tt.invalidHash {
+				user.Password = "hash-rusak"
+			}
+
+			req := validRequest
+			if tt.request != nil {
+				req = *tt.request
+			}
+
+			ctx := context.WithValue(
+				context.Background(),
+				loginTestContextKey{},
+				"trace-uji",
+			)
+
+			repoCalls := 0
+			jwtCalls := 0
+
+			// Menggunakan fakeUserRepository dari test register.
+			repo := &fakeUserRepository{
+				checkEmailFn: func(
+					gotCtx context.Context,
+					email string,
+				) (entities.User, bool, error) {
+					repoCalls++
+
+					if gotCtx != ctx {
+						t.Error(
+							"context tidak diteruskan ke repository",
+						)
+					}
+
+					if email != "orwin@example.com" {
+						t.Errorf(
+							"email belum dinormalisasi: %q",
+							email,
+						)
+					}
+
+					if tt.repositoryErr != nil {
+						return entities.User{}, false, tt.repositoryErr
+					}
+
+					if tt.missingUser {
+						return entities.User{}, false, nil
+					}
+
+					return user, true, nil
+				},
+			}
+
+			jwtStub := &loginJWTStub{
+				generate: func(
+					id string,
+					role string,
+				) (string, error) {
+					jwtCalls++
+
+					if id != user.ID.String() {
+						t.Error(
+							"user ID untuk JWT harus berasal dari database",
+						)
+					}
+
+					if role != string(user.Role) {
+						t.Error(
+							"role untuk JWT harus berasal dari database",
+						)
+					}
+
+					if tt.jwtErr != nil {
+						return "", tt.jwtErr
+					}
+
+					return "token-uji-bukan-jwt-asli", nil
+				},
+			}
+
+			// Berbeda dari helper register:
+			// login membutuhkan JWT service yang tidak nil.
+			svc := service.NewAuthService(
+				repo,
+				jwtStub,
+				nil,
+				nil,
+			)
+
+			result, gotErr := svc.Login(ctx, req)
+
+			if repoCalls != tt.wantRepoCalls {
+				t.Errorf(
+					"pemanggilan repository: ingin %d, mendapat %d",
+					tt.wantRepoCalls,
+					repoCalls,
+				)
+			}
+
+			if jwtCalls != tt.wantJWTCalls {
+				t.Errorf(
+					"pemanggilan JWT: ingin %d, mendapat %d",
+					tt.wantJWTCalls,
+					jwtCalls,
+				)
+			}
+
+			// Periksa kasus gagal.
+			if tt.wantErr != nil {
+				if !errors.Is(gotErr, tt.wantErr) {
+					t.Fatalf(
+						"error: ingin %v, mendapat %v",
+						tt.wantErr,
+						gotErr,
+					)
+				}
+
+				if result != (authDto.LoginResponse{}) {
+					t.Error(
+						"login gagal harus memberikan response kosong",
+					)
+				}
+
+				return
+			}
+
+			// Periksa kasus berhasil.
+			if gotErr != nil {
+				t.Fatalf(
+					"login seharusnya berhasil: %v",
+					gotErr,
+				)
+			}
+
+			want := authDto.LoginResponse{
+				AccessToken: "token-uji-bukan-jwt-asli",
+				TokenType:   "Bearer",
+				ExpiresIn:   900,
+				User: authDto.LoginUserResponse{
+					ID:    user.ID.String(),
+					Name:  user.Name,
+					Email: user.Email,
+					Role:  string(user.Role),
+				},
+			}
+
+			if result != want {
+				t.Errorf(
+					"hasil login tidak sesuai:\nmendapat %+v\ningin %+v",
+					result,
+					want,
+				)
+			}
+		})
 	}
 }
