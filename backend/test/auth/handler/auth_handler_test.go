@@ -7,8 +7,9 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"strings"
+	"testing"
+
 	"github.com/gin-gonic/gin"
 	"github.com/samber/do"
 	authDto "github.com/story2gherkin/modules/auth/dto"
@@ -396,4 +397,3 @@ func TestLoginHandler(t *testing.T) {
 		})
 	}
 }
-
