@@ -1,0 +1,106 @@
+name: Feature
+description: Kapabilitas yang memberi nilai ke pengguna dan punya acceptance criteria yang bisa diuji.
+labels: ["status:needs-triage"]
+type: Feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Sebelum membuat issue: cari duplikat, tentukan parent epic (jika ada),
+        dan pastikan ini benar-benar feature — bukan task teknis.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Why
+      description: Masalah pengguna atau peluang bisnis yang ingin diselesaikan. Bukan solusi.
+      placeholder: "Saat ini QA harus ... sehingga ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: story
+    attributes:
+      label: User Story
+      description: Satu persona, satu kebutuhan, satu nilai.
+      value: |
+        Sebagai ...
+        Saya ingin ...
+        Sehingga ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria (Gherkin)
+      description: |
+        Minimal satu happy path dan satu negative path.
+        Gunakan contoh konkret, bukan elipsis.
+      placeholder: |
+        Scenario: Registrasi berhasil
+          Given belum ada pengguna dengan email "budi@example.com"
+          When saya mendaftar dengan email "budi@example.com" dan role "qa"
+          Then registrasi berhasil
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of Scope
+      description: Apa yang sengaja tidak dikerjakan di issue ini?
+    validations:
+      required: false
+
+  - type: input
+    id: design
+    attributes:
+      label: Design / API Contract
+      description: Link Figma, dokumen API, atau ADR.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: Kosongkan jika org sudah memakai issue field Priority.
+      options:
+        - P0 - Urgent
+        - P1 - High
+        - P2 - Medium
+        - P3 - Low
+    validations:
+      required: true
+
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Issue lain yang blocking. Lebih baik pakai relasi "blocked by" di sidebar.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: ready
+    attributes:
+      label: Definition of Ready
+      options:
+        - label: Sudah dicari duplikatnya dan ada parent epic (jika perlu)
+          required: true
+        - label: Acceptance criteria sudah disepakati PO/QA/dev
+          required: true
+        - label: Desain/kontrak API sudah ada atau eksplisit belum diperlukan
+          required: true
+        - label: Dependensi dan risiko sudah dicatat
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        **Definition of Done** bersifat tim, bukan per issue.
+        Lihat `docs/definition-of-done.md` di repo.
+        Jangan menutup issue ini sebelum semua sub-issue selesai
+        dan acceptance criteria terbukti.
