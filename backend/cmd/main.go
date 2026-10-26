@@ -9,7 +9,6 @@ import (
 	"github.com/samber/do"
 	"github.com/story2gherkin/middlewares"
 	"github.com/story2gherkin/modules/auth"
-	"github.com/story2gherkin/modules/scenario"
 	"github.com/story2gherkin/providers"
 )
 
@@ -41,7 +40,6 @@ func main() {
 	)
 
 	providers.RegisterDependencies(injector)
-	providers.RegisterScenarioDependencies(injector)
 
 	server := gin.Default()
 	server.Use(middlewares.CORSMiddleware())
@@ -49,7 +47,6 @@ func main() {
 	v1 := server.Group("api/v1")
 	{
 		auth.RegisterRoutes(v1, injector)
-		scenario.RegisterRoutes(v1, injector)
 	}
 
 	run(server)
