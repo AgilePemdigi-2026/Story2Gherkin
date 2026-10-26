@@ -15,13 +15,17 @@ import (
 	"github.com/story2gherkin/modules/scenario/dto"
 )
 
-type AIClient struct {
+// LLMClient memanggil AI-service internal untuk generate skenario.
+// Namanya mengikuti llm_client.py di ai-service; URL/key menunjuk ke
+// AI-service (bukan langsung ke provider) sehingga tetap agnostik
+// mau backend-nya Ollama maupun OpenRouter.
+type LLMClient struct {
 	endpoint string
 	key      string
 	client   *http.Client
 }
 
-func NewAIClient(baseURL, key string) (*AIClient, error) {
+func NewLLMClient(baseURL, key string) (*LLMClient, error) {
 	u, err := url.Parse(baseURL)
 	if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		return nil, fmt.Errorf("AI_SERVICE_URL must be an HTTP(S) base URL")
@@ -29,7 +33,7 @@ func NewAIClient(baseURL, key string) (*AIClient, error) {
 	if len(strings.TrimSpace(key)) < 32 || strings.HasPrefix(key, "REPLACE_") {
 		return nil, fmt.Errorf("AI_SERVICE_KEY must contain a random secret of at least 32 characters")
 	}
-	return &AIClient{
+	return &LLMClient{
 		endpoint: strings.TrimRight(baseURL, "/") + "/internal/scenarios/generate",
 		key:      key,
 		client: &http.Client{
@@ -40,7 +44,7 @@ func NewAIClient(baseURL, key string) (*AIClient, error) {
 	}, nil
 }
 
-func (c *AIClient) Generate(ctx context.Context, input dto.GenerateRequest) (dto.GenerateResponse, error) {
+func (c *LLMClient) Generate(ctx context.Context, input dto.GenerateRequest) (dto.GenerateResponse, error) {
 	body, err := json.Marshal(input)
 	if err != nil {
 		return dto.GenerateResponse{}, err
@@ -77,7 +81,8 @@ func (c *AIClient) Generate(ctx context.Context, input dto.GenerateRequest) (dto
 	if err := json.Unmarshal(data, &result); err != nil {
 		return dto.GenerateResponse{}, ErrBadGateway
 	}
-	if strings.TrimSpace(result.Gherkin) == "" || result.Feature.FeatureName == "" || len(result.Feature.Scenarios) == 0 || len(result.Feature.Scenarios) > input.MaxScenarios || result.Model == "" || result.PromptVersion == "" {
+	// Light shape check; deep validation lives in scenarioService.
+	if strings.TrimSpace(result.Gherkin) == "" || strings.TrimSpace(result.Feature.FeatureName) == "" || len(result.Feature.Scenarios) == 0 {
 		return dto.GenerateResponse{}, ErrBadGateway
 	}
 	return result, nil

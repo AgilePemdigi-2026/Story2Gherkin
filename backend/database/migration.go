@@ -9,6 +9,8 @@ func Migrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
 		&entities.User{},
 		&entities.RefreshToken{},
+		&entities.GenerationRequest{},
+		&entities.GherkinScenario{},
 	)
 
 	if err != nil {
