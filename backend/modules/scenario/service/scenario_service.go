@@ -13,7 +13,6 @@ import (
 	"github.com/story2gherkin/database/entities"
 	"github.com/story2gherkin/modules/scenario/dto"
 	"github.com/story2gherkin/modules/scenario/repository"
-	"gorm.io/gorm"
 )
 
 var (
@@ -44,20 +43,17 @@ type scenarioService struct {
 	generator Generator
 	reqRepo   repository.GenerationRequestRepository
 	scenRepo  repository.GherkinScenarioRepository
-	db        *gorm.DB
 }
 
 func NewScenarioService(
 	generator Generator,
 	reqRepo repository.GenerationRequestRepository,
 	scenRepo repository.GherkinScenarioRepository,
-	db *gorm.DB,
 ) ScenarioService {
 	return &scenarioService{
 		generator: generator,
 		reqRepo:   reqRepo,
 		scenRepo:  scenRepo,
-		db:        db,
 	}
 }
 
@@ -89,14 +85,14 @@ func (s *scenarioService) Generate(ctx context.Context, userID string, req dto.G
 		FreeScenario: req.FreeScenario,
 		Status:       dto.RequestPending,
 	}
-	genReq, err = s.reqRepo.Create(ctx, s.db, genReq)
+	genReq, err = s.reqRepo.Create(ctx, nil, genReq)
 	if err != nil {
 		return dto.GenerateResponse{}, err
 	}
 	fail := func(failErr error, msg string) (dto.GenerateResponse, error) {
 		genReq.Status = dto.RequestFailed
 		genReq.ErrorMessage = msg
-		_, _ = s.reqRepo.Update(ctx, s.db, genReq)
+		_, _ = s.reqRepo.Update(ctx, nil, genReq)
 		return dto.GenerateResponse{}, failErr
 	}
 
@@ -137,7 +133,7 @@ func (s *scenarioService) Generate(ctx context.Context, userID string, req dto.G
 
 	if !gotValid {
 		if last.Gherkin != "" {
-			_, _ = s.scenRepo.Create(ctx, s.db, entities.GherkinScenario{
+			_, _ = s.scenRepo.Create(ctx, nil, entities.GherkinScenario{
 				ID:                  uuid.New(),
 				GenerationRequestID: &genReq.ID,
 				FeatureName:         last.Feature.FeatureName,
@@ -164,7 +160,7 @@ func (s *scenarioService) Generate(ctx context.Context, userID string, req dto.G
 	}
 	last.DurationMS = time.Since(start).Milliseconds()
 
-	_, err = s.scenRepo.Create(ctx, s.db, entities.GherkinScenario{
+	_, err = s.scenRepo.Create(ctx, nil, entities.GherkinScenario{
 		ID:                  uuid.New(),
 		GenerationRequestID: &genReq.ID,
 		FeatureName:         last.Feature.FeatureName,
@@ -180,7 +176,7 @@ func (s *scenarioService) Generate(ctx context.Context, userID string, req dto.G
 	}
 
 	genReq.Status = dto.RequestSuccess
-	if _, err := s.reqRepo.Update(ctx, s.db, genReq); err != nil {
+	if _, err := s.reqRepo.Update(ctx, nil, genReq); err != nil {
 		return dto.GenerateResponse{}, err
 	}
 	return last, nil

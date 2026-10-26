@@ -9,6 +9,7 @@ import (
 	"github.com/samber/do"
 	"github.com/story2gherkin/middlewares"
 	"github.com/story2gherkin/modules/auth"
+	"github.com/story2gherkin/modules/scenario"
 	"github.com/story2gherkin/providers"
 )
 
@@ -46,6 +47,7 @@ func main() {
 
 	v1 := server.Group("api/v1")
 	{
+		scenario.RegisterRoutes(v1, injector)
 		auth.RegisterRoutes(v1, injector)
 	}
 
