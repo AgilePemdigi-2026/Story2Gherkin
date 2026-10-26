@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/story2gherkin/database/entities"
@@ -12,6 +13,7 @@ import (
 	"github.com/story2gherkin/modules/user/repository"
 	"github.com/story2gherkin/pkg/helpers"
 	"github.com/story2gherkin/pkg/utils"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -59,6 +61,8 @@ func (s *authService) Register(
 	req userDto.UserCreateRequest,
 ) (userDto.UserResponse, error) {
 
+	req.Name = strings.TrimSpace(req.Name)
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 	_, isExist, err := s.userRepository.CheckEmail(ctx, s.db, req.Email)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return userDto.UserResponse{}, err
@@ -99,14 +103,31 @@ func (s *authService) Login(
 	req userDto.UserLoginRequest,
 ) (authDto.TokenResponse, error) {
 
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
+	if req.Email == "" || req.Password == "" || len([]byte(req.Password)) > 72 {
+		return authDto.TokenResponse{}, ErrInvalidCredentials
+	}
 	user, err := s.userRepository.GetUserByEmail(ctx, s.db, req.Email)
 	if err != nil {
-		return authDto.TokenResponse{}, userDto.ErrEmailNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return authDto.TokenResponse{}, ErrInvalidCredentials
+		}
+		return authDto.TokenResponse{}, err
+	}
+	if user.ID == (uuid.Nil) {
+		return authDto.TokenResponse{}, ErrInvalidCredentials
 	}
 
 	isValid, err := helpers.CheckPassword(user.Password, []byte(req.Password))
-	if err != nil || !isValid {
-		return authDto.TokenResponse{}, authDto.ErrInvalidCredentials
+	if err != nil {
+		// ponytail: rusak hash diteruskan apa adanya, kredensial salah disamarkan.
+		if errors.Is(err, bcrypt.ErrHashTooShort) {
+			return authDto.TokenResponse{}, err
+		}
+		return authDto.TokenResponse{}, ErrInvalidCredentials
+	}
+	if !isValid {
+		return authDto.TokenResponse{}, ErrInvalidCredentials
 	}
 
 	accessToken := s.jwtService.GenerateAccessToken(user.ID.String(), string(user.Role))

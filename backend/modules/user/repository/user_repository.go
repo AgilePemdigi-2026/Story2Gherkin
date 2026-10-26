@@ -60,7 +60,7 @@ func (r *userRepository) GetUserById(ctx context.Context, tx *gorm.DB, userId st
 	if err := tx.WithContext(ctx).Where("id = ?", userId).Take(&user).Error; err != nil {
 		return entities.User{}, err
 	}
-	
+
 	return user, nil
 }
 
@@ -68,12 +68,12 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, tx *gorm.DB, email 
 	if tx == nil {
 		tx = r.db
 	}
-	
+
 	var user entities.User
 	if err := tx.WithContext(ctx).Where("email = ?", email).Take(&user).Error; err != nil {
 		return entities.User{}, err
 	}
-	
+
 	return user, nil
 }
 

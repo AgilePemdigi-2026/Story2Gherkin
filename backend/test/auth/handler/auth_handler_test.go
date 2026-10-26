@@ -5,19 +5,19 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/do"
+	authModule "github.com/story2gherkin/modules/auth"
 	authDto "github.com/story2gherkin/modules/auth/dto"
 	"github.com/story2gherkin/modules/auth/handler"
 	"github.com/story2gherkin/modules/auth/service"
 	userDto "github.com/story2gherkin/modules/user/dto"
-	authModule "github.com/story2gherkin/modules/auth"
 	"github.com/story2gherkin/pkg/constants"
 	"gorm.io/gorm"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
 )
 
 type fakeAuthService struct {
@@ -33,13 +33,21 @@ func (f *fakeAuthService) Register(
 	return f.registerFn(ctx, req)
 }
 
-func (f *fakeAuthService) Login(context.Context, authDto.LoginRequest) (authDto.LoginResponse, error) {
-	return authDto.LoginResponse{}, nil
+func (f *fakeAuthService) Login(ctx context.Context, req userDto.UserLoginRequest) (authDto.TokenResponse, error) {
+	return authDto.TokenResponse{}, nil
 }
 
-func (f *fakeAuthService) ForgotPassword(context.Context, string) error { return nil }
+func (f *fakeAuthService) RefreshToken(context.Context, authDto.RefreshTokenRequest) (authDto.TokenResponse, error) {
+	return authDto.TokenResponse{}, nil
+}
 
-func (f *fakeAuthService) ResetPassword(context.Context, string, string) error { return nil }
+func (f *fakeAuthService) SendPasswordReset(context.Context, authDto.SendPasswordResetRequest) error {
+	return nil
+}
+
+func (f *fakeAuthService) ResetPassword(context.Context, authDto.ResetPasswordRequest) error {
+	return nil
+}
 
 // newTestHandler membangun handler lewat konstruktor aslinya.
 // DB tidak dipakai oleh Register, cukup injector dengan *gorm.DB kosong.
@@ -215,15 +223,15 @@ func TestRegisterHandlerServiceError(t *testing.T) {
 type loginHandlerStub struct {
 	service.AuthService
 
-	result authDto.LoginResponse
+	result authDto.TokenResponse
 	err    error
 	calls  int
 }
 
 func (s *loginHandlerStub) Login(
 	ctx context.Context,
-	req authDto.LoginRequest,
-) (authDto.LoginResponse, error) {
+	req userDto.UserLoginRequest,
+) (authDto.TokenResponse, error) {
 	s.calls++
 	return s.result, s.err
 }
@@ -288,16 +296,10 @@ func TestLoginHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			stub := &loginHandlerStub{
-				result: authDto.LoginResponse{
-					AccessToken: "token-uji",
-					TokenType:   "Bearer",
-					ExpiresIn:   900,
-					User: authDto.LoginUserResponse{
-						ID:    "user-uji",
-						Name:  "Orwin",
-						Email: "orwin@example.com",
-						Role:  "system_analyst",
-					},
+				result: authDto.TokenResponse{
+					AccessToken:  "token-uji",
+					RefreshToken: "refresh-uji",
+					Role:         "system_analyst",
 				},
 				err: tt.serviceErr,
 			}
@@ -345,7 +347,7 @@ func TestLoginHandler(t *testing.T) {
 				Status  bool                   `json:"status"`
 				Message string                 `json:"message"`
 				Error   string                 `json:"error"`
-				Data    *authDto.LoginResponse `json:"data"`
+				Data    *authDto.TokenResponse `json:"data"`
 			}
 
 			if err := json.Unmarshal(
@@ -372,8 +374,8 @@ func TestLoginHandler(t *testing.T) {
 					t.Error("access token dari service tidak diteruskan")
 				}
 
-				if response.Data.User.Email != "orwin@example.com" {
-					t.Error("data pengguna tidak sesuai")
+				if response.Data.Role != "system_analyst" {
+					t.Error("role tidak sesuai")
 				}
 			}
 
@@ -491,7 +493,7 @@ func TestLogoutHandler(t *testing.T) {
 			name: "tanpa body dan tanpa Authorization",
 		},
 		{
-			name: "Authorization tidak divalidasi pada endpoint konfirmasi",
+			name:          "Authorization tidak divalidasi pada endpoint konfirmasi",
 			authorization: "Bearer token-uji-bukan-jwt-asli",
 		},
 	}

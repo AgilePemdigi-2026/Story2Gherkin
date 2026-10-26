@@ -4,20 +4,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
-	"testing"
-	authDto "github.com/story2gherkin/modules/auth/dto"
 	"github.com/google/uuid"
 	"github.com/story2gherkin/database/entities"
+	authDto "github.com/story2gherkin/modules/auth/dto"
+	authRepo "github.com/story2gherkin/modules/auth/repository"
 	"github.com/story2gherkin/modules/auth/service"
 	userDto "github.com/story2gherkin/modules/user/dto"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"strings"
+	"testing"
+	"time"
 )
 
 type fakeUserRepository struct {
 	checkEmailFn func(ctx context.Context, email string) (entities.User, bool, error)
 	registerFn   func(ctx context.Context, user entities.User) (entities.User, error)
+	getByEmailFn func(ctx context.Context, email string) (entities.User, error)
+	getByIDFn    func(ctx context.Context, id string) (entities.User, error)
+	updateFn     func(ctx context.Context, user entities.User) (entities.User, error)
 
 	checkedEmail string
 	registered   *entities.User
@@ -42,6 +47,39 @@ func (f *fakeUserRepository) Register(
 	f.registered = &user
 	return f.registerFn(ctx, user)
 }
+
+func (f *fakeUserRepository) GetUserByEmail(ctx context.Context, _ *gorm.DB, email string) (entities.User, error) {
+	if f.getByEmailFn != nil {
+		return f.getByEmailFn(ctx, email)
+	}
+	if f.checkEmailFn != nil {
+		u, ok, err := f.checkEmailFn(ctx, email)
+		if err != nil {
+			return entities.User{}, err
+		}
+		if !ok {
+			return entities.User{}, gorm.ErrRecordNotFound
+		}
+		return u, nil
+	}
+	return entities.User{}, gorm.ErrRecordNotFound
+}
+
+func (f *fakeUserRepository) GetUserById(ctx context.Context, _ *gorm.DB, id string) (entities.User, error) {
+	if f.getByIDFn != nil {
+		return f.getByIDFn(ctx, id)
+	}
+	return entities.User{}, gorm.ErrRecordNotFound
+}
+
+func (f *fakeUserRepository) Update(ctx context.Context, _ *gorm.DB, user entities.User) (entities.User, error) {
+	if f.updateFn != nil {
+		return f.updateFn(ctx, user)
+	}
+	return user, nil
+}
+
+func (f *fakeUserRepository) Delete(context.Context, *gorm.DB, string) error { return nil }
 
 func newTestService(repo *fakeUserRepository) service.AuthService {
 	return service.NewAuthService(repo, nil, nil, nil)
@@ -196,14 +234,30 @@ func TestRegisterHashError(t *testing.T) {
 type loginJWTStub struct {
 	service.JWTService
 
-	generate func(string, string) (string, error)
+	generate func(string, string) string
 }
 
 func (j *loginJWTStub) GenerateAccessToken(
 	userID string,
 	role string,
-) (string, error) {
+) string {
 	return j.generate(userID, role)
+}
+
+func (j *loginJWTStub) GenerateRefreshToken() (string, time.Time) {
+	return "refresh-uji", time.Now().Add(time.Hour)
+}
+
+type stubRefreshRepo struct {
+	authRepo.RefreshTokenRepository
+	createFn func(ctx context.Context, token entities.RefreshToken) (entities.RefreshToken, error)
+}
+
+func (s *stubRefreshRepo) Create(ctx context.Context, _ *gorm.DB, token entities.RefreshToken) (entities.RefreshToken, error) {
+	if s.createFn != nil {
+		return s.createFn(ctx, token)
+	}
+	return token, nil
 }
 
 type loginTestContextKey struct{}
@@ -225,21 +279,19 @@ func TestLoginService(t *testing.T) {
 	)
 
 	dbErr := errors.New("database sedang bermasalah")
-	tokenErr := errors.New("penandatanganan JWT gagal")
 
-	validRequest := authDto.LoginRequest{
+	validRequest := userDto.UserLoginRequest{
 		Email:    "  ORWIN@EXAMPLE.COM  ",
 		Password: password,
 	}
 
 	tests := []struct {
 		name          string
-		request       *authDto.LoginRequest
+		request       *userDto.UserLoginRequest
 		role          entities.Role
 		missingUser   bool
 		repositoryErr error
 		invalidHash   bool
-		jwtErr        error
 		wantErr       error
 		wantRepoCalls int
 		wantJWTCalls  int
@@ -284,7 +336,7 @@ func TestLoginService(t *testing.T) {
 		},
 		{
 			name: "password salah",
-			request: &authDto.LoginRequest{
+			request: &userDto.UserLoginRequest{
 				Email:    "orwin@example.com",
 				Password: "PasswordSalah123!",
 			},
@@ -298,15 +350,8 @@ func TestLoginService(t *testing.T) {
 			wantRepoCalls: 1,
 		},
 		{
-			name:          "error penerbitan token diteruskan",
-			jwtErr:        tokenErr,
-			wantErr:       tokenErr,
-			wantRepoCalls: 1,
-			wantJWTCalls:  1,
-		},
-		{
 			name: "email kosong",
-			request: &authDto.LoginRequest{
+			request: &userDto.UserLoginRequest{
 				Email:    "   ",
 				Password: password,
 			},
@@ -314,7 +359,7 @@ func TestLoginService(t *testing.T) {
 		},
 		{
 			name: "password kosong",
-			request: &authDto.LoginRequest{
+			request: &userDto.UserLoginRequest{
 				Email:    "orwin@example.com",
 				Password: "",
 			},
@@ -322,7 +367,7 @@ func TestLoginService(t *testing.T) {
 		},
 		{
 			name: "password UTF8 melebihi 72 byte",
-			request: &authDto.LoginRequest{
+			request: &userDto.UserLoginRequest{
 				Email:    "orwin@example.com",
 				Password: strings.Repeat("界", 25),
 			},
@@ -399,7 +444,7 @@ func TestLoginService(t *testing.T) {
 				generate: func(
 					id string,
 					role string,
-				) (string, error) {
+				) string {
 					jwtCalls++
 
 					if id != user.ID.String() {
@@ -414,11 +459,7 @@ func TestLoginService(t *testing.T) {
 						)
 					}
 
-					if tt.jwtErr != nil {
-						return "", tt.jwtErr
-					}
-
-					return "token-uji-bukan-jwt-asli", nil
+					return "token-uji-bukan-jwt-asli"
 				},
 			}
 
@@ -428,7 +469,7 @@ func TestLoginService(t *testing.T) {
 				repo,
 				jwtStub,
 				nil,
-				nil,
+				&stubRefreshRepo{},
 			)
 
 			result, gotErr := svc.Login(ctx, req)
@@ -459,7 +500,7 @@ func TestLoginService(t *testing.T) {
 					)
 				}
 
-				if result != (authDto.LoginResponse{}) {
+				if result != (authDto.TokenResponse{}) {
 					t.Error(
 						"login gagal harus memberikan response kosong",
 					)
@@ -476,24 +517,20 @@ func TestLoginService(t *testing.T) {
 				)
 			}
 
-			want := authDto.LoginResponse{
+			want := authDto.TokenResponse{
 				AccessToken: "token-uji-bukan-jwt-asli",
-				TokenType:   "Bearer",
-				ExpiresIn:   900,
-				User: authDto.LoginUserResponse{
-					ID:    user.ID.String(),
-					Name:  user.Name,
-					Email: user.Email,
-					Role:  string(user.Role),
-				},
+				Role:        string(user.Role),
 			}
 
-			if result != want {
+			if result.AccessToken != want.AccessToken || result.Role != want.Role {
 				t.Errorf(
 					"hasil login tidak sesuai:\nmendapat %+v\ningin %+v",
 					result,
 					want,
 				)
+			}
+			if result.RefreshToken == "" {
+				t.Error("refresh token harus terisi")
 			}
 		})
 	}

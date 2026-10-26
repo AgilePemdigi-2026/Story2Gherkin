@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gin-gonic/gin"
 	"github.com/story2gherkin/modules/auth/service"
 	"github.com/story2gherkin/modules/user/dto"
 	"github.com/story2gherkin/pkg/utils"
-	"github.com/gin-gonic/gin"
 )
 
 func Authenticate(jwtService service.JWTService) gin.HandlerFunc {
