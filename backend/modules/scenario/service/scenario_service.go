@@ -117,16 +117,16 @@ func (s *scenarioService) Generate(ctx context.Context, userID string, req dto.G
 			lastErr = err.Error()
 			break
 		}
-		if msg := validateResponse(req, res); msg != "" {
-			lastErr, last = msg, res
-			continue
-		}
-		if attempt > 1 && res.Gherkin == prevGherkin {
+		if attempt > 1 && res.Gherkin != "" && res.Gherkin == prevGherkin {
 			// ponytail: output identik = model macet, stop dini hemat kuota.
 			lastErr, last = "generator returned identical output", res
 			break
 		}
 		prevGherkin = res.Gherkin
+		if msg := validateResponse(req, res); msg != "" {
+			lastErr, last = msg, res
+			continue
+		}
 		last, gotValid = res, true
 		break
 	}
