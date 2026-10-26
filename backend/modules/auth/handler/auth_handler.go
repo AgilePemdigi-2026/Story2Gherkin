@@ -24,7 +24,8 @@ type AuthHandler interface {
 	Register(ctx *gin.Context)
 	Login(ctx *gin.Context)
 	Logout(ctx *gin.Context)
-	ForgotPassword(ctx *gin.Context)
+	RefreshToken(ctx *gin.Context)
+	SendPasswordReset(ctx *gin.Context)
 	ResetPassword(ctx *gin.Context)
 }
 
@@ -40,7 +41,6 @@ func NewAuthController(
 	}
 }
 
-// Register menangani registrasi pengguna.
 func (c *authHandler) Register(ctx *gin.Context) {
 	var req userDto.UserCreateRequest
 
@@ -89,19 +89,16 @@ func (c *authHandler) Register(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, res)
 }
 
-// Login menangani autentikasi pengguna.
 func (c *authHandler) Login(ctx *gin.Context) {
-	// Respons token tidak boleh disimpan oleh cache.
 	ctx.Header("Cache-Control", "no-store")
 
-	// Batasi ukuran request login menjadi 16 KiB.
 	ctx.Request.Body = http.MaxBytesReader(
 		ctx.Writer,
 		ctx.Request.Body,
 		16*1024,
 	)
 
-	var req authDto.LoginRequest
+	var req userDto.UserLoginRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		res := utils.BuildResponseFailed(
@@ -157,34 +154,59 @@ func (c *authHandler) Logout(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-// ForgotPassword menangani permintaan pemulihan password.
-func (c *authHandler) ForgotPassword(ctx *gin.Context) {
-	var req authDto.SendPasswordResetRequest
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		res := utils.BuildResponseFailed(
-			"Invalid forgot password request",
-			err.Error(),
-			nil,
-		)
+func (c *authHandler) RefreshToken(ctx *gin.Context) {
+	var req authDto.RefreshTokenRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		res := utils.BuildResponseFailed(userDto.MESSAGE_FAILED_GET_DATA_FROM_BODY, err.Error(), nil)
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
 		return
 	}
 
-	err := c.authService.ForgotPassword(
-		ctx.Request.Context(),
-		req.Email,
-	)
-
+	result, err := c.authService.RefreshToken(ctx.Request.Context(), req)
 	if err != nil {
-		log.Printf("Forgot password service error: %v", err)
+		res := utils.BuildResponseFailed(authDto.MESSAGE_FAILED_REFRESH_TOKEN, err.Error(), nil)
+		ctx.JSON(http.StatusUnauthorized, res)
+		return
 	}
 
-	// Respons sama untuk email terdaftar maupun tidak.
-	res := utils.BuildResponseSuccess(
-		"If the email is registered, a password reset link will be sent.",
-		nil,
-	)
+	res := utils.BuildResponseSuccess(authDto.MESSAGE_SUCCESS_REFRESH_TOKEN, result)
+	ctx.JSON(http.StatusOK, res)
+}
 
-	ctx.JSON(http.StatusAccepted, res)
+func (c *authHandler) SendPasswordReset(ctx *gin.Context) {
+	var req authDto.SendPasswordResetRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		res := utils.BuildResponseFailed(userDto.MESSAGE_FAILED_GET_DATA_FROM_BODY, err.Error(), nil)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err := c.authService.SendPasswordReset(ctx.Request.Context(), req)
+	if err != nil {
+		res := utils.BuildResponseFailed(authDto.MESSAGE_FAILED_SEND_PASSWORD_RESET, err.Error(), nil)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	res := utils.BuildResponseSuccess(authDto.MESSAGE_SUCCESS_SEND_PASSWORD_RESET, nil)
+	ctx.JSON(http.StatusOK, res)
+}
+
+func (c *authHandler) ResetPassword(ctx *gin.Context) {
+	var req authDto.ResetPasswordRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		res := utils.BuildResponseFailed(userDto.MESSAGE_FAILED_GET_DATA_FROM_BODY, err.Error(), nil)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+		return
+	}
+
+	err := c.authService.ResetPassword(ctx.Request.Context(), req)
+	if err != nil {
+		res := utils.BuildResponseFailed(authDto.MESSAGE_FAILED_RESET_PASSWORD, err.Error(), nil)
+		ctx.JSON(http.StatusBadRequest, res)
+		return
+	}
+
+	res := utils.BuildResponseSuccess(authDto.MESSAGE_SUCCESS_RESET_PASSWORD, nil)
+	ctx.JSON(http.StatusOK, res)
 }

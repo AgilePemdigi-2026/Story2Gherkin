@@ -15,6 +15,8 @@ const (
 	MESSAGE_FAILED_DELETE_USER        = "failed delete user"
 	MESSAGE_FAILED_PROSES_REQUEST     = "failed proses request"
 	MESSAGE_FAILED_DENIED_ACCESS      = "denied access"
+	MESSAGE_FAILED_TOKEN_NOT_FOUND    = "token not found"
+	MESSAGE_FAILED_TOKEN_NOT_VALID    = "token not valid"
 
 	// Success
 	MESSAGE_SUCCESS_REGISTER_USER = "success create user"
@@ -67,7 +69,7 @@ type (
 	}
 
 	UserLoginRequest struct {
-		Email    string `json:"email" form:"email" binding:"required"`
+		Email    string `json:"email" form:"email" binding:"required,email"`
 		Password string `json:"password" form:"password" binding:"required"`
 	}
 )

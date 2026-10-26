@@ -23,10 +23,13 @@ func RegisterRoutes(
 		// Logout
 		authRoutes.POST("/logout", authHandler.Logout)
 
-		// Forgot Password
-		authRoutes.POST("/forgot-password", authHandler.ForgotPassword)
+		// Refresh Token
+		authRoutes.POST("/refresh", authHandler.RefreshToken)
+
+		// Send Password Reset
+		authRoutes.POST("/password-reset/send", authHandler.SendPasswordReset)
 
 		// Reset Password
-		authRoutes.POST("/reset-password", authHandler.ResetPassword)
+		authRoutes.POST("/password-reset/reset", authHandler.ResetPassword)
 	}
 }

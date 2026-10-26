@@ -3,14 +3,14 @@ package handler
 import (
 	"context"
 	"errors"
+	"github.com/gin-gonic/gin"
+	"github.com/story2gherkin/modules/scenario/dto"
+	scenarioHandler "github.com/story2gherkin/modules/scenario/handler"
+	"github.com/story2gherkin/modules/scenario/service"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	scenarioHandler "github.com/story2gherkin/modules/scenario/handler"
-	"github.com/gin-gonic/gin"
-	"github.com/story2gherkin/modules/scenario/dto"
-	"github.com/story2gherkin/modules/scenario/service"
 )
 
 type serviceStub struct {
