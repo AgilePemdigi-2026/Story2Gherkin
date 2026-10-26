@@ -33,5 +33,7 @@ func SetUpDatabaseConnection() *gorm.DB {
 		panic(err)
 	}
 
+	db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";")
+
 	return db
 }
