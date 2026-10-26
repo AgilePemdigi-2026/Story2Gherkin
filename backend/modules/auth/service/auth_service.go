@@ -3,20 +3,15 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
-	"log"
-	"net/url"
-	"os"
-	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/story2gherkin/database/entities"
 	authDto "github.com/story2gherkin/modules/auth/dto"
+	authRepo "github.com/story2gherkin/modules/auth/repository"
 	userDto "github.com/story2gherkin/modules/user/dto"
 	"github.com/story2gherkin/modules/user/repository"
 	"github.com/story2gherkin/pkg/helpers"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/story2gherkin/pkg/utils"
 	"gorm.io/gorm"
 )
 
@@ -30,58 +25,42 @@ type AuthService interface {
 
 	Login(
 		ctx context.Context,
-		req authDto.LoginRequest,
-	) (authDto.LoginResponse, error)
+		req userDto.UserLoginRequest,
+	) (authDto.TokenResponse, error)
 
-	ForgotPassword(
-		ctx context.Context,
-		email string,
-	) error
-
-	ResetPassword(
-		ctx context.Context,
-		token string,
-		newPassword string,
-	) error
+	RefreshToken(ctx context.Context, req authDto.RefreshTokenRequest) (authDto.TokenResponse, error)
+	SendPasswordReset(ctx context.Context, req authDto.SendPasswordResetRequest) error
+	ResetPassword(ctx context.Context, req authDto.ResetPasswordRequest) error
 }
 
 type authService struct {
-	userRepository repository.UserRepository
-	jwtService     JWTService
-	mailer         PasswordResetMailer
-	db             *gorm.DB
+	userRepository         repository.UserRepository
+	jwtService             JWTService
+	refreshTokenRepository authRepo.RefreshTokenRepository
+	db                     *gorm.DB
 }
 
 func NewAuthService(
 	userRepo repository.UserRepository,
 	jwtService JWTService,
 	db *gorm.DB,
-	mailer PasswordResetMailer,
+	refreshTokenRepo authRepo.RefreshTokenRepository,
 ) AuthService {
 	return &authService{
-		userRepository: userRepo,
-		jwtService:     jwtService,
-		db:             db,
-		mailer:         mailer,
+		userRepository:         userRepo,
+		refreshTokenRepository: refreshTokenRepo,
+		jwtService:             jwtService,
+		db:                     db,
 	}
 }
 
-// Register membuat akun pengguna baru.
 func (s *authService) Register(
 	ctx context.Context,
 	req userDto.UserCreateRequest,
 ) (userDto.UserResponse, error) {
 
-	req.Name = strings.TrimSpace(req.Name)
-	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
-
-	_, isExist, err := s.userRepository.CheckEmail(
-		ctx,
-		s.db,
-		req.Email,
-	)
-
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	_, isExist, err := s.userRepository.CheckEmail(ctx, s.db, req.Email)
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return userDto.UserResponse{}, err
 	}
 
@@ -102,12 +81,7 @@ func (s *authService) Register(
 		Role:     entities.Role(req.Role),
 	}
 
-	createdUser, err := s.userRepository.Register(
-		ctx,
-		s.db,
-		user,
-	)
-
+	createdUser, err := s.userRepository.Register(ctx, s.db, user)
 	if err != nil {
 		return userDto.UserResponse{}, err
 	}
@@ -120,148 +94,119 @@ func (s *authService) Register(
 	}, nil
 }
 
-// Login memverifikasi kredensial dan menghasilkan JWT.
 func (s *authService) Login(
 	ctx context.Context,
-	req authDto.LoginRequest,
-) (authDto.LoginResponse, error) {
+	req userDto.UserLoginRequest,
+) (authDto.TokenResponse, error) {
 
-	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
-
-	// Password tidak di-trim karena spasi
-	// dapat menjadi bagian dari password.
-	if req.Email == "" ||
-		req.Password == "" ||
-		len(req.Password) > 72 {
-		return authDto.LoginResponse{}, ErrInvalidCredentials
-	}
-
-	// Cari pengguna berdasarkan email.
-	user, isExist, err := s.userRepository.CheckEmail(
-		ctx,
-		s.db,
-		req.Email,
-	)
-
+	user, err := s.userRepository.GetUserByEmail(ctx, s.db, req.Email)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return authDto.LoginResponse{}, ErrInvalidCredentials
-		}
-
-		return authDto.LoginResponse{}, fmt.Errorf(
-			"mencari pengguna: %w",
-			err,
-		)
+		return authDto.TokenResponse{}, userDto.ErrEmailNotFound
 	}
 
-	if !isExist {
-		return authDto.LoginResponse{}, ErrInvalidCredentials
+	isValid, err := helpers.CheckPassword(user.Password, []byte(req.Password))
+	if err != nil || !isValid {
+		return authDto.TokenResponse{}, authDto.ErrInvalidCredentials
 	}
 
-	// Bandingkan password dengan hash tersimpan.
-	matches, err := helpers.CheckPassword(
-		user.Password,
-		[]byte(req.Password),
-	)
+	accessToken := s.jwtService.GenerateAccessToken(user.ID.String(), string(user.Role))
+	refreshTokenString, expiresAt := s.jwtService.GenerateRefreshToken()
 
+	refreshToken := entities.RefreshToken{
+		ID:        uuid.New(),
+		UserID:    user.ID,
+		Token:     refreshTokenString,
+		ExpiresAt: expiresAt,
+	}
+
+	_, err = s.refreshTokenRepository.Create(ctx, s.db, refreshToken)
 	if err != nil {
-		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return authDto.LoginResponse{}, ErrInvalidCredentials
-		}
-
-		return authDto.LoginResponse{}, fmt.Errorf(
-			"memverifikasi password: %w",
-			err,
-		)
+		return authDto.TokenResponse{}, err
 	}
 
-	if !matches {
-		return authDto.LoginResponse{}, ErrInvalidCredentials
-	}
-
-	// Buat JWT dari identitas pengguna.
-	accessToken, err := s.jwtService.GenerateAccessToken(
-		user.ID.String(),
-		string(user.Role),
-	)
-
-	if err != nil {
-		return authDto.LoginResponse{}, fmt.Errorf(
-			"membuat access token: %w",
-			err,
-		)
-	}
-
-	// Kembalikan token dan informasi pengguna.
-	return authDto.LoginResponse{
-		AccessToken: accessToken,
-		TokenType:   "Bearer",
-		ExpiresIn:   int64(AccessTokenTTL / time.Second),
-		User: authDto.LoginUserResponse{
-			ID:    user.ID.String(),
-			Name:  user.Name,
-			Email: user.Email,
-			Role:  string(user.Role),
-		},
+	return authDto.TokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshTokenString,
+		Role:         string(user.Role),
 	}, nil
 }
 
-// ForgotPassword memproses permintaan reset password.
-func (s *authService) ForgotPassword(
-	ctx context.Context,
-	email string,
-) error {
-
-	email = strings.ToLower(strings.TrimSpace(email))
-
-	user, exists, err := s.userRepository.CheckEmail(
-		ctx,
-		s.db,
-		email,
-	)
-
-	// Jangan ungkapkan apakah email terdaftar.
-	if errors.Is(err, gorm.ErrRecordNotFound) ||
-		(!exists && err == nil) {
-		return nil
+func (s *authService) RefreshToken(ctx context.Context, req authDto.RefreshTokenRequest) (authDto.TokenResponse, error) {
+	refreshToken, err := s.refreshTokenRepository.FindByToken(ctx, s.db, req.RefreshToken)
+	if err != nil {
+		return authDto.TokenResponse{}, authDto.ErrRefreshTokenNotFound
 	}
 
+	accessToken := s.jwtService.GenerateAccessToken(refreshToken.UserID.String(), string(refreshToken.User.Role))
+	newRefreshTokenString, expiresAt := s.jwtService.GenerateRefreshToken()
+
+	err = s.refreshTokenRepository.DeleteByToken(ctx, s.db, req.RefreshToken)
+	if err != nil {
+		return authDto.TokenResponse{}, err
+	}
+
+	newRefreshToken := entities.RefreshToken{
+		ID:        uuid.New(),
+		UserID:    refreshToken.UserID,
+		Token:     newRefreshTokenString,
+		ExpiresAt: expiresAt,
+	}
+
+	_, err = s.refreshTokenRepository.Create(ctx, s.db, newRefreshToken)
+	if err != nil {
+		return authDto.TokenResponse{}, err
+	}
+
+	return authDto.TokenResponse{
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshTokenString,
+		Role:         string(refreshToken.User.Role),
+	}, nil
+}
+
+func (s *authService) SendPasswordReset(ctx context.Context, req authDto.SendPasswordResetRequest) error {
+	user, err := s.userRepository.GetUserByEmail(ctx, s.db, req.Email)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+
+		return userDto.ErrEmailNotFound
+	}
+
+	resetToken := s.jwtService.GenerateAccessToken(user.ID.String(), "password_reset")
+
+	subject := "Password Reset"
+	body := "Please reset your password using this token: " + resetToken
+
+	return utils.SendMail(user.Email, subject, body)
+}
+
+func (s *authService) ResetPassword(ctx context.Context, req authDto.ResetPasswordRequest) error {
+	token, err := s.jwtService.ValidateToken(req.Token)
+	if err != nil || !token.Valid {
+		return authDto.ErrPasswordResetToken
+	}
+
+	userId, err := s.jwtService.GetUserIDByToken(req.Token)
+	if err != nil {
+		return authDto.ErrPasswordResetToken
+	}
+
+	user, err := s.userRepository.GetUserById(ctx, s.db, userId)
+	if err != nil {
+		return userDto.ErrUserNotFound
+	}
+
+	hashedPassword, err := helpers.HashPassword(req.NewPassword)
 	if err != nil {
 		return err
 	}
 
-	frontendURL := strings.TrimRight(
-		os.Getenv("FRONTEND_URL"),
-		"/",
-	)
-
-	if frontendURL == "" {
-		log.Println("Password reset: FRONTEND_URL is not configured")
-		return nil
-	}
-
-	// Buat reset token dan simpan hash-nya.
-	token, err := createPasswordResetToken(
-		ctx,
-		s.db,
-		user.ID,
-	)
-
+	user.Password = hashedPassword
+	_, err = s.userRepository.Update(ctx, s.db, user)
 	if err != nil {
 		return err
-	}
-
-	resetURL := frontendURL +
-		"/reset-password?token=" +
-		url.QueryEscape(token)
-
-	// Kirim tautan reset melalui email.
-	if err := s.mailer.SendResetLink(
-		user.Email,
-		resetURL,
-	); err != nil {
-		log.Println("Password reset: email delivery failed")
-		return nil
 	}
 
 	return nil
