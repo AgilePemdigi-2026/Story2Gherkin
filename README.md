@@ -1,6 +1,7 @@
+
 <div align="center">
 
-<img src="docs/assets/story2gherkin-logo.svg" alt="Story2Gherkin logo" width="480" />
+<img width="1317" height="494" alt="story2gherkin-logo (1)" src="https://github.com/user-attachments/assets/52c08739-7b97-44b3-bcac-939d54bd23f3" />
 
 # Story2Gherkin
 
