@@ -1,3 +1,7 @@
+<div align="center">
+
+<img src="docs/assets/story2gherkin-logo.svg" alt="Story2Gherkin logo" width="480" />
+
 # Story2Gherkin
 
 **Mengubah user story menjadi draft skenario pengujian Gherkin dengan bantuan LLM.**
