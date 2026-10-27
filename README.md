@@ -1,8 +1,3 @@
-<img width="1317" height="494" alt="story2gherkin-logo" src="https://github.com/user-attachments/assets/c4e54eb8-13d6-4139-9f04-cf2392b9c2b8" />
-<div align="center">
-
-<img src="docs/assets/story2gherkin-logo.svg" alt="Story2Gherkin logo" width="480" />
-
 # Story2Gherkin
 
 **Mengubah user story menjadi draft skenario pengujian Gherkin dengan bantuan LLM.**
