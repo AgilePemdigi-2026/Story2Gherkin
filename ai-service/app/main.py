@@ -9,7 +9,10 @@ from fastapi.security import APIKeyHeader
 
 from .config import Settings
 from .generator import ScenarioGenerator
-from .llm_client import InvalidModelOutput, ModelUnavailable, OllamaClient
+from .llm_client import (
+    InvalidModelOutput, ModelConfigurationError, ModelRateLimited,
+    ModelUnavailable, OpenRouterClient,
+)
 from .schemas import GenerateRequest, GenerateResponse
 
 logger = logging.getLogger(__name__)
@@ -36,7 +39,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             trust_env=False,
         ) as client:
             app.state.generator = ScenarioGenerator(
-                OllamaClient(client, config), config.model, config.timeout_seconds
+                OpenRouterClient(client, config), config.model, config.timeout_seconds
             )
             yield
 
@@ -61,6 +64,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return await generator.generate(request_body)
         except (TimeoutError, httpx.TimeoutException):
             raise HTTPException(status_code=504, detail="Scenario generation timed out")
+        except ModelRateLimited:
+            raise HTTPException(status_code=503, detail="Language model rate limit reached; retry later")
+        except ModelConfigurationError:
+            raise HTTPException(status_code=502, detail="Language model credentials or configuration are invalid")
         except ModelUnavailable:
             raise HTTPException(status_code=503, detail="Language model is unavailable")
         except InvalidModelOutput:
