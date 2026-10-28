@@ -5,7 +5,8 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 Line = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500, pattern=r"^[^\r\n]+$")]
 Title = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200, pattern=r"^[^\r\n]+$")]
 Story = Annotated[str, StringConstraints(strip_whitespace=True, min_length=10, max_length=8000)]
-CriterionID = Annotated[int, Field(strict=True, ge=1, le=20)]
+FreeScenario = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=4000)]
+GuiElementID = Annotated[int, Field(strict=True, ge=1, le=30)]
 
 
 class StrictModel(BaseModel):
@@ -14,15 +15,14 @@ class StrictModel(BaseModel):
 
 class GenerateRequest(StrictModel):
     user_story: Story
-    acceptance_criteria: list[Line] = Field(min_length=1, max_length=20)
-    max_scenarios: int = Field(default=4, strict=True, ge=1, le=6)
-    language: Literal["en", "id"] = "en"
+    gui_elements: list[Line] = Field(min_length=1, max_length=30)
+    free_scenario: FreeScenario
 
 
 class Scenario(StrictModel):
     name: Title
     kind: Literal["positive", "negative", "edge"]
-    criterion_ids: list[CriterionID] = Field(min_length=1, max_length=20)
+    gui_element_ids: list[GuiElementID] = Field(min_length=1, max_length=30)
     given: list[Line] = Field(min_length=1, max_length=5)
     when: list[Line] = Field(min_length=1, max_length=5)
     then: list[Line] = Field(min_length=1, max_length=5)
