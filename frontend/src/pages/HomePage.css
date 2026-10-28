@@ -1,0 +1,255 @@
+
+/* =====================================
+   HOME PAGE - STORY2GHERKIN
+   ===================================== */
+
+.home-page {
+  min-height: 100vh;
+  background: #f8fbff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+/* MAIN CONTENT */
+.home-main {
+  width: 100%;
+  background:
+    radial-gradient(
+      ellipse at 85% 30%,
+      rgba(191, 219, 254, 0.65) 0%,
+      rgba(239, 246, 255, 0.75) 45%,
+      #ffffff 100%
+    );
+}
+
+/* HERO SECTION */
+.home-hero {
+  width: 100%;
+  min-height: 610px;
+
+  display: grid;
+  grid-template-columns: 48% 52%;
+  align-items: center;
+
+  gap: 0;
+  padding: 60px 45px 70px;
+}
+
+/* LEFT CONTENT */
+.home-hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+/* BADGE */
+.home-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 8px 16px;
+  margin-bottom: 30px;
+
+  border: 1px solid #bfdbfe;
+  border-radius: 30px;
+  background: #eff6ff;
+
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* HEADING */
+.home-hero-title {
+  margin: 0;
+
+  font-size: clamp(42px, 4.15vw, 64px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+
+  color: #0f172a;
+}
+
+.home-hero-title span {
+  display: block;
+  color: #2563eb;
+}
+
+/* DESCRIPTION */
+.home-hero-description {
+  max-width: 610px;
+  margin: 28px 0 0;
+
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.65;
+
+  color: #475569;
+}
+
+/* ACTION BUTTONS */
+.home-hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+
+  margin-top: 36px;
+}
+
+/* PRIMARY BUTTON */
+.home-primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+
+  min-height: 54px;
+  padding: 0 26px;
+
+  border-radius: 12px;
+  background: #2563eb;
+  color: #ffffff;
+
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.22);
+  transition: background 0.2s, transform 0.2s;
+}
+
+.home-primary-button:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+}
+
+/* SECONDARY BUTTON */
+.home-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+
+  min-height: 54px;
+  padding: 0 26px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #334155;
+
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+  transition: background 0.2s, transform 0.2s;
+}
+
+.home-secondary-button:hover {
+  background: #f1f5f9;
+  transform: translateY(-2px);
+}
+
+/* RIGHT ILLUSTRATION */
+.home-hero-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-width: 0;
+}
+
+.home-hero-image {
+  display: block;
+  width: 100%;
+  max-width: 740px;
+  height: auto;
+
+  object-fit: contain;
+}
+
+/* =====================================
+   RESPONSIVE
+   ===================================== */
+
+@media (max-width: 1100px) {
+  .home-hero {
+    grid-template-columns: 50% 50%;
+    padding: 55px 30px;
+  }
+
+  .home-hero-title {
+    font-size: 46px;
+  }
+
+  .home-hero-description {
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-hero {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding: 64px 28px;
+    text-align: center;
+  }
+
+  .home-hero-content {
+    align-items: center;
+  }
+
+  .home-hero-title {
+    font-size: clamp(40px, 6vw, 54px);
+  }
+
+  .home-hero-description {
+    max-width: 650px;
+    font-size: 16px;
+  }
+
+  .home-hero-actions {
+    justify-content: center;
+  }
+
+  .home-hero-image {
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-hero {
+    padding: 48px 20px;
+    gap: 28px;
+  }
+
+  .home-hero-badge {
+    font-size: 11px;
+    margin-bottom: 24px;
+  }
+
+  .home-hero-title {
+    font-size: 37px;
+  }
+
+  .home-hero-description {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .home-hero-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .home-primary-button,
+  .home-secondary-button {
+    width: 100%;
+  }
+}
