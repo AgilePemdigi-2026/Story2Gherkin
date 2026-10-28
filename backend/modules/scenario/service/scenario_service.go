@@ -23,11 +23,7 @@ var (
 )
 
 const (
-	// MaxAttempts batas retry per request (hasil riset: iterasi perbaikan
-	// converge dalam sedikit putaran; tanpa batas membakar kuota LLM).
 	MaxAttempts = 3
-	// MaxScenarios batas scenario per Feature; fitur kompleks dipecah
-	// jadi beberapa request, bukan satu request raksasa.
 	MaxScenarios = 6
 )
 
@@ -100,7 +96,6 @@ func (s *scenarioService) Generate(ctx context.Context, userID string, req dto.G
 	var last dto.GenerateResponse
 	var lastErr string
 	failErr := ErrBadGateway
-	prevGherkin := ""
 	gotValid := false
 
 	for attempt := 1; attempt <= MaxAttempts; attempt++ {
@@ -117,15 +112,9 @@ func (s *scenarioService) Generate(ctx context.Context, userID string, req dto.G
 			lastErr = err.Error()
 			break
 		}
-		if attempt > 1 && res.Gherkin != "" && res.Gherkin == prevGherkin {
-			// ponytail: output identik = model macet, stop dini hemat kuota.
-			lastErr, last = "generator returned identical output", res
-			break
-		}
-		prevGherkin = res.Gherkin
 		if msg := validateResponse(req, res); msg != "" {
 			lastErr, last = msg, res
-			continue
+			break
 		}
 		last, gotValid = res, true
 		break
@@ -247,8 +236,6 @@ func validateResponse(req dto.GenerateRequest, res dto.GenerateResponse) string 
 	return ""
 }
 
-// guiCoverage implementasi SRS 6.3: normalisasi lalu substring match
-// terhadap langkah Given/When/Then (judul Feature/Scenario tidak dihitung).
 func guiCoverage(elements []string, res dto.GenerateResponse) (covered, uncovered []string) {
 	var steps []string
 	for _, sc := range res.Feature.Scenarios {
