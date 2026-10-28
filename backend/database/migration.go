@@ -8,7 +8,9 @@ import (
 func Migrate(db *gorm.DB) error {
 	err := db.AutoMigrate(
 		&entities.User{},
-		&entities.PasswordResetToken{},
+		&entities.RefreshToken{},
+		&entities.GenerationRequest{},
+		&entities.GherkinScenario{},
 	)
 
 	if err != nil {

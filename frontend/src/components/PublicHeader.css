@@ -1,0 +1,286 @@
+.public-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  width: 100%;
+  height: 80px;
+
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.public-header-container {
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 40px;
+
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+}
+
+.public-logo img {
+  display: block;
+  width: auto;
+  max-width: 240px;
+  height: 42px;
+  object-fit: contain;
+}
+
+/* NAVIGATION */
+.public-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.public-nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 12px 22px;
+  border-radius: 30px;
+
+  color: #475569;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+
+  transition: background 0.2s, color 0.2s;
+}
+
+.public-nav-link:hover {
+  background: #f1f5f9;
+  color: #2563eb;
+}
+
+.public-nav-link.active {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+/* RIGHT SECTION */
+.public-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* LOGIN & SIGN UP */
+.public-auth-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.public-login-button,
+.public-signup-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 42px;
+  padding: 0 20px;
+
+  border-radius: 24px;
+
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.public-login-button {
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+  background: #ffffff;
+}
+
+.public-login-button:hover {
+  background: #eff6ff;
+}
+
+.public-signup-button {
+  color: #ffffff;
+  background: #2563eb;
+}
+
+.public-signup-button:hover {
+  background: #1d4ed8;
+}
+
+/* ACCOUNT */
+.public-account {
+  position: relative;
+}
+
+.public-account-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-height: 46px;
+  padding: 6px 14px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 28px;
+
+  background: #ffffff;
+  color: #334155;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.public-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #64748b;
+}
+
+.public-account-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+
+  min-width: 160px;
+  padding: 6px;
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.10);
+}
+
+.public-account-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  width: 100%;
+  padding: 12px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: transparent;
+  color: #334155;
+
+  font-family: inherit;
+  font-size: 14px;
+
+  cursor: pointer;
+  text-align: left;
+}
+
+.public-account-dropdown button:hover {
+  background: #f1f5f9;
+}
+
+/* MOBILE TOGGLE */
+.public-mobile-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+
+  border: none;
+  background: transparent;
+  color: #334155;
+
+  cursor: pointer;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1000px) {
+  .public-header-container {
+    padding: 0 24px;
+    grid-template-columns: 1fr auto;
+  }
+
+  .public-mobile-toggle {
+    display: flex;
+  }
+
+  .public-nav {
+    display: none;
+    position: absolute;
+    top: 90px;
+    left: 0;
+    right: 0;
+
+    padding: 16px 24px;
+    flex-direction: column;
+    align-items: stretch;
+
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 12px 20px rgba(15, 23, 42, 0.06);
+  }
+
+  .public-nav.mobile-open {
+    display: flex;
+  }
+
+  .public-nav-link {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .public-header {
+    height: 80px;
+  }
+
+  .public-header-container {
+    padding: 0 20px;
+    gap: 8px;
+  }
+
+  .public-logo img {
+    width: 135px;
+  }
+
+  .public-auth-actions {
+    gap: 6px;
+  }
+
+  .public-login-button,
+  .public-signup-button {
+    padding: 0 10px;
+    font-size: 12px;
+    min-height: 36px;
+  }
+
+  .public-account-button {
+    padding: 5px 8px;
+    gap: 5px;
+    font-size: 12px;
+  }
+
+  .public-nav {
+    top: 80px;
+  }
+}

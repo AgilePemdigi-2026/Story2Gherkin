@@ -1,0 +1,116 @@
+
+/* LOGIN PAGE */
+
+/* Spacing between title and form */
+.login-form {
+  margin-top: 36px;
+  gap: 32px;
+}
+
+/* Login Form Labels */
+.login-form .form-group {
+  gap: 14px;
+}
+
+/* Remember Me & Forgot Password */
+.login-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: -4px;
+}
+
+/* Remember Me */
+.login-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 20px;
+
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.login-remember input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+/* Forgot Password */
+.login-forgot {
+  color: #1a8fe3;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.login-forgot:hover {
+  color: #2563eb;
+}
+
+/* Login Button */
+.login-submit {
+  margin-top: 18px;
+}
+
+/* OR Divider */
+.login-divider {
+  margin-top: 52px;
+  margin-bottom: 40px;
+  font-size: 13px;
+}
+
+/* Sign Up Link */
+.login-signup,
+.login-signup a {
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .login-form {
+    margin-top: 28px;
+    gap: 24px;
+  }
+
+  .login-options {
+    gap: 12px;
+  }
+
+  .login-divider {
+    margin-top: 36px;
+    margin-bottom: 28px;
+  }
+}
+
+
+/* Login API Feedback */
+.login-error {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 13px;
+  text-align: center;
+}
+
+.login-success {
+  margin: 0;
+  color: #059669;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.login-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
