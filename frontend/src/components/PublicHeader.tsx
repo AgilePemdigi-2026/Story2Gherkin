@@ -1,6 +1,6 @@
 
 import { useState } from 'react'
-import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { UserRound, ChevronDown, LogOut, Menu, X } from 'lucide-react'
 
 import logo from '../assets/story2gherkin-logo.svg'
@@ -8,10 +8,7 @@ import './PublicHeader.css'
 
 function PublicHeader() {
   const navigate = useNavigate()
-  const location = useLocation()
 
-  const returnTo =
-    location.pathname + location.search + location.hash
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return Boolean(
       localStorage.getItem('access_token') ||
@@ -112,7 +109,7 @@ function PublicHeader() {
             <div className="public-auth-actions">
               <Link
                 to="/login"
-                state={{ from: returnTo }}
+                className="public-login-button"
               >
                 Login
               </Link>

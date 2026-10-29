@@ -12,7 +12,6 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import HomePage from './pages/HomePage'
 import AboutProjectPage from './pages/AboutProjectPage'
-import GenerateScenarioPage from './pages/GenerateScenarioPage'
 
 function App() {
   return (
@@ -44,10 +43,6 @@ function App() {
         <Route
           path="/about"
           element={<AboutProjectPage />}
-        />
-        <Route
-          path="/generate"
-          element={<GenerateScenarioPage />}
         />
       </Routes>
     </BrowserRouter>
