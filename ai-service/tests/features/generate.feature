@@ -40,3 +40,8 @@ Fitur: Generate skenario Gherkin di AI-service
     Ketika saya generate skenario
     Maka hasilnya valid
     Dan feedback menyebut respons terpotong
+
+  Skenario: Prosa di sekitar blok diabaikan
+    Dengan model mengembalikan prosa plus blok fitur valid
+    Ketika saya generate skenario
+    Maka hasilnya valid dengan nama fitur "Hapus User"
