@@ -25,6 +25,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         config = settings or Settings.from_env()
         app.state.settings = config
         app.state.gate = asyncio.Semaphore(1)
+
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(config.timeout_seconds, connect=5),
             trust_env=False,
@@ -41,9 +42,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             )
             yield
 
-    app = FastAPI(title="Story2Gherkin AI Service", version="0.2.0", lifespan=lifespan)
+    app = FastAPI(
+        title="Story2Gherkin AI Service",
+        version="0.2.0",
+        lifespan=lifespan,
+    )
+
     app.include_router(health_routes.router)
-    app.include_router(generate_routes.router, dependencies=[Depends(require_service_key)])
+    app.include_router(
+        generate_routes.router,
+        dependencies=[Depends(require_service_key)],
+    )
+
     return app
 
 

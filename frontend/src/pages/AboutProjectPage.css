@@ -1,0 +1,320 @@
+
+/* =====================================
+   ABOUT PROJECT PAGE - STORY2GHERKIN
+   ===================================== */
+
+.about-page {
+  min-height: 100vh;
+  background: #f8fbff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.about-main {
+  min-height: calc(100vh - 80px);
+
+  background:
+    radial-gradient(
+      ellipse at 74% 10%,
+      rgba(219, 234, 254, 0.6) 0%,
+      rgba(239, 246, 255, 0.65) 42%,
+      #f8fbff 85%
+    );
+}
+
+/* =====================================
+   HERO SECTION
+   ===================================== */
+
+.about-hero {
+  width: 100%;
+  max-width: 1600px;
+  min-height: 450px;
+
+  display: grid;
+  grid-template-columns: 49% 51%;
+  align-items: center;
+  gap: 0;
+
+  margin: 0 auto;
+  padding: 55px 28px 45px;
+}
+
+/* LEFT CONTENT */
+.about-hero-content {
+  min-width: 0;
+}
+
+.about-title {
+  margin: 0;
+
+  font-size: clamp(40px, 4vw, 62px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+
+  color: #0f172a;
+}
+
+.about-title span {
+  display: block;
+  color: #2563eb;
+}
+
+.about-description {
+  max-width: 660px;
+  margin: 28px 0 0;
+
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: #475569;
+}
+
+/* RIGHT ILLUSTRATION */
+.about-hero-visual {
+  width: 100%;
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-illustration {
+  display: block;
+  width: 100%;
+  max-width: 700px;
+  height: auto;
+  object-fit: contain;
+}
+
+/* =====================================
+   INFORMATION SECTION
+   ===================================== */
+
+.about-info-section {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 35px 28px 100px;
+}
+
+.about-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 36px;
+}
+
+/* CARD */
+.about-card {
+  min-width: 0;
+  min-height: 405px;
+  padding: 34px;
+
+  border: 1px solid #edf2f7;
+  border-radius: 26px;
+
+  background: #ffffff;
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.04);
+}
+
+/* CARD HEADER */
+.about-card-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.about-card-header h2 {
+  margin: 0;
+
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+
+/* ICON CONTAINER */
+.about-card-icon {
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 16px;
+}
+
+/* TUJUAN ICON */
+.objective-icon {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+/* TEKNOLOGI ICON */
+.technology-icon {
+  background: #ccfbf1;
+  color: #0d9488;
+}
+
+/* MANFAAT ICON */
+.benefit-icon {
+  background: #f3e8ff;
+  color: #a855f7;
+}
+
+/* =====================================
+   CARD LIST
+   ===================================== */
+
+.about-card-list {
+  list-style: none;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  margin: 0;
+  padding: 0;
+}
+
+.about-card-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: #475569;
+}
+
+.about-card-list li span {
+  flex: 1;
+  min-width: 0;
+}
+
+/* CHECK ICONS */
+.about-check {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.objective-check {
+  color: #0ea5e9;
+  fill: #0ea5e9;
+  stroke: white;
+}
+
+.benefit-check {
+  color: #a855f7;
+  fill: #a855f7;
+  stroke: white;
+}
+
+/* TECHNOLOGY LIST */
+.technology-list {
+  gap: 23px;
+}
+
+.about-tech-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* =====================================
+   RESPONSIVE
+   ===================================== */
+
+@media (max-width: 1100px) {
+  .about-hero {
+    grid-template-columns: 50% 50%;
+    padding: 55px 30px 40px;
+  }
+
+  .about-title {
+    font-size: 46px;
+  }
+
+  .about-description {
+    font-size: 16px;
+  }
+
+  .about-cards {
+    gap: 20px;
+  }
+
+  .about-card {
+    padding: 26px;
+  }
+
+  .about-card-list li {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 900px) {
+  .about-hero {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 60px 28px 30px;
+    text-align: center;
+  }
+
+  .about-title {
+    font-size: clamp(38px, 6vw, 52px);
+  }
+
+  .about-description {
+    max-width: 650px;
+    margin: 24px auto 0;
+  }
+
+  .about-illustration {
+    max-width: 630px;
+  }
+
+  .about-cards {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .about-card {
+    min-height: unset;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-hero {
+    padding: 48px 20px 25px;
+  }
+
+  .about-title {
+    font-size: 36px;
+  }
+
+  .about-description {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .about-info-section {
+    padding: 25px 20px 60px;
+  }
+
+  .about-card {
+    padding: 24px;
+    border-radius: 20px;
+  }
+
+  .about-card-header h2 {
+    font-size: 21px;
+  }
+
+  .about-card-list {
+    gap: 20px;
+  }
+}
