@@ -7,9 +7,16 @@ from fastapi import Depends, FastAPI
 from app.api.deps import require_service_key
 from app.api.routes import generate as generate_routes
 from app.api.routes import health as health_routes
+from app.clients.ollama import OllamaClient
 from app.clients.openrouter import OpenRouterClient
 from app.core.config import Settings
 from app.services.generator import ScenarioGenerator
+
+
+def build_client(client: httpx.AsyncClient, config: Settings):
+    if config.provider == "ollama":
+        return OllamaClient(client, config), config.ollama_model
+    return OpenRouterClient(client, config), config.model
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -17,19 +24,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(app: FastAPI):
         config = settings or Settings.from_env()
         app.state.settings = config
-
-        # Serializes LLM calls: free-tier quota is tiny and shared.
-        # TODO: ganti dengan rate-limit per-user di backend (SRS 5.3).
         app.state.gate = asyncio.Semaphore(1)
 
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(config.timeout_seconds, connect=5),
             trust_env=False,
+            headers={"Connection": "close"},
         ) as client:
+            model_client, model_name = build_client(client, config)
+            print(
+                f"ai-service ready | provider={config.provider} "
+                f"model={model_name}",
+                flush=True,
+            )
             app.state.generator = ScenarioGenerator(
-                OpenRouterClient(client, config),
-                config.model,
-                config.timeout_seconds,
+                model_client, model_name, config.timeout_seconds
             )
             yield
 

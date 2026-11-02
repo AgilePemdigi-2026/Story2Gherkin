@@ -3,7 +3,7 @@ import asyncio
 from behave import given, then, when
 
 from app.clients.base import InvalidModelOutput, ModelUnavailable
-from app.schemas.generate import GenerateRequest, GeneratedFeature
+from app.schemas.generate import GenerateRequest
 from app.services.generator import MAX_ATTEMPTS, ScenarioGenerator
 
 
@@ -15,51 +15,50 @@ def make_request():
     )
 
 
-def valid_feature():
-    return GeneratedFeature(
-        feature_name="Hapus User",
-        scenarios=[
-            {
-                "name": "Hapus user terdaftar",
-                "kind": "positive",
-                "gui_element_ids": [1],
-                "given": ["admin ada di halaman user"],
-                "when": ["admin menekan Delete button"],
-                "then": ["user hilang"],
-            }
-        ],
-        warnings=[],
-    )
+VALID_TEXT = """Feature: Hapus User
 
+  @positive @gui-1
+  Scenario: Hapus user terdaftar
+    Given admin ada di halaman user
+    When admin menekan Delete button
+    Then user hilang
+"""
 
-def dup_feature():
-    return GeneratedFeature(
-        feature_name="Hapus User",
-        scenarios=[
-            {
-                "name": "Sama", "kind": "positive", "gui_element_ids": [1],
-                "given": ["a"], "when": ["b"], "then": ["c"],
-            },
-            {
-                "name": "sama", "kind": "negative", "gui_element_ids": [2],
-                "given": ["a"], "when": ["b"], "then": ["c"],
-            },
-        ],
-        warnings=[],
-    )
+DUP_TEXT = """Feature: Hapus User
 
+  @positive @gui-1
+  Scenario: Sama
+    Given a
+    When b
+    Then c
 
-def ghost_feature():
-    return GeneratedFeature(
-        feature_name="Hapus User",
-        scenarios=[
-            {
-                "name": "Hantu", "kind": "edge", "gui_element_ids": [3],
-                "given": ["a"], "when": ["b"], "then": ["c"],
-            }
-        ],
-        warnings= [],
-    )
+  @negative @gui-2
+  Scenario: sama
+    Given a
+    When b
+    Then c
+"""
+
+GHOST_TEXT = """Feature: Hapus User
+
+  @edge @gui-3
+  Scenario: Hantu
+    Given a
+    When b
+    Then c
+"""
+
+PROSE_TEXT = """Berikut skenarionya:
+
+Feature: Hapus User
+
+  @positive @gui-1
+  Scenario: Hapus user terdaftar
+    Given admin ada di halaman user
+    When admin menekan Delete button
+    Then user hilang
+
+Semoga membantu!"""
 
 
 class FakeClient:
@@ -80,17 +79,17 @@ class FakeClient:
 
 @given('model mengembalikan fitur valid')
 def step_model_valid(context):
-    context.client = FakeClient([valid_feature()])
+    context.client = FakeClient([VALID_TEXT])
 
 
 @given('model mengembalikan nama skenario duplikat lalu fitur valid')
 def step_dup_lalu_valid(context):
-    context.client = FakeClient([dup_feature(), valid_feature()])
+    context.client = FakeClient([DUP_TEXT, VALID_TEXT])
 
 
 @given('model selalu mengembalikan nama skenario duplikat')
 def step_selalu_dup(context):
-    context.client = FakeClient([dup_feature()] * MAX_ATTEMPTS)
+    context.client = FakeClient([DUP_TEXT] * MAX_ATTEMPTS)
 
 
 @given('model sedang down')
@@ -100,15 +99,20 @@ def step_model_down(context):
 
 @given('model mengembalikan gui_element_ids tak dikenal lalu fitur valid')
 def step_ghost_lalu_valid(context):
-    context.client = FakeClient([ghost_feature(), valid_feature()])
+    context.client = FakeClient([GHOST_TEXT, VALID_TEXT])
 
 
 @given('model mengembalikan respons terpotong lalu fitur valid')
 def step_truncated_lalu_valid(context):
     context.client = FakeClient([
-        InvalidModelOutput("Response truncated by token limit; return a shorter complete JSON"),
-        valid_feature(),
+        InvalidModelOutput("Response truncated by token limit; return a shorter complete feature"),
+        VALID_TEXT,
     ])
+
+
+@given('model mengembalikan prosa plus blok fitur valid')
+def step_prose_lalu_valid(context):
+    context.client = FakeClient([PROSE_TEXT])
 
 
 @when('saya generate skenario')
