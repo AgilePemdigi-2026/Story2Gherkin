@@ -114,11 +114,10 @@ jobs:
           cache: pip
           cache-dependency-path: |
             ai-service/requirements.txt
-            ai-service/app/requirements.txt
             ai-service/requirements-dev.txt
 
       - name: Install Python dependencies
-        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+        run: python -m pip install -r requirements-dev.txt
 
       # Existing legacy conftest imports moved modules; review tests are isolated.
       - name: Test review validator without LLM calls
