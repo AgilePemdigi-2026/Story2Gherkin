@@ -9,6 +9,9 @@ import HomePage from './pages/HomePage'
 import AboutProjectPage from './pages/AboutProjectPage'
 import GenerateScenarioPage from './pages/GenerateScenarioPage'
 import ReviewScenarioPage from './pages/ReviewScenarioPage'
+import DocumentationPage from './pages/DocumentationPage'
+import EvaluationPage from './pages/EvaluationPage'
+import RequireRole from './components/RequireRole'
 
 // A data router enables useBlocker to protect unsaved review corrections.
 const router = createBrowserRouter([
@@ -18,9 +21,11 @@ const router = createBrowserRouter([
   { path: '/forgot-password', element: <ForgotPasswordPage /> },
   { path: '/reset-password', element: <ResetPasswordPage /> },
   { path: '/about', element: <AboutProjectPage /> },
-  { path: '/generate', element: <GenerateScenarioPage /> },
-  { path: '/review', element: <ReviewScenarioPage /> },
-  { path: '*', element: <Navigate to="/login" replace /> },
+  { path: '/documentation', element: <DocumentationPage /> },
+  { path: '/generate', element: <RequireRole role="system_analyst"><GenerateScenarioPage /></RequireRole> },
+  { path: '/review', element: <RequireRole role="system_analyst"><ReviewScenarioPage /></RequireRole> },
+  { path: '/evaluation', element: <RequireRole role="qa"><EvaluationPage /></RequireRole> },
+  { path: '*', element: <Navigate to="/" replace /> },
 ])
 
 function App() {

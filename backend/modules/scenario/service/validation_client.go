@@ -49,8 +49,15 @@ func (c *LLMClient) Validate(ctx context.Context, text string, elements []string
 	}
 	// Refuse malformed upstream reports before updating persisted validation.
 	if result.Issues == nil || result.UsedElements == nil || result.NotCoveredElements == nil ||
-		math.IsNaN(result.CoveragePercent) || result.CoveragePercent < 0 || result.CoveragePercent > 100 ||
-		len(result.UsedElements)+len(result.NotCoveredElements) != len(elements) {
+		math.IsNaN(result.CoveragePercent) || result.CoveragePercent < 0 || result.CoveragePercent > 100 {
+		return result, ErrBadGateway
+	}
+	coverageAvailable := result.CoverageAvailable == nil || *result.CoverageAvailable
+	if coverageAvailable && len(result.UsedElements)+len(result.NotCoveredElements) != len(elements) {
+		return result, ErrBadGateway
+	}
+	if !coverageAvailable && (result.Valid || result.CoveragePercent != 0 ||
+		len(result.UsedElements) != 0 || len(result.NotCoveredElements) != 0) {
 		return result, ErrBadGateway
 	}
 	if result.Valid && (strings.TrimSpace(result.FeatureName) == "" || len(result.Issues) != 0 ||

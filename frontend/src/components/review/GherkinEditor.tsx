@@ -6,7 +6,7 @@ interface Props {
 }
 
 function HighlightedGherkin({ value }: { value: string }) {
-  const lines = value.split('\n')
+  const lines = value.split(/\r\n|\r|\n/)
   return lines.map((line, index) => {
     const match = line.match(/^(\s*)(Feature:|Scenario:|Given\b|When\b|Then\b|And\b)(.*)$/)
     const newline = index < lines.length - 1 ? '\n' : ''
@@ -19,24 +19,22 @@ function HighlightedGherkin({ value }: { value: string }) {
 
 export default function GherkinEditor({ value, editing, disabled, onChange }: Props) {
   return (
-    <div className={`review-code-editor ${editing ? 'is-editing' : ''}`}>
-      <pre aria-hidden={editing || undefined}><code><HighlightedGherkin value={value} />{'\n'}</code></pre>
-      {editing && (
+    <div className="review-code-editor">
+      {/* Native text and caret share one surface while editing, including when scrolled. */}
+      {editing ? (
         <textarea
           id="review-gherkin"
           aria-label="Generated Gherkin"
           value={value}
           disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
-          onScroll={(event) => {
-            const pre = event.currentTarget.previousElementSibling
-            if (pre) { pre.scrollTop = event.currentTarget.scrollTop; pre.scrollLeft = event.currentTarget.scrollLeft }
-          }}
           spellCheck={false}
           autoCapitalize="off"
           autoCorrect="off"
           wrap="off"
         />
+      ) : (
+        <pre><code><HighlightedGherkin value={value} />{'\n'}</code></pre>
       )}
     </div>
   )

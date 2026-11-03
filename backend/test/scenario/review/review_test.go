@@ -82,7 +82,8 @@ func (v *validator) Validate(_ context.Context, text string, elements []string) 
 func fixture() (service.ReviewService, *scenarioStore, *validator, *userStore) {
 	owner, requestID := uuid.New(), uuid.New()
 	store := &scenarioStore{owner: owner, row: entities.GherkinScenario{
-		ID: uuid.New(), GenerationRequestID: &requestID, FeatureName: "Original", GherkinText: original,
+		ScenarioNumber: 1,
+		ID:             uuid.New(), GenerationRequestID: &requestID, FeatureName: "Original", GherkinText: original,
 		Status: dto.ScenarioValid, SourceType: dto.SourceLLM,
 		GenerationRequest: entities.GenerationRequest{ID: requestID, UserID: owner, GuiElements: []string{"Login button", "Missing field"}},
 		Timestamp:         entities.Timestamp{UpdatedAt: time.Date(2026, 11, 2, 0, 0, 0, 0, time.UTC)},

@@ -18,4 +18,11 @@ def test_review_validation_is_private_and_does_not_call_llm():
         assert result.json()["valid"] and result.json()["coverage_percent"] == 50
         invalid = client.post(ENDPOINT, json={**payload, "gherkin": ""}, headers={"X-AI-Service-Key": KEY})
         assert invalid.status_code == 200 and not invalid.json()["valid"]
+        incomplete = client.post(ENDPOINT, json={**payload, "gherkin": 'Feature: User login\n  Scenario: Successful login\n    Given\n    When\n    Then\n'}, headers={"X-AI-Service-Key": KEY})
+        report = incomplete.json()
+        assert incomplete.status_code == 200 and not report['valid']
+        assert report['checks'] == {'feature': True, 'scenario': True, 'given': False, 'when': False, 'then': False}
+        assert not report['coverage_available']
+        assert len(report['issues']) == 3
+        assert all('deskripsi langkah' in issue['message'] for issue in report['issues'])
         assert client.post(ENDPOINT, json={**payload, "gui_elements": []}, headers={"X-AI-Service-Key": KEY}).status_code == 422

@@ -137,7 +137,6 @@ function ScenarioReview({ id, selector, onSaved }: { id: string; selector: React
           <button className="review-button download" disabled={!scenario.validation.valid || scenario.status !== 'VALID' || saving || downloading} onClick={handleDownload}>{downloading ? 'Mengunduh…' : 'Download .feature'}</button>
         </div>
         {dirty && <p className="review-saved-note">Download menggunakan versi valid terakhir yang tersimpan, bukan draft di editor.</p>}
-        {feedback?.kind === 'error' && <div className="review-editor-error" role="alert">{feedback.message}</div>}
       </section>
       <ValidationPanel validation={draftValidation || scenario.validation} draft={dirty} validatedDraft={draftValidation !== null} feedback={feedback} />
     </div>

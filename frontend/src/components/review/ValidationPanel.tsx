@@ -10,6 +10,7 @@ interface Props {
 
 export default function ValidationPanel({ validation, draft, validatedDraft, feedback }: Props) {
   const labels = { feature: 'Feature', scenario: 'Scenario', given: 'Given', when: 'When', then: 'Then' } as const
+  const coverageAvailable = validation.coverage_available !== false
   return (
     <section className="review-panel review-validation" aria-labelledby="review-validation-title">
       <h2 id="review-validation-title">Validation Result</h2>
@@ -19,11 +20,15 @@ export default function ValidationPanel({ validation, draft, validatedDraft, fee
         <ul className="review-checks">
           {Object.entries(labels).map(([key, label]) => {
             const valid = validation.checks[key as keyof typeof labels]
-            return <li key={key}>{valid ? <Check className="review-check" size={19} /> : <X className="review-cross" size={19} />}Memiliki {label}</li>
+            const description = valid ? `Memiliki ${label}` : key === 'feature' || key === 'scenario'
+              ? `${label} belum lengkap atau belum sesuai`
+              : `${label} belum lengkap; periksa langkah dan deskripsinya`
+            return <li key={key}>{valid ? <Check className="review-check" size={19} /> : <X className="review-cross" size={19} />}<span>{description}</span></li>
           })}
         </ul>
       </div>
       {validation.issues.length > 0 && <ul className="review-issues" aria-label="Kesalahan validasi">{validation.issues.map((issue, index) => <li key={index}>Baris {issue.line}, kolom {issue.column}: {issue.message}</li>)}</ul>}
+      {coverageAvailable ? <>
       <div className="review-coverage-heading"><h3>GUI Coverage</h3><strong>{validation.coverage_percent}%</strong></div>
       <div className="review-progress" role="progressbar" aria-label="GUI Coverage" aria-valuemin={0} aria-valuemax={100} aria-valuenow={validation.coverage_percent}><span style={{ width: `${validation.coverage_percent}%` }} /></div>
       <h4>USED ({validation.used_elements.length})</h4>
@@ -31,6 +36,7 @@ export default function ValidationPanel({ validation, draft, validatedDraft, fee
       <h4>NOT COVERED ({validation.not_covered_elements.length})</h4>
       <ul className="review-uncovered">{validation.not_covered_elements.map((element, index) => <li key={index}><AlertTriangle size={19} /><span>{element}</span></li>)}</ul>
       {validation.not_covered_elements.length > 0 && <p className="review-coverage-note">Coverage di bawah 100% tidak menghalangi penyimpanan skenario yang valid.</p>}
+      </> : <div className="review-coverage-unavailable"><h3>GUI Coverage</h3><p>Belum dapat dihitung. Perbaiki struktur Gherkin terlebih dahulu agar elemen GUI dapat diperiksa.</p></div>}
       {feedback && <div className={`review-feedback ${feedback.kind}`} role={feedback.kind === 'error' ? 'alert' : 'status'}>{feedback.kind === 'success' ? <Check size={21} /> : <AlertTriangle size={21} />}<span>{feedback.message}</span></div>}
     </section>
   )

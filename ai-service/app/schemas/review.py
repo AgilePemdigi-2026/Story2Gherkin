@@ -30,3 +30,4 @@ class ScenarioValidation(BaseModel):
     used_elements: list[str]
     not_covered_elements: list[str]
     coverage_percent: float
+    coverage_available: bool = True

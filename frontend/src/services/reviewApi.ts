@@ -9,9 +9,11 @@ export interface ScenarioValidation {
   used_elements: string[]
   not_covered_elements: string[]
   coverage_percent: number
+  coverage_available?: boolean
 }
 export interface ScenarioSummary {
   id: string
+  scenario_code?: string
   feature_name: string
   source_type: string
   status: string
@@ -55,7 +57,9 @@ async function request(path: string, options: RequestInit = {}) {
     const result = await response.json().catch(() => null)
     const message = response.status === 401
       ? 'Sesi berakhir. Silakan login kembali.'
-      : result?.error || result?.message || 'Permintaan skenario gagal.'
+      : response.status === 422 && result?.data?.validation
+        ? 'Perubahan belum disimpan. Perbaiki kesalahan pada struktur Gherkin terlebih dahulu.'
+        : result?.error || result?.message || 'Permintaan skenario gagal.'
     throw new ReviewApiError(message, response.status, result?.data?.validation)
   }
   return response

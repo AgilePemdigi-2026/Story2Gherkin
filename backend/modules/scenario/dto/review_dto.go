@@ -24,14 +24,16 @@ type ScenarioValidation struct {
 	UsedElements       []string          `json:"used_elements"`
 	NotCoveredElements []string          `json:"not_covered_elements"`
 	CoveragePercent    float64           `json:"coverage_percent"`
+	CoverageAvailable  *bool             `json:"coverage_available,omitempty"`
 }
 
 type ScenarioSummary struct {
-	ID          string    `json:"id"`
-	FeatureName string    `json:"feature_name"`
-	SourceType  string    `json:"source_type"`
-	Status      string    `json:"status"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID           string    `json:"id"`
+	ScenarioCode string    `json:"scenario_code"`
+	FeatureName  string    `json:"feature_name"`
+	SourceType   string    `json:"source_type"`
+	Status       string    `json:"status"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type ReviewScenario struct {

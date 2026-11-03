@@ -31,7 +31,7 @@ func (r *gherkinScenarioRepository) owned(ctx context.Context, owner uuid.UUID) 
 
 func (r *gherkinScenarioRepository) ListOwned(ctx context.Context, owner uuid.UUID) ([]entities.GherkinScenario, error) {
 	rows := []entities.GherkinScenario{}
-	err := r.owned(ctx, owner).Select("id", "feature_name", "source_type", "status", "updated_at").
+	err := r.owned(ctx, owner).Select("id", "scenario_number", "feature_name", "source_type", "status", "updated_at").
 		Order("created_at DESC, id DESC").Find(&rows).Error
 	return rows, err
 }

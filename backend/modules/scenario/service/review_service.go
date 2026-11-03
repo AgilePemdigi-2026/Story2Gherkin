@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"unicode/utf8"
 
@@ -83,7 +84,8 @@ func (s *reviewService) List(ctx context.Context, userID string) ([]dto.Scenario
 
 func reviewSummary(row entities.GherkinScenario) dto.ScenarioSummary {
 	return dto.ScenarioSummary{ID: row.ID.String(), FeatureName: row.FeatureName,
-		SourceType: string(row.SourceType), Status: string(row.Status), UpdatedAt: row.UpdatedAt}
+		ScenarioCode: fmt.Sprintf("SCN-%04d", row.ScenarioNumber),
+		SourceType:   string(row.SourceType), Status: string(row.Status), UpdatedAt: row.UpdatedAt}
 }
 
 func (s *reviewService) load(ctx context.Context, userID, scenarioID string) (uuid.UUID, entities.GherkinScenario, error) {

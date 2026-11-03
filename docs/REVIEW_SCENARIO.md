@@ -3,7 +3,8 @@
 Halaman `/review` menggunakan skenario persisten dari PostgreSQL. Dari Generate,
 tombol Review membuka `/review?scenario=<scenario_id>`; ID berasal dari respons
 generate setelah record berhasil disimpan. Dropdown hanya memuat skenario milik
-System Analyst yang sedang login. UUID ditampilkan apa adanya, bukan ID contoh.
+System Analyst yang sedang login. Dropdown menampilkan kode tetap seperti
+`SCN-0001 — User Login`; UUID tetap digunakan untuk pemilihan dan endpoint API.
 
 ## Alur
 
@@ -50,12 +51,53 @@ Body koreksi:
 }
 ```
 
-Respons detail/koreksi memuat `id`, `feature_name`, `source_type`, `status`,
+Respons daftar/detail/koreksi memuat `id`, `scenario_code`, `feature_name`, `source_type`, `status`,
 `updated_at`, `gherkin`, `gui_elements`, dan `validation`. Validasi memuat
 `valid`, `checks`, `issues` (message/line/column), `used_elements`,
-`not_covered_elements`, dan `coverage_percent`. Pada 422, hasil validasi berada
+`not_covered_elements`, `coverage_percent`, dan `coverage_available`. Pada 422, hasil validasi berada
 di `data.validation`. Pada konflik 409, muat ulang versi server sebelum mencoba
 menyimpan kembali; salin draft bila ingin mempertahankannya untuk digabung manual.
+
+## Kode skenario
+
+PostgreSQL memberikan `scenario_number` melalui sequence saat record dibuat.
+Backend mengirimkannya sebagai `scenario_code` dengan format SCN dan minimal
+empat digit: `SCN-0001`, `SCN-0042`, `SCN-10000`. Nomor bersifat global dan unik,
+bukan posisi dropdown atau nomor per pengguna. Urutan dropdown tetap berdasarkan
+waktu pembuatan terbaru. Nomor dapat memiliki jeda akibat penghapusan, transaksi
+batal, record invalid, atau skenario pengguna lain.
+
+Edit judul, simpan koreksi, pengurutan daftar, dan restart tidak mengganti nomor.
+Nomor yang dihapus tidak dipakai kembali oleh sequence. API tetap menerima UUID
+untuk lookup dan tetap memeriksa role serta kepemilikan. Frontend memakai UUID
+sebagai value pilihan, tetapi menampilkan kode dan judul. Jika frontend diperbarui
+sebelum backend, dropdown sementara menampilkan judul saja.
+
+Restart backend untuk menjalankan AutoMigrate sebelum mencoba kode skenario.
+Tidak perlu konfigurasi baru atau migrasi SQL manual. Tes PostgreSQL baru memakai
+`TEST_DATABASE_URL` dan schema disposable; CI backend sudah menyediakan variabel
+tersebut. Tes mencakup backfill, migrasi berulang, create bersamaan, kepemilikan,
+kode setelah rename/hapus, dan format melebihi empat digit.
+
+## Diagnostik validasi
+
+Feature/Scenario yang sudah terisi tetap ditandai hijau ketika langkah lain salah.
+Given/When/Then/And tanpa deskripsi mendapatkan pesan spesifik beserta nomor baris,
+misalnya "Given belum memiliki deskripsi langkah". Pesan token internal parser tidak
+ditampilkan. Pemeriksaan sumber saat parser gagal hanya membantu menunjukkan
+bagian yang terdeteksi; validitas tetap memerlukan parser Cucumber atas teks asli
+dan seluruh aturan semantik. Teks tidak diperbaiki otomatis.
+
+Jika parser gagal atau terdapat langkah tanpa deskripsi, `coverage_available=false`:
+persentase numerik bernilai 0 sebagai placeholder, kedua daftar elemen kosong, dan
+UI menampilkan "Belum dapat dihitung" tanpa persentase maupun daftar Not Covered.
+Ini berbeda dari coverage 0% yang benar-benar dihitung dari langkah AST. Struktur
+yang terbaca tetapi urutan langkahnya salah tetap dapat memiliki coverage aktual.
+Klien lama yang tidak mengirim field ini tetap didukung (field absen berarti tersedia).
+
+Pesan gagal simpan muncul sekali di panel Validation Result. Draft tetap tersedia
+dan download memakai versi valid terakhir yang tersimpan. Setelah perubahan
+validator/kontrak ini, restart AI service dan backend lalu refresh frontend.
 
 ## Aturan SRS
 
@@ -70,8 +112,9 @@ deskripsi, doc string, atau tabel. Normalisasi menggunakan lowercase, membuang
 tanda baca/kutip, dan merapikan whitespace; pencocokan substring, pembulatan dua
 desimal. Tidak ada nilai coverage atau daftar elemen dari mockup di production.
 
-Tidak diperlukan migrasi baru: memakai GherkinScenario, GenerationRequest, dan
-User existing. API tidak memerlukan konfigurasi baru; tetap memakai
+Migrasi otomatis menambahkan `scenario_number` (PostgreSQL BIGSERIAL, unik dan
+tidak boleh NULL) pada GherkinScenario. Data lama mendapat nomor otomatis saat
+backend dijalankan kembali; UUID, teks, dan timestamp lama tetap dipertahankan. API tidak memerlukan konfigurasi baru; tetap memakai
 `AI_SERVICE_URL`, `AI_SERVICE_KEY`, dan `VITE_API_URL` yang sudah ada.
 
 ## Menjalankan dan menguji
@@ -151,6 +194,8 @@ aplikasi. Service key validator uji adalah
 - `backend/providers/core.go` — diubah.
 - `backend/test/scenario/review/persistence_test.go` — baru.
 - `backend/test/scenario/review/review_test.go` — baru.
+- `backend/test/scenario/review/scenario_code_test.go` — baru.
+- `backend/test/scenario/review/validation_diagnostics_test.go` — baru.
 - `docs/REVIEW_SCENARIO.md` — baru.
 - `frontend/src/App.tsx` — diubah.
 - `frontend/src/components/PublicHeader.tsx` — diubah.

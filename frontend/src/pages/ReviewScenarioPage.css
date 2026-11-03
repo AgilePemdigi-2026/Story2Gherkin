@@ -13,10 +13,10 @@
 .review-unsaved { color: #9a6700; font-size: 12px; }
 .review-code-editor { position: relative; height: 330px; border: 1px solid #dce9ff; border-radius: 18px; background: #f9fcff; overflow: hidden; }
 .review-code-editor:focus-within { outline: 3px solid #bfdbfe; border-color: #2563eb; }
-.review-code-editor pre, .review-code-editor textarea { width: 100%; height: 100%; margin: 0; padding: 24px; border: 0; font-family: 'Consolas', 'Courier New', monospace; font-size: 15px; line-height: 1.8; letter-spacing: .015em; tab-size: 2; white-space: pre; overflow: auto; }
+.review-code-editor pre, .review-code-editor textarea { display: block; box-sizing: border-box; width: 100%; height: 100%; margin: 0; padding: 24px; border: 0; font-family: 'Consolas', 'Courier New', monospace; font-size: 15px; font-weight: 400; line-height: 1.8; letter-spacing: .015em; tab-size: 2; text-align: left; white-space: pre; overflow: auto; }
 .review-code-editor pre { color: #334155; }
 .review-code-editor code { font: inherit; }
-.review-code-editor textarea { position: absolute; inset: 0; resize: none; background: transparent; color: transparent; caret-color: #0f172a; -webkit-text-fill-color: transparent; outline: 0; }
+.review-code-editor textarea { resize: none; background: transparent; color: #334155; caret-color: #0f172a; outline: 0; }
 .review-code-editor textarea::selection { background: rgb(37 99 235 / 20%); }
 .review-code-feature { color: #2563eb; font-weight: 650; }
 .review-code-scenario { color: #7e22ce; }
@@ -43,6 +43,8 @@
 .review-check { color: #009f7a; }
 .review-cross { color: #dc2626; }
 .review-coverage-heading { margin-top: 30px; }
+.review-coverage-unavailable { margin-top: 30px; }
+.review-coverage-unavailable p { color: #64748b; font-size: 13px; line-height: 1.7; }
 .review-coverage-heading strong { color: #2563eb; font-size: 18px; }
 .review-progress { height: 11px; margin: 12px 0 20px; overflow: hidden; border-radius: 10px; background: #f0f4f9; }
 .review-progress span { display: block; height: 100%; border-radius: inherit; background: #2563eb; transition: width .2s; }
