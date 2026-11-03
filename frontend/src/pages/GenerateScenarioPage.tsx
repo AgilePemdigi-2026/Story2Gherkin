@@ -1,5 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react'
-import { Link, NavLink } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   Plus,
   X,
@@ -11,6 +11,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import PublicHeader from '../components/PublicHeader'
+import ScenarioSidebar from '../components/ScenarioSidebar'
 import {
   generateScenario,
   type GenerateScenarioResult,
@@ -64,6 +65,7 @@ function renderGherkin(source: string) {
 }
 
 function GenerateScenarioPage() {
+  const navigate = useNavigate()
   // FORM STATE
   const [userStory, setUserStory] = useState('')
   const [freeScenario, setFreeScenario] = useState('')
@@ -227,51 +229,7 @@ function GenerateScenarioPage() {
       <div className="generate-layout">
 
         {/* SIDEBAR */}
-        <aside className="generate-sidebar">
-          <nav
-            className="generate-sidebar-nav"
-            aria-label="Workspace navigation"
-          >
-            <div className="generate-sidebar-section">
-              <p className="generate-sidebar-heading">
-                GENERATE
-              </p>
-
-              <NavLink
-                to="/generate"
-                className={({ isActive }) =>
-                  `generate-sidebar-link ${isActive ? 'active' : ''}`
-                }
-              >
-                Generate Scenario
-              </NavLink>
-
-              <span className="generate-sidebar-link disabled">
-                Review Scenario
-              </span>
-            </div>
-
-            <div className="generate-sidebar-divider" />
-
-            <div className="generate-sidebar-section">
-              <p className="generate-sidebar-heading">
-                EVALUATION
-              </p>
-
-              <span className="generate-sidebar-link disabled">
-                Golden Dataset
-              </span>
-
-              <span className="generate-sidebar-link disabled">
-                Run Evaluation
-              </span>
-
-              <span className="generate-sidebar-link disabled">
-                Evaluation Report
-              </span>
-            </div>
-          </nav>
-        </aside>
+        <ScenarioSidebar />
 
         {/* MAIN CONTENT */}
         <main className="generate-main">
@@ -726,8 +684,11 @@ function GenerateScenarioPage() {
     <button
       type="button"
       className="generate-review-button"
-      disabled
-      title="Halaman Review Scenario belum tersedia"
+      disabled={!generatedResult?.scenario_id}
+      onClick={() => {
+        if (generatedResult?.scenario_id) navigate(`/review?scenario=${encodeURIComponent(generatedResult.scenario_id)}`)
+      }}
+      title={generatedResult?.scenario_id ? 'Review hasil generate ini' : 'Generate skenario tersimpan terlebih dahulu'}
     >
       Review Skenario
       <ArrowRight size={18} />

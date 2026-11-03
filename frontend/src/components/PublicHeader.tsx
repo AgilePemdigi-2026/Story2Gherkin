@@ -23,6 +23,9 @@ function PublicHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
+    // Review pages may cancel before authentication data is removed.
+    const beforeLogout = new Event('story2gherkin:before-logout', { cancelable: true })
+    if (!window.dispatchEvent(beforeLogout)) return
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     sessionStorage.removeItem('access_token')
@@ -63,7 +66,7 @@ function PublicHeader() {
               end={item.path === '/'}
               onClick={() => setMobileMenuOpen(false)}
               className={({ isActive }) =>
-                `public-nav-link ${isActive ? 'active' : ''}`
+                `public-nav-link ${isActive || (item.path === '/generate' && location.pathname === '/review') ? 'active' : ''}`
               }
             >
               {item.label}

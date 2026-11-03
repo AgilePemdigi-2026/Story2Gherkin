@@ -23,7 +23,7 @@ var (
 )
 
 const (
-	MaxAttempts = 3
+	MaxAttempts  = 3
 	MaxScenarios = 6
 )
 
@@ -149,7 +149,7 @@ func (s *scenarioService) Generate(ctx context.Context, userID string, req dto.G
 	}
 	last.DurationMS = time.Since(start).Milliseconds()
 
-	_, err = s.scenRepo.Create(ctx, nil, entities.GherkinScenario{
+	savedScenario, err := s.scenRepo.Create(ctx, nil, entities.GherkinScenario{
 		ID:                  uuid.New(),
 		GenerationRequestID: &genReq.ID,
 		FeatureName:         last.Feature.FeatureName,
@@ -163,6 +163,7 @@ func (s *scenarioService) Generate(ctx context.Context, userID string, req dto.G
 	if err != nil {
 		return fail(err, err.Error())
 	}
+	last.ScenarioID = savedScenario.ID.String()
 
 	genReq.Status = dto.RequestSuccess
 	if _, err := s.reqRepo.Update(ctx, nil, genReq); err != nil {
