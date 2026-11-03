@@ -7,6 +7,7 @@ from fastapi import Depends, FastAPI
 from app.api.deps import require_service_key
 from app.api.routes import generate as generate_routes
 from app.api.routes import health as health_routes
+from app.api.routes import review as review_routes
 from app.clients.ollama import OllamaClient
 from app.clients.openrouter import OpenRouterClient
 from app.core.config import Settings
@@ -51,6 +52,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(health_routes.router)
     app.include_router(
         generate_routes.router,
+        dependencies=[Depends(require_service_key)],
+    )
+    app.include_router(
+        review_routes.router,
         dependencies=[Depends(require_service_key)],
     )
 

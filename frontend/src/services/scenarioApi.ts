@@ -22,6 +22,7 @@ export interface GeneratedScenario {
 
 // Hasil generasi
 export interface GenerateScenarioResult {
+  scenario_id?: string
   feature: {
     feature_name: string
     scenarios: GeneratedScenario[]

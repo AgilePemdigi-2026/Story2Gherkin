@@ -1,10 +1,5 @@
 
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Navigate
-} from 'react-router-dom'
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 
 import RegisterPage from './pages/RegisterPage'
 import LoginPage from './pages/LoginPage'
@@ -13,45 +8,28 @@ import ResetPasswordPage from './pages/ResetPasswordPage'
 import HomePage from './pages/HomePage'
 import AboutProjectPage from './pages/AboutProjectPage'
 import GenerateScenarioPage from './pages/GenerateScenarioPage'
+import ReviewScenarioPage from './pages/ReviewScenarioPage'
+import DocumentationPage from './pages/DocumentationPage'
+import EvaluationPage from './pages/EvaluationPage'
+import RequireRole from './components/RequireRole'
+
+// A data router enables useBlocker to protect unsaved review corrections.
+const router = createBrowserRouter([
+  { path: '/', element: <HomePage /> },
+  { path: '/login', element: <LoginPage /> },
+  { path: '/register', element: <RegisterPage /> },
+  { path: '/forgot-password', element: <ForgotPasswordPage /> },
+  { path: '/reset-password', element: <ResetPasswordPage /> },
+  { path: '/about', element: <AboutProjectPage /> },
+  { path: '/documentation', element: <DocumentationPage /> },
+  { path: '/generate', element: <RequireRole role="system_analyst"><GenerateScenarioPage /></RequireRole> },
+  { path: '/review', element: <RequireRole role="system_analyst"><ReviewScenarioPage /></RequireRole> },
+  { path: '/evaluation', element: <RequireRole role="qa"><EvaluationPage /></RequireRole> },
+  { path: '*', element: <Navigate to="/" replace /> },
+])
 
 function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        {/* Default page */}
-        <Route path="/" element={<HomePage />} />
-
-        {/* Authentication pages */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-
-        {/* Unknown pages */}
-        <Route
-          path="*"
-          element={<Navigate to="/login" replace />}
-        />
-        <Route
-          path="/forgot-password"
-          element={<ForgotPasswordPage />}
-        />
-
-        <Route
-          path="/reset-password"
-          element={<ResetPasswordPage />}
-        />
-
-        <Route path="/" element={<HomePage />} />
-        <Route
-          path="/about"
-          element={<AboutProjectPage />}
-        />
-        <Route
-          path="/generate"
-          element={<GenerateScenarioPage />}
-        />
-      </Routes>
-    </BrowserRouter>
-  )
+  return <RouterProvider router={router} />
 }
 
 export default App

@@ -64,6 +64,7 @@ type Feature struct {
 }
 
 type GenerateResponse struct {
+	ScenarioID string  `json:"scenario_id,omitempty"`
 	Feature    Feature `json:"feature"`
 	Gherkin    string  `json:"gherkin"`
 	DurationMS int64   `json:"duration_ms"`

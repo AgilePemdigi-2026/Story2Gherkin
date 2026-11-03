@@ -6,13 +6,12 @@ import PublicHeader from '../components/PublicHeader'
 import homeIllustration from '../assets/homepage-illustration.png'
 
 import './HomePage.css'
+import { useAuthSession } from '../hooks/useAuthSession'
+import { roleHome } from '../services/authSession'
 
 function HomePage() {
-  // Cek apakah user sudah login
-  const isLoggedIn = Boolean(
-    localStorage.getItem('access_token') ||
-    sessionStorage.getItem('access_token')
-  )
+  const session = useAuthSession()
+  const actionLabel = !session ? 'Mulai Menggunakan' : session.role === 'system_analyst' ? 'Mulai Generate' : 'Buka Evaluation'
 
   return (
     <div className="home-page">
@@ -29,43 +28,42 @@ function HomePage() {
 
             {/* BADGE */}
             <div className="home-hero-badge">
-              Turn your requirements into test scenarios
+              Generate and evaluate your Gherkin scenarios
             </div>
 
             {/* HEADING */}
             <h1 className="home-hero-title">
-              Generate Better
+              Build &amp; Evaluate
               <span>
                 Gherkin Scenarios
                 <br />
-                with AI
+                with Confidence
               </span>
             </h1>
 
             {/* DESCRIPTION */}
             <p className="home-hero-description">
-              Ubah user story, elemen GUI, dan deskripsi
-              skenario menjadi skenario pengujian Gherkin
-              yang siap digunakan. Lebih cepat, konsisten,
-              dan tervalidasi.
+              Bantu System Analyst menyusun dan meninjau skenario Gherkin,
+              serta QA mengevaluasi kualitasnya dalam satu platform.
+              Masuk ke ruang kerja sesuai peran Anda.
             </p>
 
             {/* ACTION BUTTONS */}
             <div className="home-hero-actions">
 
               <Link
-                to={isLoggedIn ? '/generate' : '/login'}
+                to={session ? roleHome(session.role) : '/login'}
                 className="home-primary-button"
               >
-                Mulai Generate
+                {actionLabel}
                 <ArrowRight size={20} />
               </Link>
 
               <Link
-                to="/about"
+                to="/documentation"
                 className="home-secondary-button"
               >
-                Pelajari Lebih Lanjut
+                Baca Panduan
                 <ChevronRight size={20} />
               </Link>
 

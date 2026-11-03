@@ -7,6 +7,7 @@ type ScenarioStatus string
 
 type GherkinScenario struct {
 	ID                  uuid.UUID         `gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
+	ScenarioNumber      int64             `gorm:"autoIncrement;not null;uniqueIndex;<-:create"`
 	GenerationRequestID *uuid.UUID        `gorm:"type:uuid;index"`
 	GenerationRequest   GenerationRequest `gorm:"foreignKey:GenerationRequestID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	FeatureName         string            `gorm:"size:200;not null"`
