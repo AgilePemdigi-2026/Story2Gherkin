@@ -122,3 +122,36 @@ jobs:
       # Existing legacy conftest imports moved modules; review tests are isolated.
       - name: Test review validator without LLM calls
         run: python -m pytest tests/unit/test_review_validation.py tests/api/test_review_api.py --noconftest -q -o addopts=
+
+  deploy-production:
+    name: Queue Coolify production deployment
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: [backend, frontend, review-validation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: production
+    steps:
+      - name: Trigger Coolify deploy webhook
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COOLIFY_DEPLOY_WEBHOOK: ${{ secrets.COOLIFY_DEPLOY_WEBHOOK }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          main_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          if [[ "$main_sha" != "$GITHUB_SHA" ]]; then
+            echo "Skipping deployment because main has advanced."
+            exit 0
+          fi
+
+          : "${COOLIFY_DEPLOY_WEBHOOK:?Set the COOLIFY_DEPLOY_WEBHOOK production secret}"
+          : "${COOLIFY_TOKEN:?Set the COOLIFY_TOKEN production secret}"
+          response=$(curl --fail --silent --show-error --max-time 30 --proto '=https' \
+            --header "Authorization: Bearer $COOLIFY_TOKEN" \
+            "$COOLIFY_DEPLOY_WEBHOOK")
+
+          if ! jq -e 'any(.deployments[]?; (.deployment_uuid // "") != "")' >/dev/null 2>&1 <<< "$response"; then
+            echo "::error::Coolify did not return a queued deployment."
+            exit 1
+          fi
+          echo "Coolify queued the production deployment."
