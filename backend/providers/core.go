@@ -70,4 +70,17 @@ func RegisterDependencies(injector *do.Injector) {
 		)
 		return scenHandler.NewScenarioHandler(svc), nil
 	})
+
+	do.Provide(injector, func(*do.Injector) (*scenHandler.ReviewHandler, error) {
+		baseURL := os.Getenv("AI_SERVICE_URL")
+		if baseURL == "" {
+			baseURL = "http://127.0.0.1:8001"
+		}
+		client, err := scenService.NewLLMClient(baseURL, os.Getenv("AI_SERVICE_KEY"))
+		if err != nil {
+			return nil, err
+		}
+		svc := scenService.NewReviewService(client, userRepository, scenRepo.NewReviewRepository(db))
+		return scenHandler.NewReviewHandler(svc), nil
+	})
 }

@@ -2,9 +2,10 @@
 import { useState, type FormEvent } from 'react'
 import { Mail, LockKeyhole, Eye, EyeOff } from 'lucide-react'
 import { loginUser } from '../services/authApi'
+import { loginDestination, saveAuthSession } from '../services/authSession'
 import logo from '../assets/story2gherkin-logo.svg'
 import authIllustration from '../assets/register-illustration.png'
-
+import { useLocation, useNavigate } from 'react-router-dom'
 import './RegisterPage.css'
 import './LoginPage.css'
 
@@ -15,9 +16,13 @@ function LoginPage() {
     
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [loginError, setLoginError] = useState('')
-    const [loginSuccess, setLoginSuccess] = useState(false)
 
-    
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    // Halaman tempat pengguna menekan tombol Login
+    const from = (location.state as { from?: string } | null)?.from
+
     const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
@@ -27,7 +32,6 @@ function LoginPage() {
     const email = String(formData.get('email') ?? '').trim()
 
     setLoginError('')
-    setLoginSuccess(false)
     setIsSubmitting(true)
 
     try {
@@ -36,18 +40,8 @@ function LoginPage() {
         password,
         })
 
-        // Hapus token sesi sebelumnya
-        sessionStorage.removeItem('access_token')
-        localStorage.removeItem('access_token')
-
-        // Simpan token sesuai Remember Me
-        const storage = rememberMe
-        ? localStorage
-        : sessionStorage
-
-        storage.setItem('access_token', result.access_token)
-
-        setLoginSuccess(true)
+        saveAuthSession(result, rememberMe)
+        navigate(loginDestination(from, result.role), { replace: true })
 
     } catch (error) {
         // Kosongkan password, tetapi pertahankan email
@@ -226,15 +220,6 @@ function LoginPage() {
                 >
                 {isSubmitting ? 'Logging in...' : 'Login'}
                 </button>
-
-
-                {/* SUCCESS MESSAGE */}
-                {loginSuccess && (
-                <p className="login-success" role="status">
-                    Login successful!
-                </p>
-                )}
-
 
             </form>
 

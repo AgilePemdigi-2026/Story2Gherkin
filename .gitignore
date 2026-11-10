@@ -1,0 +1,4 @@
+demo-backup/
+
+# secrets lokal — jangan commit
+.env

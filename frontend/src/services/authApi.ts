@@ -52,9 +52,8 @@ export interface LoginUser {
 
 export interface LoginResult {
   access_token: string
-  token_type: string
-  expires_in: number
-  user: LoginUser
+  refresh_token: string
+  role: UserRole
 }
 
 interface LoginApiResponse {
@@ -88,7 +87,7 @@ export async function loginUser(
     )
   }
 
-  if (!result.data?.access_token) {
+  if (!result.data?.access_token || !['system_analyst', 'qa'].includes(result.data.role)) {
     throw new Error('Invalid login response from server.')
   }
 

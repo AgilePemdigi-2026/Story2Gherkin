@@ -1,42 +1,42 @@
 
 import { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { UserRound, ChevronDown, LogOut, Menu, X } from 'lucide-react'
 
 import logo from '../assets/story2gherkin-logo.svg'
 import './PublicHeader.css'
+import { useAuthSession } from '../hooks/useAuthSession'
+import { clearAuthSession } from '../services/authSession'
 
 function PublicHeader() {
   const navigate = useNavigate()
+  const location = useLocation()
 
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return Boolean(
-      localStorage.getItem('access_token') ||
-      sessionStorage.getItem('access_token')
-    )
-  })
+  const returnTo =
+    location.pathname + location.search + location.hash
+  const session = useAuthSession()
 
   const [accountOpen, setAccountOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
-    sessionStorage.removeItem('access_token')
-    sessionStorage.removeItem('refresh_token')
-
-    setIsLoggedIn(false)
+    // Review pages may cancel before authentication data is removed.
+    const beforeLogout = new Event('story2gherkin:before-logout', { cancelable: true })
+    if (!window.dispatchEvent(beforeLogout)) return
     setAccountOpen(false)
     setMobileMenuOpen(false)
 
-    navigate('/')
+    // Leave the protected route before notifying its guard that the session ended.
+    navigate('/', { flushSync: true })
+    clearAuthSession()
   }
 
   const menuItems = [
     { label: 'Home', path: '/' },
-    { label: 'Generate', path: '/generate' },
-    { label: 'Evaluation', path: '/evaluation' },
-    { label: 'About Project', path: '/about' },
+    ...(session?.role === 'system_analyst' ? [{ label: 'Generate', path: '/generate' }] : []),
+    ...(session?.role === 'qa' ? [{ label: 'Evaluation', path: '/evaluation' }] : []),
+    { label: 'About', path: '/about' },
+    { label: 'Documentation', path: '/documentation' },
   ]
 
   return (
@@ -60,7 +60,7 @@ function PublicHeader() {
               end={item.path === '/'}
               onClick={() => setMobileMenuOpen(false)}
               className={({ isActive }) =>
-                `public-nav-link ${isActive ? 'active' : ''}`
+                `public-nav-link ${isActive || (item.path === '/generate' && location.pathname === '/review') ? 'active' : ''}`
               }
             >
               {item.label}
@@ -70,7 +70,7 @@ function PublicHeader() {
 
         {/* RIGHT SECTION */}
         <div className="public-header-actions">
-          {isLoggedIn ? (
+          {session ? (
 
             /* LOGGED IN */
             <div className="public-account">
@@ -85,7 +85,7 @@ function PublicHeader() {
                   <UserRound size={18} />
                 </span>
 
-                <span>My Account</span>
+                <span>{session.role === 'system_analyst' ? 'System Analyst' : 'Quality Assurance'}</span>
 
                 <ChevronDown size={16} />
               </button>
@@ -110,6 +110,7 @@ function PublicHeader() {
               <Link
                 to="/login"
                 className="public-login-button"
+                state={{ from: returnTo }}
               >
                 Login
               </Link>

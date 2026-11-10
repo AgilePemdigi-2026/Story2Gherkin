@@ -1,28 +1,23 @@
 import asyncio
-import logging
-import secrets
 from contextlib import asynccontextmanager
 
 import httpx
-from fastapi import Depends, FastAPI, HTTPException, Request
-from fastapi.security import APIKeyHeader
+from fastapi import Depends, FastAPI
 
-from .config import Settings
-from .generator import ScenarioGenerator
-from .llm_client import InvalidModelOutput, ModelUnavailable, OllamaClient
-from .schemas import GenerateRequest, GenerateResponse
-
-logger = logging.getLogger(__name__)
-key_header = APIKeyHeader(name="X-AI-Service-Key", auto_error=False)
-
-
-def require_service_key(request: Request, key: str | None = Depends(key_header)) -> None:
-    if key is None or not secrets.compare_digest(key, request.app.state.settings.service_key):
-        raise HTTPException(status_code=401, detail="Invalid service credentials")
+from app.api.deps import require_service_key
+from app.api.routes import generate as generate_routes
+from app.api.routes import health as health_routes
+from app.api.routes import review as review_routes
+from app.clients.ollama import OllamaClient
+from app.clients.openrouter import OpenRouterClient
+from app.core.config import Settings
+from app.services.generator import ScenarioGenerator
 
 
-def get_generator(request: Request) -> ScenarioGenerator:
-    return request.app.state.generator
+def build_client(client: httpx.AsyncClient, config: Settings):
+    if config.provider == "ollama":
+        return OllamaClient(client, config), config.ollama_model
+    return OpenRouterClient(client, config), config.model
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -31,46 +26,38 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         config = settings or Settings.from_env()
         app.state.settings = config
         app.state.gate = asyncio.Semaphore(1)
+
         async with httpx.AsyncClient(
             timeout=httpx.Timeout(config.timeout_seconds, connect=5),
             trust_env=False,
+            headers={"Connection": "close"},
         ) as client:
+            model_client, model_name = build_client(client, config)
+            print(
+                f"ai-service ready | provider={config.provider} "
+                f"model={model_name}",
+                flush=True,
+            )
             app.state.generator = ScenarioGenerator(
-                OllamaClient(client, config), config.model, config.timeout_seconds
+                model_client, model_name, config.timeout_seconds
             )
             yield
 
-    app = FastAPI(title="Story2Gherkin AI Service", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(
+        title="Story2Gherkin AI Service",
+        version="0.2.0",
+        lifespan=lifespan,
+    )
 
-    @app.get("/health")
-    async def health():
-        # Liveness only: does not claim the model is loaded or reachable.
-        return {"status": "ok"}
-
-    @app.post("/internal/scenarios/generate", response_model=GenerateResponse,
-              dependencies=[Depends(require_service_key)])
-    async def generate(request_body: GenerateRequest, request: Request,
-                       generator: ScenarioGenerator = Depends(get_generator)):
-        gate = request.app.state.gate
-        try:
-            async with asyncio.timeout(0.1):
-                await gate.acquire()
-        except TimeoutError:
-            raise HTTPException(status_code=503, detail="Generator is busy; retry later")
-        try:
-            return await generator.generate(request_body)
-        except (TimeoutError, httpx.TimeoutException):
-            raise HTTPException(status_code=504, detail="Scenario generation timed out")
-        except ModelUnavailable:
-            raise HTTPException(status_code=503, detail="Language model is unavailable")
-        except InvalidModelOutput:
-            raise HTTPException(status_code=502, detail="Model returned an invalid scenario result")
-        except Exception:
-            # Do not log requirements, credentials, or raw model responses.
-            logger.error("Unexpected scenario generation failure")
-            raise HTTPException(status_code=500, detail="Scenario generation failed")
-        finally:
-            gate.release()
+    app.include_router(health_routes.router)
+    app.include_router(
+        generate_routes.router,
+        dependencies=[Depends(require_service_key)],
+    )
+    app.include_router(
+        review_routes.router,
+        dependencies=[Depends(require_service_key)],
+    )
 
     return app
 

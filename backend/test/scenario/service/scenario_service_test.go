@@ -214,8 +214,8 @@ func TestGenerateInvalidResponseFails(t *testing.T) {
 	if !errors.Is(err, service.ErrBadGateway) {
 		t.Fatalf("error = %v, ingin ErrBadGateway", err)
 	}
-	if stub.calls != service.MaxAttempts {
-		t.Errorf("retry = %d kali, ingin %d", stub.calls, service.MaxAttempts)
+	if stub.calls != 1 {
+		t.Errorf("respons invalid tidak diulang (ai-service sudah retry internal): %d kali", stub.calls)
 	}
 	saved := reqRepo.single()
 	if saved.Status != dto.RequestFailed || saved.ErrorMessage == "" {
@@ -268,7 +268,8 @@ func TestGenerateTimeoutFails(t *testing.T) {
 	}
 }
 
-func TestGenerateIdenticalOutputStopsEarly(t *testing.T) {
+func TestGenerateTransportRetryOnly(t *testing.T) {
+	// Respons invalid (bukan error transport) langsung final tanpa retry.
 	bad := dto.GenerateResponse{Gherkin: "Feature: X\n", Feature: dto.Feature{FeatureName: "X"}}
 	stub := &stubGenerator{fn: func(context.Context, dto.GenerateRequest) (dto.GenerateResponse, error) {
 		return bad, nil
@@ -278,7 +279,7 @@ func TestGenerateIdenticalOutputStopsEarly(t *testing.T) {
 	if !errors.Is(err, service.ErrBadGateway) {
 		t.Fatalf("error = %v, ingin ErrBadGateway", err)
 	}
-	if stub.calls != 2 {
-		t.Errorf("output identik harus stop di 2 panggilan, dapat %d", stub.calls)
+	if stub.calls != 1 {
+		t.Errorf("respons invalid harus 1 panggilan, dapat %d", stub.calls)
 	}
 }
