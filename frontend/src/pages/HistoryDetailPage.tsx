@@ -25,6 +25,11 @@ import './HistoryDetailPage.css'
 export default function HistoryDetailPage() {
   const { id } = useParams<{ id: string }>()
 
+  // Remount the detail state whenever the URL ID changes.
+  return <HistoryDetailContent key={id ?? 'missing'} scenarioId={id} />
+}
+
+function HistoryDetailContent({ scenarioId }: { scenarioId?: string }) {
   const [summary, setSummary] = useState<ScenarioSummary | null>(null)
   const [detail, setDetail] = useState<ReviewScenario | null>(null)
 
@@ -36,22 +41,11 @@ export default function HistoryDetailPage() {
   const [retry, setRetry] = useState(0)
 
   useEffect(() => {
+    // A missing ID is handled during render; do not set state in the effect.
+    if (!scenarioId) return
+
     const controller = new AbortController()
-    const scenarioId = id
-
-    setSummary(null)
-    setDetail(null)
-    setLoading(true)
-    setDetailLoading(true)
-    setError('')
-    setDetailError('')
-
-    if (!scenarioId) {
-      setError('Scenario ID tidak ditemukan.')
-      setLoading(false)
-      setDetailLoading(false)
-      return () => controller.abort()
-    }
+    const selectedId = scenarioId
 
     async function loadScenario() {
       try {
@@ -63,7 +57,7 @@ export default function HistoryDetailPage() {
         if (controller.signal.aborted) return
 
         const selected = scenarios.find(
-          (item) => item.id === scenarioId
+          (item) => item.id === selectedId
         )
 
         if (!selected) {
@@ -78,7 +72,7 @@ export default function HistoryDetailPage() {
         // Endpoint detail saat ini menggunakan validator
         try {
           const result = await getReviewScenario(
-            scenarioId!,
+            selectedId,
             controller.signal
           )
 
@@ -113,7 +107,20 @@ export default function HistoryDetailPage() {
     void loadScenario()
 
     return () => controller.abort()
-  }, [id, retry])
+  }, [scenarioId, retry])
+
+  const pageLoading = Boolean(scenarioId) && loading
+  const pageError = scenarioId ? error : 'Scenario ID tidak ditemukan.'
+
+  function retryLoad() {
+    setSummary(null)
+    setDetail(null)
+    setError('')
+    setDetailError('')
+    setLoading(true)
+    setDetailLoading(true)
+    setRetry((current) => current + 1)
+  }
 
   const formatDate = (date: string) => {
     const parsed = new Date(date)
@@ -147,7 +154,7 @@ export default function HistoryDetailPage() {
             </p>
           </div>
 
-          {loading && (
+          {pageLoading && (
             <section className="history-detail-card history-detail-state">
               <LoaderCircle
                 className="history-detail-spinner"
@@ -157,25 +164,32 @@ export default function HistoryDetailPage() {
             </section>
           )}
 
-          {!loading && error && (
+          {!pageLoading && pageError && (
             <section
               className="history-detail-card history-detail-state"
               role="alert"
             >
               <AlertCircle size={36} />
               <h2>Unable to load scenario</h2>
-              <p>{error}</p>
+              <p>{pageError}</p>
 
-              <button
-                className="history-detail-button"
-                onClick={() => setRetry((value) => value + 1)}
-              >
-                Try Again
-              </button>
+              {scenarioId ? (
+                <button
+                  type="button"
+                  className="history-detail-button"
+                  onClick={retryLoad}
+                >
+                  Try Again
+                </button>
+              ) : (
+                <Link to="/history" className="history-detail-button">
+                  Back to History
+                </Link>
+              )}
             </section>
           )}
 
-          {!loading && !error && summary && (
+          {!pageLoading && !pageError && summary && (
             <section className="history-detail-card">
               {/* SCENARIO INFORMATION */}
               <div className="history-detail-header">
@@ -309,10 +323,9 @@ export default function HistoryDetailPage() {
                       </p>
 
                       <button
+                        type="button"
                         className="history-detail-retry"
-                        onClick={() =>
-                          setRetry((value) => value + 1)
-                        }
+                        onClick={retryLoad}
                       >
                         Try Again
                       </button>
