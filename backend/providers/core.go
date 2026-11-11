@@ -83,4 +83,36 @@ func RegisterDependencies(injector *do.Injector) {
 		svc := scenService.NewReviewService(client, userRepository, scenRepo.NewReviewRepository(db))
 		return scenHandler.NewReviewHandler(svc), nil
 	})
+
+	// Golden Dataset
+	do.Provide(
+		injector,
+		func(*do.Injector) (*scenHandler.GoldenDatasetHandler, error) {
+			baseURL := os.Getenv("AI_SERVICE_URL")
+			if baseURL == "" {
+				baseURL = "http://127.0.0.1:8001"
+			}
+
+			validator, err := scenService.NewLLMClient(
+				baseURL,
+				os.Getenv("AI_SERVICE_KEY"),
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			goldenRepo := scenRepo.NewGoldenDatasetRepository(db)
+
+			goldenService := scenService.NewGoldenDatasetService(
+				goldenRepo,
+				userRepository,
+				validator,
+			)
+
+			return scenHandler.NewGoldenDatasetHandler(
+				goldenService,
+			), nil
+		},
+	)
+
 }
