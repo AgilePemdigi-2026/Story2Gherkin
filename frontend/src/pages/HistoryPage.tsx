@@ -70,9 +70,6 @@ useEffect(() => {
   useEffect(() => {
     const controller = new AbortController()
 
-    setLoading(true)
-    setError('')
-
     listReviewScenarios(controller.signal)
       .then((data) => {
         if (!controller.signal.aborted) {
