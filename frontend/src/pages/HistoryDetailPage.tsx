@@ -2,10 +2,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
-  AlertCircle,
   ArrowLeft,
   ArrowRight,
+  FileText,
+  Layers,
   Code2,
+  Clock3,
+  AlertCircle,
   LoaderCircle,
 } from 'lucide-react'
 
@@ -13,329 +16,414 @@ import PublicHeader from '../components/PublicHeader'
 import ScenarioSidebar from '../components/ScenarioSidebar'
 
 import {
-  getReviewScenario,
-  listReviewScenarios,
-  type ReviewScenario,
-  type ScenarioSummary,
-} from '../services/reviewApi'
+  getGenerationHistoryDetail,
+  HistoryApiError,
+  type HistoryDetail,
+} from '../services/historyApi'
 
 import './GenerateScenarioPage.css'
+import './HistoryPage.css'
 import './HistoryDetailPage.css'
+
+function formatDate(value: string) {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return '-'
+
+  return date.toLocaleString('id-ID', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
+}
+
+function formatStatus(value: string) {
+  return value
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+}
 
 export default function HistoryDetailPage() {
   const { id } = useParams<{ id: string }>()
 
-  const [summary, setSummary] = useState<ScenarioSummary | null>(null)
-  const [detail, setDetail] = useState<ReviewScenario | null>(null)
-
+  const [history, setHistory] = useState<HistoryDetail | null>(
+    null
+  )
   const [loading, setLoading] = useState(true)
-  const [detailLoading, setDetailLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
-  const [error, setError] = useState('')
-  const [detailError, setDetailError] = useState('')
-  const [retry, setRetry] = useState(0)
+  // ------------------------------------
+  // FETCH DETAIL FROM BACKEND
+  // ------------------------------------
 
   useEffect(() => {
     const controller = new AbortController()
-    const scenarioId = id
 
-    setSummary(null)
-    setDetail(null)
-    setLoading(true)
-    setDetailLoading(true)
-    setError('')
-    setDetailError('')
+    async function loadDetail() {
+      setLoading(true)
+      setError(null)
+      setHistory(null)
 
-    if (!scenarioId) {
-      setError('Scenario ID tidak ditemukan.')
-      setLoading(false)
-      setDetailLoading(false)
-      return () => controller.abort()
-    }
+      if (!id) {
+        setError(new Error('History ID is missing.'))
+        setLoading(false)
+        return
+      }
 
-    async function loadScenario() {
       try {
-        // Endpoint list tidak memerlukan validator
-        const scenarios = await listReviewScenarios(
+        const result = await getGenerationHistoryDetail(
+          id,
           controller.signal
         )
 
-        if (controller.signal.aborted) return
-
-        const selected = scenarios.find(
-          (item) => item.id === scenarioId
-        )
-
-        if (!selected) {
-          setError('Skenario tidak ditemukan dalam History.')
-          setDetailLoading(false)
-          return
+        if (!controller.signal.aborted) {
+          setHistory(result)
         }
-
-        setSummary(selected)
-        setLoading(false)
-
-        // Endpoint detail saat ini menggunakan validator
-        try {
-          const result = await getReviewScenario(
-            scenarioId!,
-            controller.signal
-          )
-
-          if (!controller.signal.aborted) {
-            setDetail(result)
-          }
-        } catch (reason) {
-          if (!controller.signal.aborted) {
-            setDetailError(
-              reason instanceof Error
-                ? reason.message
-                : 'Gagal memuat detail skenario.'
-            )
-          }
-        }
-      } catch (reason) {
+      } catch (err) {
         if (!controller.signal.aborted) {
           setError(
-            reason instanceof Error
-              ? reason.message
-              : 'Gagal memuat History.'
+            err instanceof Error
+              ? err
+              : new Error('Failed to load history detail.')
           )
         }
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false)
-          setDetailLoading(false)
         }
       }
     }
 
-    void loadScenario()
+    void loadDetail()
 
     return () => controller.abort()
-  }, [id, retry])
+  }, [id, retryCount])
 
-  const formatDate = (date: string) => {
-    const parsed = new Date(date)
-
-    if (Number.isNaN(parsed.getTime())) return '-'
-
-    return parsed.toLocaleString('id-ID', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    })
+  const retryLoadDetail = () => {
+    setRetryCount((current) => current + 1)
   }
 
+  const status = history?.request_status.toUpperCase() ?? ''
+
+  const statusClass =
+    status === 'SUCCESS'
+      ? 'valid'
+      : status === 'FAILED'
+        ? 'invalid'
+        : ''
+
+  // ------------------------------------
+  // RENDER
+  // ------------------------------------
+
   return (
-    <div className="generate-page history-detail-page">
+    <div className="generate-page history-page history-detail-page">
       <PublicHeader />
 
       <div className="generate-layout">
         <ScenarioSidebar />
 
         <main className="generate-main">
-          <Link to="/history" className="history-detail-back">
+          {/* BACK BUTTON */}
+          <Link
+            to="/history"
+            className="history-detail-back"
+          >
             <ArrowLeft size={18} />
             Back to History
           </Link>
 
+          {/* PAGE HEADING */}
           <div className="generate-page-heading">
-            <h1>Scenario Detail</h1>
+            <h1>Generation History Detail</h1>
+
             <p>
-              View the information and saved Gherkin
-              scenario from your generation history.
+              Review the original inputs and generated Gherkin
+              scenario from your previous request.
             </p>
           </div>
 
+          {/* LOADING */}
           {loading && (
-            <section className="history-detail-card history-detail-state">
+            <section
+              className="history-panel history-state"
+              role="status"
+            >
               <LoaderCircle
-                className="history-detail-spinner"
-                size={32}
+                size={34}
+                className="history-spinner"
               />
-              <p>Loading scenario...</p>
+
+              <p>Loading history details...</p>
             </section>
           )}
 
+          {/* ERROR */}
           {!loading && error && (
             <section
-              className="history-detail-card history-detail-state"
+              className="history-panel history-state"
               role="alert"
             >
-              <AlertCircle size={36} />
-              <h2>Unable to load scenario</h2>
-              <p>{error}</p>
+              <AlertCircle
+                size={38}
+                color="#dc2626"
+              />
 
-              <button
-                className="history-detail-button"
-                onClick={() => setRetry((value) => value + 1)}
-              >
-                Try Again
-              </button>
+              <h3>
+                {error instanceof HistoryApiError &&
+                error.status === 404
+                  ? 'History not found'
+                  : error instanceof HistoryApiError &&
+                      error.status === 403
+                    ? 'Access denied'
+                    : 'Unable to load history'}
+              </h3>
+
+              <p>{error.message}</p>
+
+              <div className="history-detail-actions">
+                <Link
+                  to="/history"
+                  className="history-button outline"
+                >
+                  <ArrowLeft size={17} />
+                  Back to History
+                </Link>
+
+                {error instanceof HistoryApiError &&
+                error.status === 401 ? (
+                  <Link
+                    to="/login"
+                    state={{ from: `/history/${id}` }}
+                    className="history-button"
+                  >
+                    Login Again
+                    <ArrowRight size={17} />
+                  </Link>
+                ) : !(error instanceof HistoryApiError &&
+                    error.status === 403) && (
+                  <button
+                    type="button"
+                    className="history-button"
+                    onClick={retryLoadDetail}
+                  >
+                    Try Again
+                  </button>
+                )}
+              </div>
             </section>
           )}
 
-          {!loading && !error && summary && (
-            <section className="history-detail-card">
-              {/* SCENARIO INFORMATION */}
-              <div className="history-detail-header">
-                <div>
-                  <p className="history-detail-code">
-                    {summary.scenario_code || 'Scenario'}
-                  </p>
+          {/* HISTORY DETAIL */}
+          {!loading && !error && history && (
+            <>
+              {/* SUMMARY */}
+              <section className="history-panel">
+                <div className="history-detail-top">
+                  <div>
+                    <h2>Generation Summary</h2>
+                    <p>
+                      Details of your previous generation request.
+                    </p>
+                  </div>
 
-                  <h2>{summary.feature_name}</h2>
+                  <span
+                    className={`history-status ${statusClass}`}
+                  >
+                    {formatStatus(status)}
+                  </span>
                 </div>
 
-                <span
-                  className={`history-detail-status ${
-                    summary.status === 'VALID'
-                      ? 'valid'
-                      : 'invalid'
-                  }`}
-                >
-                  {summary.status === 'VALID'
-                    ? 'Valid'
-                    : 'Needs Review'}
-                </span>
-              </div>
+                <div className="history-detail-metadata">
+                  <div>
+                    <span>Request ID</span>
+                    <strong>{history.id}</strong>
+                  </div>
 
-              <div className="history-detail-meta">
-                <span>
-                  Source: {summary.source_type}
-                </span>
-                <span>
-                  Updated: {formatDate(summary.updated_at)}
-                </span>
-              </div>
+                  <div>
+                    <span>Created At</span>
+                    <strong>
+                      {formatDate(history.created_at)}
+                    </strong>
+                  </div>
 
-              <div className="history-detail-divider" />
+                  <div>
+                    <span>Last Updated</span>
+                    <strong>
+                      {formatDate(history.updated_at)}
+                    </strong>
+                  </div>
+                </div>
+              </section>
 
               {/* ORIGINAL INPUTS */}
-              <div className="history-detail-section">
-                <h3>Original Inputs</h3>
+              <section className="history-panel">
+                <div className="history-detail-section-title">
+                  <FileText size={22} color="#2563eb" />
 
-                <div className="history-detail-field">
-                  <h4>User Story</h4>
-
-                  <div className="history-detail-value">
+                  <div>
+                    <h2>Original Input</h2>
                     <p>
-                      Belum tersedia pada respons API
-                      History saat ini.
+                      Information submitted during generation.
                     </p>
                   </div>
                 </div>
 
+                {/* USER STORY */}
                 <div className="history-detail-field">
-                  <h4>GUI Elements</h4>
+                  <h3>User Story</h3>
 
-                  <div className="history-detail-value">
-                    {detailLoading ? (
-                      <p>Loading...</p>
-                    ) : detail?.gui_elements?.length ? (
-                      <div className="history-detail-tags">
-                        {detail.gui_elements.map(
+                  <div className="history-detail-content">
+                    {history.user_story || '-'}
+                  </div>
+                </div>
+
+                {/* GUI ELEMENTS */}
+                <div className="history-detail-field">
+                  <div className="history-detail-field-heading">
+                    <Layers size={18} />
+                    <h3>GUI Elements</h3>
+                  </div>
+
+                  <div className="history-detail-content">
+                    {history.gui_elements.length > 0 ? (
+                      <div className="history-detail-elements">
+                        {history.gui_elements.map(
                           (element, index) => (
-                            <span key={index}>
+                            <span
+                              className="history-detail-element"
+                              key={`${element}-${index}`}
+                            >
                               {element}
                             </span>
                           )
                         )}
                       </div>
                     ) : (
-                      <p>
-                        {detail
-                          ? 'No GUI elements available.'
-                          : 'GUI elements could not be loaded.'}
-                      </p>
+                      <p>No GUI elements available.</p>
                     )}
                   </div>
                 </div>
 
+                {/* FREE SCENARIO */}
                 <div className="history-detail-field">
-                  <h4>Free Scenario</h4>
+                  <h3>Free Scenario</h3>
 
-                  <div className="history-detail-value">
+                  <div className="history-detail-content preserve-text">
+                    {history.free_scenario || '-'}
+                  </div>
+                </div>
+              </section>
+
+              {/* GENERATED GHERKIN */}
+              <section className="history-panel">
+                <div className="history-detail-section-title">
+                  <Code2 size={22} color="#2563eb" />
+
+                  <div>
+                    <h2>Generated Gherkin</h2>
                     <p>
-                      Belum tersedia pada respons API
-                      History saat ini.
+                      Gherkin scenario saved for this request.
                     </p>
                   </div>
                 </div>
-              </div>
 
-              <div className="history-detail-divider" />
+                {history.scenario ? (
+                  <>
+                    <div className="history-detail-metadata">
+                      <div>
+                        <span>Scenario Code</span>
+                        <strong>
+                          {history.scenario.scenario_code}
+                        </strong>
+                      </div>
 
-              {/* GENERATED GHERKIN */}
-              <div className="history-detail-section">
-                <div className="history-detail-section-title">
-                  <Code2 size={21} />
-                  <h3>Generated Gherkin</h3>
-                </div>
+                      <div>
+                        <span>Feature Name</span>
+                        <strong>
+                          {history.scenario.feature_name}
+                        </strong>
+                      </div>
 
-                {detailLoading && (
-                  <div className="history-detail-value">
-                    <p>Loading Gherkin...</p>
+                      <div>
+                        <span>Validation Status</span>
+                        <strong>
+                          {history.scenario.status}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Coverage</span>
+                        <strong>
+                          {history.scenario.coverage_percent}%
+                        </strong>
+                      </div>
+                    </div>
+
+                    <pre className="history-detail-gherkin">
+                      <code>
+                        {history.scenario.gherkin}
+                      </code>
+                    </pre>
+                  </>
+                ) : (
+                  <div className="history-detail-empty">
+                    <AlertCircle size={28} />
+
+                    <h3>No Generated Gherkin</h3>
+
+                    <p>
+                      No Gherkin scenario was saved for this
+                      generation request.
+                    </p>
                   </div>
                 )}
+              </section>
 
-                {!detailLoading && detail && (
-                  <pre className="history-detail-gherkin">
-                    <code>{detail.gherkin}</code>
-                  </pre>
-                )}
-
-                {!detailLoading && !detail && (
-                  <div
-                    className="history-detail-alert"
-                    role="status"
-                  >
-                    <AlertCircle size={22} />
+              {/* ERROR MESSAGE */}
+              {history.error_message && (
+                <section className="history-panel">
+                  <div className="history-detail-section-title">
+                    <AlertCircle
+                      size={22}
+                      color="#dc2626"
+                    />
 
                     <div>
-                      <strong>
-                        Gherkin could not be loaded
-                      </strong>
-
+                      <h2>Generation Error</h2>
                       <p>
-                        {detailError ||
-                          'Scenario detail is currently unavailable.'}
+                        The error recorded during generation.
                       </p>
-
-                      <p>
-                        Your saved scenario has not changed.
-                        The current detail API requires
-                        the Gherkin validator.
-                      </p>
-
-                      <button
-                        className="history-detail-retry"
-                        onClick={() =>
-                          setRetry((value) => value + 1)
-                        }
-                      >
-                        Try Again
-                      </button>
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* NAVIGATION TO REVIEW */}
-              {detail && (
-                <div className="history-detail-actions">
-                  <Link
-                    className="history-detail-button"
-                    to={`/review?scenario=${encodeURIComponent(
-                      summary.id
-                    )}`}
+                  <div
+                    className="history-detail-error"
+                    role="alert"
                   >
-                    Open in Review
-                    <ArrowRight size={18} />
-                  </Link>
-                </div>
+                    {history.error_message}
+                  </div>
+                </section>
               )}
-            </section>
+
+              {/* FOOTER ACTIONS */}
+              <div className="history-detail-footer">
+                <span>
+                  <Clock3 size={16} />
+                  Last updated:{' '}
+                  {formatDate(history.updated_at)}
+                </span>
+
+                <Link
+                  to="/history"
+                  className="history-button outline"
+                >
+                  <ArrowLeft size={17} />
+                  Back to History
+                </Link>
+              </div>
+            </>
           )}
         </main>
       </div>
