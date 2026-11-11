@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cucumber/godog"
 	"github.com/gin-gonic/gin"
@@ -246,10 +247,90 @@ func (f *goldenFeature) existingDataset(count int) error {
 	return nil
 }
 
+func (f *goldenFeature) usedDataset() error {
+	if err := f.existingDataset(2); err != nil {
+		return err
+	}
+
+	stamp := time.Now().UTC()
+
+	row := f.store.rows[goldenFixtureID]
+	row.UsedAt = &stamp
+	f.store.rows[goldenFixtureID] = row
+	f.store.writes = 0
+
+	return nil
+}
+
+func (f *goldenFeature) storedName(want string) error {
+	row, exists := f.store.rows[f.datasetID]
+
+	if !exists {
+		return fmt.Errorf("dataset is not stored")
+	}
+
+	if row.Name != want {
+		return fmt.Errorf(
+			"stored name=%q, want=%q",
+			row.Name,
+			want,
+		)
+	}
+
+	return nil
+}
+
+func (f *goldenFeature) storedItemCount(want int) error {
+	row, exists := f.store.rows[f.datasetID]
+
+	if !exists {
+		return fmt.Errorf("dataset is not stored")
+	}
+
+	if len(row.Items) != want || row.ItemCount != want {
+		return fmt.Errorf(
+			"stored items=%d, item_count=%d, want=%d",
+			len(row.Items),
+			row.ItemCount,
+			want,
+		)
+	}
+
+	return nil
+}
+
+func (f *goldenFeature) datasetRemoved() error {
+	if len(f.store.rows) != 0 {
+		return fmt.Errorf(
+			"dataset is still stored: %d",
+			len(f.store.rows),
+		)
+	}
+
+	return nil
+}
+
+func (f *goldenFeature) datasetUntouched() error {
+	if len(f.store.rows) != 1 {
+		return fmt.Errorf(
+			"stored datasets=%d, want=1",
+			len(f.store.rows),
+		)
+	}
+
+	if f.store.writes != 0 {
+		return fmt.Errorf(
+			"unexpected writes: %d",
+			f.store.writes,
+		)
+	}
+
+	return nil
+}
+
 // ------------------------------------
 // HTTP REQUEST HELPERS
 // ------------------------------------
-
 func (f *goldenFeature) sendRequest(
 	method string,
 	path string,
@@ -320,6 +401,66 @@ func (f *goldenFeature) upload() error {
 	)
 
 	return nil
+}
+
+func (f *goldenFeature) update(withFile bool) error {
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+
+	if err := writer.WriteField(
+		"name", "Golden Dataset Revisi",
+	); err != nil {
+		return err
+	}
+
+	if err := writer.WriteField(
+		"description", "Revisi dataset",
+	); err != nil {
+		return err
+	}
+
+	if withFile {
+		part, err := writer.CreateFormFile(
+			"file", "golden-test.json",
+		)
+		if err != nil {
+			return err
+		}
+
+		if _, err := part.Write(f.rawFile); err != nil {
+			return err
+		}
+	}
+
+	if err := writer.Close(); err != nil {
+		return err
+	}
+
+	f.sendRequest(
+		http.MethodPut,
+		goldenBDDPath+"/"+f.datasetID.String(),
+		&body,
+		writer.FormDataContentType(),
+	)
+
+	return nil
+}
+
+func (f *goldenFeature) updateDataset() error {
+	return f.update(false)
+}
+
+func (f *goldenFeature) updateDatasetWithFile() error {
+	return f.update(true)
+}
+
+func (f *goldenFeature) deleteDataset() {
+	f.sendRequest(
+		http.MethodDelete,
+		goldenBDDPath+"/"+f.datasetID.String(),
+		nil,
+		"",
+	)
 }
 
 func (f *goldenFeature) list() {
@@ -620,6 +761,46 @@ func InitializeGoldenDatasetScenario(
 		func() error {
 			return f.existingDataset(2)
 		},
+	)
+
+	ctx.Step(
+		`^terdapat 1 Golden Dataset yang sudah dipakai evaluasi$`,
+		f.usedDataset,
+	)
+
+	ctx.Step(
+		`^pengguna mengubah Golden Dataset$`,
+		f.updateDataset,
+	)
+
+	ctx.Step(
+		`^pengguna mengubah Golden Dataset dengan file baru$`,
+		f.updateDatasetWithFile,
+	)
+
+	ctx.Step(
+		`^pengguna menghapus Golden Dataset$`,
+		f.deleteDataset,
+	)
+
+	ctx.Step(
+		`^Golden Dataset berubah nama menjadi "([^"]+)"$`,
+		f.storedName,
+	)
+
+	ctx.Step(
+		`^Golden Dataset tersimpan dengan (\d+) item terbaru$`,
+		f.storedItemCount,
+	)
+
+	ctx.Step(
+		`^Golden Dataset sudah tidak tersimpan$`,
+		f.datasetRemoved,
+	)
+
+	ctx.Step(
+		`^Golden Dataset tidak berubah$`,
+		f.datasetUntouched,
 	)
 
 	ctx.Step(

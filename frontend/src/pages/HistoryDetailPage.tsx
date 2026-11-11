@@ -39,20 +39,6 @@ export default function HistoryDetailPage() {
     const controller = new AbortController()
     const scenarioId = id
 
-    setSummary(null)
-    setDetail(null)
-    setLoading(true)
-    setDetailLoading(true)
-    setError('')
-    setDetailError('')
-
-    if (!scenarioId) {
-      setError('Scenario ID tidak ditemukan.')
-      setLoading(false)
-      setDetailLoading(false)
-      return () => controller.abort()
-    }
-
     async function loadScenario() {
       try {
         // Endpoint list tidak memerlukan validator
@@ -115,6 +101,16 @@ export default function HistoryDetailPage() {
     return () => controller.abort()
   }, [id, retry])
 
+  function retryLoad() {
+    setSummary(null)
+    setDetail(null)
+    setLoading(true)
+    setDetailLoading(true)
+    setError('')
+    setDetailError('')
+    setRetry((value) => value + 1)
+  }
+
   const formatDate = (date: string) => {
     const parsed = new Date(date)
 
@@ -168,7 +164,7 @@ export default function HistoryDetailPage() {
 
               <button
                 className="history-detail-button"
-                onClick={() => setRetry((value) => value + 1)}
+                onClick={retryLoad}
               >
                 Try Again
               </button>
@@ -310,9 +306,7 @@ export default function HistoryDetailPage() {
 
                       <button
                         className="history-detail-retry"
-                        onClick={() =>
-                          setRetry((value) => value + 1)
-                        }
+                        onClick={retryLoad}
                       >
                         Try Again
                       </button>

@@ -96,3 +96,48 @@ Fitur: Pengelolaan Golden Dataset
       | operasi |
       | daftar  |
       | detail  |
+
+  Skenario: QA mengubah Golden Dataset yang belum dipakai
+    Dengan pengguna Golden Dataset login sebagai "QA"
+    Dan terdapat 1 Golden Dataset yang sudah tersimpan
+    Ketika pengguna mengubah Golden Dataset
+    Maka status respons Golden Dataset harus 200
+    Dan Golden Dataset berubah nama menjadi "Golden Dataset Revisi"
+    Dan Golden Dataset tersimpan dengan 2 item terbaru
+
+  Skenario: QA mengganti item Golden Dataset dengan file baru
+    Dengan pengguna Golden Dataset login sebagai "QA"
+    Dan terdapat 1 Golden Dataset yang sudah tersimpan
+    Dan file Golden Dataset berisi 1 item valid
+    Dan validator Golden Dataset menyatakan semua Gherkin valid
+    Ketika pengguna mengubah Golden Dataset dengan file baru
+    Maka status respons Golden Dataset harus 200
+    Dan Golden Dataset tersimpan dengan 1 item terbaru
+
+  Skenario: Golden Dataset yang sudah dipakai evaluasi tidak dapat diubah
+    Dengan pengguna Golden Dataset login sebagai "QA"
+    Dan terdapat 1 Golden Dataset yang sudah dipakai evaluasi
+    Ketika pengguna mengubah Golden Dataset
+    Maka status respons Golden Dataset harus 409
+    Dan Golden Dataset tidak berubah
+
+  Skenario: Golden Dataset yang sudah dipakai evaluasi tidak dapat dihapus
+    Dengan pengguna Golden Dataset login sebagai "QA"
+    Dan terdapat 1 Golden Dataset yang sudah dipakai evaluasi
+    Ketika pengguna menghapus Golden Dataset
+    Maka status respons Golden Dataset harus 409
+    Dan Golden Dataset tidak berubah
+
+  Skenario: QA menghapus Golden Dataset yang belum dipakai
+    Dengan pengguna Golden Dataset login sebagai "QA"
+    Dan terdapat 1 Golden Dataset yang sudah tersimpan
+    Ketika pengguna menghapus Golden Dataset
+    Maka status respons Golden Dataset harus 200
+    Dan Golden Dataset sudah tidak tersimpan
+
+  Skenario: System Analyst tidak dapat menghapus Golden Dataset
+    Dengan pengguna Golden Dataset login sebagai "SA"
+    Dan terdapat 1 Golden Dataset yang sudah tersimpan
+    Ketika pengguna menghapus Golden Dataset
+    Maka status respons Golden Dataset harus 403
+    Dan Golden Dataset tidak berubah

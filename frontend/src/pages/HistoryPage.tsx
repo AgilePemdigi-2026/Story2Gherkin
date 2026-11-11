@@ -70,9 +70,6 @@ useEffect(() => {
   useEffect(() => {
     const controller = new AbortController()
 
-    setLoading(true)
-    setError('')
-
     listReviewScenarios(controller.signal)
       .then((data) => {
         if (!controller.signal.aborted) {
@@ -214,7 +211,11 @@ useEffect(() => {
 
                 <button
                   className="history-button"
-                  onClick={() => setRetry((value) => value + 1)}
+                  onClick={() => {
+                    setLoading(true)
+                    setError('')
+                    setRetry((value) => value + 1)
+                  }}
                 >
                   Try Again
                 </button>
