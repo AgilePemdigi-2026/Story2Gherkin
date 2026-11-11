@@ -3,7 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { Mail, LockKeyhole, Eye, EyeOff } from 'lucide-react'
 import { loginUser } from '../services/authApi'
 import { loginDestination, saveAuthSession } from '../services/authSession'
-import logo from '../assets/story2gherkin-logo.svg'
+import AuthHeader from '../components/AuthHeader'
 import authIllustration from '../assets/register-illustration.png'
 import { useLocation, useNavigate } from 'react-router-dom'
 import './RegisterPage.css'
@@ -64,13 +64,7 @@ function LoginPage() {
     <div className="register-page">
 
       {/* HEADER */}
-      <header className="register-header">
-        <img
-          src={logo}
-          alt="Story2Gherkin"
-          className="register-logo"
-        />
-      </header>
+      <AuthHeader />
 
       {/* MAIN LAYOUT */}
       <main className="register-layout">

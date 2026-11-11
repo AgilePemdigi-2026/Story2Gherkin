@@ -22,12 +22,33 @@
 
   border-bottom: 1px solid #f1f5f9;
   background: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
 }
 
 .register-logo {
   height: 42px;
   max-width: 240px;
   object-fit: contain;
+}
+
+/* Clickable logo on authentication pages */
+.register-logo-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.register-logo-link:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 4px;
+}
+
+.register-logo-link img {
+  display: block;
 }
 
 /* Main Layout */
