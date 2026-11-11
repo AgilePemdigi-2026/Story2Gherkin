@@ -36,7 +36,7 @@ jobs:
 
           : "${COOLIFY_DEPLOY_WEBHOOK:?Set the COOLIFY_DEPLOY_WEBHOOK production secret}"
           : "${COOLIFY_TOKEN:?Set the COOLIFY_TOKEN production secret}"
-          response=$(curl --fail --silent --show-error --max-time 30 --proto '=https' \
+          response=$(curl --request POST --fail --silent --show-error --max-time 30 --proto '=https' \
             --header "Authorization: Bearer $COOLIFY_TOKEN" \
             "$COOLIFY_DEPLOY_WEBHOOK")
 
