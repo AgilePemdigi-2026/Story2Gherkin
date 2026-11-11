@@ -14,7 +14,7 @@ import {
   Check
 } from 'lucide-react'
 import { registerUser } from '../services/authApi'
-import logo from '../assets/story2gherkin-logo.svg'
+import AuthHeader from '../components/AuthHeader'
 import registerIllustration from '../assets/register-illustration.png'
 import './RegisterPage.css'
 import { useNavigate } from 'react-router-dom'
@@ -168,13 +168,7 @@ function RegisterPage() {
     <div className="register-page">
 
       {/* HEADER */}
-      <header className="register-header">
-        <img
-          src={logo}
-          alt="Story2Gherkin"
-          className="register-logo"
-        />
-      </header>
+      <AuthHeader />
 
       {/* MAIN LAYOUT */}
       <main className="register-layout">

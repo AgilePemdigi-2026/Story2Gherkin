@@ -26,11 +26,6 @@ function HomePage() {
           {/* LEFT CONTENT */}
           <div className="home-hero-content">
 
-            {/* BADGE */}
-            <div className="home-hero-badge">
-              Generate and evaluate your Gherkin scenarios
-            </div>
-
             {/* HEADING */}
             <h1 className="home-hero-title">
               Build &amp; Evaluate

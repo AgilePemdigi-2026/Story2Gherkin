@@ -1,0 +1,258 @@
+
+.history-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 25px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.history-detail-back:hover {
+  color: #2563eb;
+}
+
+.history-detail-card {
+  padding: 32px;
+  background: #ffffff;
+  border: 1px solid #edf2f7;
+  border-radius: 24px;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04);
+}
+
+.history-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.history-detail-header h2 {
+  margin: 4px 0 0;
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.history-detail-code {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.history-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 17px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.history-detail-status {
+  padding: 7px 15px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.history-detail-status.valid {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.history-detail-status.invalid {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.history-detail-divider {
+  height: 1px;
+  margin: 28px 0;
+  background: #e2e8f0;
+}
+
+.history-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.history-detail-section h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.history-detail-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #2563eb;
+}
+
+.history-detail-field h4 {
+  margin: 0 0 9px;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.history-detail-value {
+  padding: 17px 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.history-detail-value p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.history-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.history-detail-tags span {
+  padding: 8px 12px;
+  background: #eff6ff;
+  border-radius: 9px;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.history-detail-gherkin {
+  margin: 0;
+  padding: 23px;
+  max-height: 440px;
+  overflow: auto;
+  background: #f8fafc;
+  border: 1px solid #dbe4f2;
+  border-radius: 15px;
+  color: #334155;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.85;
+  white-space: pre;
+}
+
+.history-detail-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 14px;
+  color: #9a3412;
+}
+
+.history-detail-alert svg {
+  flex-shrink: 0;
+}
+
+.history-detail-alert p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.history-detail-retry {
+  padding: 8px 15px;
+  background: white;
+  border: 1px solid #fdba74;
+  border-radius: 9px;
+  color: #9a3412;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.history-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 30px;
+}
+
+.history-detail-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.history-detail-button:hover {
+  background: #1d4ed8;
+}
+
+.history-detail-button:focus-visible,
+.history-detail-back:focus-visible,
+.history-detail-retry:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+.history-detail-state {
+  display: flex;
+  min-height: 250px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.history-detail-state h2,
+.history-detail-state p {
+  margin: 0;
+}
+
+.history-detail-spinner {
+  color: #2563eb;
+  animation: history-detail-spin 1s linear infinite;
+}
+
+@keyframes history-detail-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 700px) {
+  .history-detail-card {
+    padding: 20px;
+  }
+
+  .history-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .history-detail-actions,
+  .history-detail-button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .history-detail-spinner {
+    animation: none;
+  }
+}
