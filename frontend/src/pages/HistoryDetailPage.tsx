@@ -59,14 +59,6 @@ export default function HistoryDetailPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    const scenarioId = id
-
-    async function loadScenario() {
-      try {
-        // Endpoint list tidak memerlukan validator
-        const scenarios = await listReviewScenarios(
-          controller.signal
-        )
 
     async function loadDetail() {
       setLoading(true)
@@ -108,18 +100,9 @@ export default function HistoryDetailPage() {
     return () => controller.abort()
   }, [id, retryCount])
 
-  function retryLoad() {
-    setSummary(null)
-    setDetail(null)
-    setLoading(true)
-    setDetailLoading(true)
-    setError('')
-    setDetailError('')
-    setRetry((value) => value + 1)
+  const retryLoadDetail = () => {
+    setRetryCount((current) => current + 1)
   }
-
-  const formatDate = (date: string) => {
-    const parsed = new Date(date)
 
   const status = history?.request_status.toUpperCase() ?? ''
 
@@ -182,16 +165,53 @@ export default function HistoryDetailPage() {
               className="history-panel history-state"
               role="alert"
             >
-              <AlertCircle size={36} />
-              <h2>Unable to load scenario</h2>
-              <p>{error}</p>
+              <AlertCircle
+                size={38}
+                color="#dc2626"
+              />
 
-              <button
-                className="history-detail-button"
-                onClick={retryLoad}
-              >
-                Try Again
-              </button>
+              <h3>
+                {error instanceof HistoryApiError &&
+                error.status === 404
+                  ? 'History not found'
+                  : error instanceof HistoryApiError &&
+                      error.status === 403
+                    ? 'Access denied'
+                    : 'Unable to load history'}
+              </h3>
+
+              <p>{error.message}</p>
+
+              <div className="history-detail-actions">
+                <Link
+                  to="/history"
+                  className="history-button outline"
+                >
+                  <ArrowLeft size={17} />
+                  Back to History
+                </Link>
+
+                {error instanceof HistoryApiError &&
+                error.status === 401 ? (
+                  <Link
+                    to="/login"
+                    state={{ from: `/history/${id}` }}
+                    className="history-button"
+                  >
+                    Login Again
+                    <ArrowRight size={17} />
+                  </Link>
+                ) : !(error instanceof HistoryApiError &&
+                    error.status === 403) && (
+                  <button
+                    type="button"
+                    className="history-button"
+                    onClick={retryLoadDetail}
+                  >
+                    Try Again
+                  </button>
+                )}
+              </div>
             </section>
           )}
 
@@ -375,13 +395,6 @@ export default function HistoryDetailPage() {
                       <p>
                         The error recorded during generation.
                       </p>
-
-                      <button
-                        className="history-detail-retry"
-                        onClick={retryLoad}
-                      >
-                        Try Again
-                      </button>
                     </div>
                   </div>
 

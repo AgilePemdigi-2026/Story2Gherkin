@@ -78,8 +78,33 @@ export default function HistoryPage() {
   useEffect(() => {
     const controller = new AbortController()
 
-    listReviewScenarios(controller.signal)
-      .then((data) => {
+    async function loadHistory() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        // Fetch first page
+        const first = await listGenerationHistory(
+          1,
+          100,
+          controller.signal
+        )
+
+        const records = [...first.history]
+
+        // Fetch remaining pages
+        for (let page = 2; page <= first.total_pages; page++) {
+          if (controller.signal.aborted) return
+
+          const result = await listGenerationHistory(
+            page,
+            100,
+            controller.signal
+          )
+
+          records.push(...result.history)
+        }
+
         if (!controller.signal.aborted) {
           setHistories(records)
         }
@@ -294,11 +319,7 @@ export default function HistoryPage() {
                 <button
                   type="button"
                   className="history-button"
-                  onClick={() => {
-                    setLoading(true)
-                    setError('')
-                    setRetry((value) => value + 1)
-                  }}
+                  onClick={retryLoadHistory}
                 >
                   Try Again
                 </button>
