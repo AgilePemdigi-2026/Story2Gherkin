@@ -36,21 +36,122 @@ func InitDatabase(injector *do.Injector) {
 func RegisterDependencies(injector *do.Injector) {
 	InitDatabase(injector)
 
-	do.ProvideNamed(injector, constants.JWTService, func(i *do.Injector) (authService.JWTService, error) {
-		return authService.NewJWTService(), nil
-	})
+	// JWT Service
+	do.ProvideNamed(
+		injector,
+		constants.JWTService,
+		func(i *do.Injector) (authService.JWTService, error) {
+			return authService.NewJWTService(), nil
+		},
+	)
 
+	// Shared dependencies
 	db := do.MustInvokeNamed[*gorm.DB](injector, constants.DB)
-	jwtService := do.MustInvokeNamed[authService.JWTService](injector, constants.JWTService)
+	jwtService := do.MustInvokeNamed[authService.JWTService](
+		injector,
+		constants.JWTService,
+	)
 
 	userRepository := userRepo.NewUserRepository(db)
 	refreshTokenRepository := authRepo.NewRefreshTokenRepository(db)
 
-	authService := authService.NewAuthService(userRepository, jwtService, db, refreshTokenRepository)
+	// Authentication
+	authSvc := authService.NewAuthService(
+		userRepository,
+		jwtService,
+		db,
+		refreshTokenRepository,
+	)
 
 	do.Provide(
-		injector, func(i *do.Injector) (authHandler.AuthHandler, error) {
-			return authHandler.NewAuthController(i, authService), nil
+		injector,
+		func(i *do.Injector) (authHandler.AuthHandler, error) {
+			return authHandler.NewAuthController(i, authSvc), nil
+		},
+	)
+
+	// Scenario Generation
+	do.Provide(
+		injector,
+		func(*do.Injector) (scenHandler.ScenarioHandler, error) {
+			baseURL := os.Getenv("AI_SERVICE_URL")
+			if baseURL == "" {
+				baseURL = "http://127.0.0.1:8001"
+			}
+
+			client, err := scenService.NewLLMClient(
+				baseURL,
+				os.Getenv("AI_SERVICE_KEY"),
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			svc := scenService.NewScenarioService(
+				client,
+				scenRepo.NewGenerationRequestRepository(db),
+				scenRepo.NewGherkinScenarioRepository(db),
+			)
+
+			return scenHandler.NewScenarioHandler(svc), nil
+		},
+	)
+
+	// Review Scenario
+	do.Provide(
+		injector,
+		func(*do.Injector) (*scenHandler.ReviewHandler, error) {
+			baseURL := os.Getenv("AI_SERVICE_URL")
+			if baseURL == "" {
+				baseURL = "http://127.0.0.1:8001"
+			}
+
+			client, err := scenService.NewLLMClient(
+				baseURL,
+				os.Getenv("AI_SERVICE_KEY"),
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			svc := scenService.NewReviewService(
+				client,
+				userRepository,
+				scenRepo.NewReviewRepository(db),
+			)
+
+			return scenHandler.NewReviewHandler(svc), nil
+		},
+	)
+
+	// Golden Dataset
+	do.Provide(
+		injector,
+		func(*do.Injector) (*scenHandler.GoldenDatasetHandler, error) {
+			baseURL := os.Getenv("AI_SERVICE_URL")
+			if baseURL == "" {
+				baseURL = "http://127.0.0.1:8001"
+			}
+
+			validator, err := scenService.NewLLMClient(
+				baseURL,
+				os.Getenv("AI_SERVICE_KEY"),
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			goldenRepo := scenRepo.NewGoldenDatasetRepository(db)
+
+			goldenService := scenService.NewGoldenDatasetService(
+				goldenRepo,
+				userRepository,
+				validator,
+			)
+
+			return scenHandler.NewGoldenDatasetHandler(
+				goldenService,
+			), nil
 		},
 	)
 

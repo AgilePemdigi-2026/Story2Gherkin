@@ -10,6 +10,7 @@ import (
 )
 
 func RegisterRoutes(server *gin.RouterGroup, injector *do.Injector) {
+	// Existing Scenario Handlers
 	h := do.MustInvoke[handler.ScenarioHandler](injector)
 	review := do.MustInvoke[*handler.ReviewHandler](injector)
 	golden := do.MustInvoke[*handler.GoldenDatasetHandler](injector)
