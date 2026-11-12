@@ -155,21 +155,50 @@ func RegisterDependencies(injector *do.Injector) {
 		},
 	)
 
-	// Generation History
-	// Reads PostgreSQL directly without calling AI Service.
-	do.Provide(
-		injector,
-		func(*do.Injector) (*scenHandler.HistoryHandler, error) {
-			historyRepo := scenRepo.NewHistoryRepository(db)
+	do.Provide(injector, func(*do.Injector) (scenHandler.ScenarioHandler, error) {
+		baseURL := os.Getenv("AI_SERVICE_URL")
+		if baseURL == "" {
+			baseURL = "http://127.0.0.1:8001"
+		}
+		client, err := scenService.NewLLMClient(baseURL, os.Getenv("AI_SERVICE_KEY"))
+		if err != nil {
+			return nil, err
+		}
+		svc := scenService.NewScenarioService(
+			client,
+			scenRepo.NewGenerationRequestRepository(db),
+			scenRepo.NewGherkinScenarioRepository(db),
+		)
+		return scenHandler.NewScenarioHandler(svc), nil
+	})
 
-			historyService := scenService.NewHistoryService(
-				userRepository,
-				historyRepo,
-			)
+	do.Provide(injector, func(*do.Injector) (*scenHandler.ReviewHandler, error) {
+		baseURL := os.Getenv("AI_SERVICE_URL")
+		if baseURL == "" {
+			baseURL = "http://127.0.0.1:8001"
+		}
+		client, err := scenService.NewLLMClient(baseURL, os.Getenv("AI_SERVICE_KEY"))
+		if err != nil {
+			return nil, err
+		}
+		svc := scenService.NewReviewService(client, userRepository, scenRepo.NewReviewRepository(db))
+		return scenHandler.NewReviewHandler(svc), nil
+	})
 
-			return scenHandler.NewHistoryHandler(
-				historyService,
-			), nil
-		},
-	)
+	do.Provide(injector, func(*do.Injector) (*scenHandler.GoldenDatasetHandler, error) {
+		baseURL := os.Getenv("AI_SERVICE_URL")
+		if baseURL == "" {
+			baseURL = "http://127.0.0.1:8001"
+		}
+		client, err := scenService.NewLLMClient(baseURL, os.Getenv("AI_SERVICE_KEY"))
+		if err != nil {
+			return nil, err
+		}
+		svc := scenService.NewGoldenDatasetService(
+			scenRepo.NewGoldenDatasetRepository(db),
+			userRepository,
+			client,
+		)
+		return scenHandler.NewGoldenDatasetHandler(svc), nil
+	})
 }

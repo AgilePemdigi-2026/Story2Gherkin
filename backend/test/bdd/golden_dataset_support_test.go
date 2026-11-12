@@ -12,8 +12,10 @@ import (
 	"github.com/story2gherkin/database/entities"
 	"github.com/story2gherkin/middlewares"
 	authService "github.com/story2gherkin/modules/auth/service"
+	"github.com/story2gherkin/modules/scenario"
 	"github.com/story2gherkin/modules/scenario/dto"
 	"github.com/story2gherkin/modules/scenario/handler"
+	"github.com/story2gherkin/modules/scenario/repository"
 	"github.com/story2gherkin/modules/scenario/service"
 	"gorm.io/gorm"
 )
@@ -196,6 +198,98 @@ func (s *goldenBDDStore) CreateWithItems(
 	return nil
 }
 
+// Simulate updating a dataset and optionally replacing its items.
+func (s *goldenBDDStore) UpdateWithItems(
+	ctx context.Context,
+	id uuid.UUID,
+	name string,
+	description *string,
+	items []entities.GoldenDatasetItem,
+) error {
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	row, exists := s.rows[id]
+
+	if !exists {
+		return gorm.ErrRecordNotFound
+	}
+
+	if row.UsedAt != nil {
+		return repository.ErrGoldenDatasetLocked
+	}
+
+	stamp := time.Now().UTC()
+
+	row.Name = name
+	row.Description = description
+	row.UpdatedAt = stamp
+
+	if items != nil {
+		if len(items) == 0 {
+			return errors.New("dataset must contain at least one item")
+		}
+
+		stored := make(
+			[]entities.GoldenDatasetItem,
+			len(items),
+		)
+
+		for i, item := range items {
+			if item.ID == uuid.Nil {
+				item.ID = uuid.New()
+			}
+
+			item.GoldenDatasetID = id
+			item.CreatedAt = stamp
+			item.UpdatedAt = stamp
+
+			item.GUIElements = append(
+				[]string(nil),
+				item.GUIElements...,
+			)
+
+			stored[i] = item
+		}
+
+		row.Items = stored
+		row.ItemCount = len(stored)
+	}
+
+	s.rows[id] = row
+	s.writes++
+
+	return nil
+}
+
+// Simulate deleting a dataset and its items.
+func (s *goldenBDDStore) Delete(
+	ctx context.Context,
+	id uuid.UUID,
+) error {
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	row, exists := s.rows[id]
+
+	if !exists {
+		return gorm.ErrRecordNotFound
+	}
+
+	if row.UsedAt != nil {
+		return repository.ErrGoldenDatasetLocked
+	}
+
+	delete(s.rows, id)
+	s.writes++
+
+	return nil
+}
+
 // Simulate searching and paginating datasets.
 func (s *goldenBDDStore) List(
 	ctx context.Context,
@@ -318,9 +412,7 @@ func goldenBDDRouter(
 		middlewares.Authenticate(jwt),
 	)
 
-	routes.POST("", h.Upload)
-	routes.GET("", h.List)
-	routes.GET("/:id", h.Detail)
+	scenario.RegisterGoldenDatasetRoutes(routes, h)
 
 	return router
 }

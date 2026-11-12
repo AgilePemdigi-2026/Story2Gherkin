@@ -13,6 +13,12 @@ type GoldenDatasetUploadForm struct {
 	File        *multipart.FileHeader `form:"file" binding:"required"`
 }
 
+type GoldenDatasetUpdateForm struct {
+	Name        string                `form:"name" binding:"required,max=200"`
+	Description string                `form:"description"`
+	File        *multipart.FileHeader `form:"file"`
+}
+
 // GoldenDatasetFile represents the JSON file
 // uploaded by QA.
 type GoldenDatasetFile struct {

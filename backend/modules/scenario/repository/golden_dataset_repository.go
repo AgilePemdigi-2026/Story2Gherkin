@@ -6,7 +6,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/story2gherkin/database/entities"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"strings"
+)
+
+var ErrGoldenDatasetLocked = errors.New(
+	"golden dataset has already been used in an evaluation",
 )
 
 // GoldenDatasetRepository defines database operations
@@ -16,6 +21,19 @@ type GoldenDatasetRepository interface {
 		ctx context.Context,
 		dataset *entities.GoldenDataset,
 		items []entities.GoldenDatasetItem,
+	) error
+
+	UpdateWithItems(
+		ctx context.Context,
+		id uuid.UUID,
+		name string,
+		description *string,
+		items []entities.GoldenDatasetItem,
+	) error
+
+	Delete(
+		ctx context.Context,
+		id uuid.UUID,
 	) error
 
 	List(
@@ -80,6 +98,100 @@ func (r *goldenDatasetRepository) CreateWithItems(
 		}
 
 		return nil
+	})
+}
+
+func lockGoldenDataset(
+	tx *gorm.DB,
+	id uuid.UUID,
+) (*entities.GoldenDataset, error) {
+
+	var dataset entities.GoldenDataset
+
+	if err := tx.Clauses(
+		clause.Locking{Strength: "UPDATE"},
+	).First(&dataset, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	if dataset.UsedAt != nil {
+		return nil, ErrGoldenDatasetLocked
+	}
+
+	return &dataset, nil
+}
+
+func (r *goldenDatasetRepository) UpdateWithItems(
+	ctx context.Context,
+	id uuid.UUID,
+	name string,
+	description *string,
+	items []entities.GoldenDatasetItem,
+) error {
+
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if _, err := lockGoldenDataset(tx, id); err != nil {
+			return err
+		}
+
+		updates := map[string]any{
+			"name":        name,
+			"description": description,
+		}
+
+		if items != nil {
+			if len(items) == 0 {
+				return errors.New(
+					"dataset must contain at least one item",
+				)
+			}
+
+			updates["item_count"] = len(items)
+		}
+
+		if err := tx.Model(&entities.GoldenDataset{}).
+			Where("id = ?", id).
+			Updates(updates).Error; err != nil {
+
+			return err
+		}
+
+		if items == nil {
+			return nil
+		}
+
+		if err := tx.Where("golden_dataset_id = ?", id).
+			Delete(&entities.GoldenDatasetItem{}).Error; err != nil {
+
+			return err
+		}
+
+		for i := range items {
+			items[i].GoldenDatasetID = id
+		}
+
+		return tx.Create(&items).Error
+	})
+}
+
+func (r *goldenDatasetRepository) Delete(
+	ctx context.Context,
+	id uuid.UUID,
+) error {
+
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if _, err := lockGoldenDataset(tx, id); err != nil {
+			return err
+		}
+
+		if err := tx.Where("golden_dataset_id = ?", id).
+			Delete(&entities.GoldenDatasetItem{}).Error; err != nil {
+
+			return err
+		}
+
+		return tx.Where("id = ?", id).
+			Delete(&entities.GoldenDataset{}).Error
 	})
 }
 
