@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Database,
+  Download,
   Eye,
   LoaderCircle,
   Pencil,
@@ -269,6 +270,71 @@ export default function GoldenDatasetPage() {
   )
 }
 
+interface GoldenItemInput {
+  item_title: string
+  user_story_text: string
+  gui_elements: string[]
+  free_scenario_text: string
+  expected_gherkin: string
+}
+
+type ItemDraft = {
+  item_title: string
+  user_story_text: string
+  gui_elements: string
+  free_scenario_text: string
+  expected_gherkin: string
+}
+
+const MAX_FILE_BYTES = 5 * 1024 * 1024
+
+const emptyDraft: ItemDraft = {
+  item_title: '',
+  user_story_text: '',
+  gui_elements: '',
+  free_scenario_text: '',
+  expected_gherkin: '',
+}
+
+const templateItem: GoldenItemInput = {
+  item_title: 'Login berhasil',
+  user_story_text: 'Sebagai pengguna, saya ingin masuk dengan email dan password agar dapat mengakses dashboard.',
+  gui_elements: ['Kolom Email', 'Kolom Password', 'Tombol Login'],
+  free_scenario_text: 'Pengguna mengisi email dan password yang valid lalu menekan tombol Login.',
+  expected_gherkin: `Feature: Login
+  Scenario: Login berhasil dengan kredensial valid
+    Given pengguna berada di halaman login
+    When pengguna mengisi kolom Email dengan "user@example.com"
+    And pengguna mengisi kolom Password dengan "rahasia123"
+    And pengguna menekan tombol Login
+    Then pengguna diarahkan ke halaman dashboard`,
+}
+
+function parseElements(value: string) {
+  return value
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
+function itemsFile(items: GoldenItemInput[]) {
+  return new File([JSON.stringify({ items }, null, 2)], 'golden-dataset.json', {
+    type: 'application/json',
+  })
+}
+
+function downloadTemplate() {
+  const blob = new Blob([JSON.stringify({ items: [templateItem] }, null, 2)], {
+    type: 'application/json',
+  })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'golden-dataset-template.json'
+  link.click()
+  URL.revokeObjectURL(url)
+}
+
 function DatasetFormDialog({
   dataset,
   onClose,
@@ -282,6 +348,9 @@ function DatasetFormDialog({
   const [name, setName] = useState(dataset?.name ?? '')
   const [description, setDescription] = useState(dataset?.description ?? '')
   const [file, setFile] = useState<File | null>(null)
+  const [mode, setMode] = useState<'form' | 'file'>('form')
+  const [draft, setDraft] = useState<ItemDraft>(emptyDraft)
+  const [items, setItems] = useState<GoldenItemInput[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const editing = Boolean(dataset)
@@ -290,19 +359,62 @@ function DatasetFormDialog({
     dialog.current?.showModal()
   }, [])
 
+  function updateDraft(field: keyof ItemDraft, value: string) {
+    setDraft((current) => ({ ...current, [field]: value }))
+  }
+
+  function addItem() {
+    const item: GoldenItemInput = {
+      item_title: draft.item_title.trim(),
+      user_story_text: draft.user_story_text.trim(),
+      gui_elements: parseElements(draft.gui_elements),
+      free_scenario_text: draft.free_scenario_text.trim(),
+      expected_gherkin: draft.expected_gherkin.trim(),
+    }
+
+    if (
+      !item.item_title ||
+      !item.user_story_text ||
+      !item.free_scenario_text ||
+      !item.expected_gherkin ||
+      item.gui_elements.length === 0
+    ) {
+      return setError('Lengkapi semua field item, termasuk minimal satu GUI element.')
+    }
+
+    const duplicate = items.some(
+      (existing) => existing.item_title.toLowerCase() === item.item_title.toLowerCase(),
+    )
+    if (duplicate) return setError(`Item "${item.item_title}" sudah ada di daftar.`)
+
+    setItems((current) => [...current, item])
+    setDraft(emptyDraft)
+    setError('')
+  }
+
+  function removeItem(index: number) {
+    setItems((current) => current.filter((_, position) => position !== index))
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!name.trim()) return setError('Nama dataset wajib diisi.')
-    if (!editing && !file) return setError('Pilih file JSON terlebih dahulu.')
-    if (file && file.size > 5 * 1024 * 1024) return setError('Ukuran file melebihi batas 5 MB.')
+
+    let upload = file
+    if (!editing && mode === 'form') {
+      if (items.length === 0) return setError('Tambahkan minimal satu item terlebih dahulu.')
+      upload = itemsFile(items)
+    }
+    if (!editing && !upload) return setError('Pilih file JSON terlebih dahulu.')
+    if (upload && upload.size > MAX_FILE_BYTES) return setError('Ukuran file melebihi batas 5 MB.')
 
     setSubmitting(true)
     setError('')
     try {
       if (dataset) {
-        await updateGoldenDataset(dataset.id, { name: name.trim(), description, file })
+        await updateGoldenDataset(dataset.id, { name: name.trim(), description, file: upload })
       } else {
-        await uploadGoldenDataset({ name: name.trim(), description, file: file as File })
+        await uploadGoldenDataset({ name: name.trim(), description, file: upload as File })
       }
       onSaved()
     } catch (reason) {
@@ -355,21 +467,152 @@ function DatasetFormDialog({
           />
         </label>
 
-        <label className="golden-field">
-          <span>File JSON {editing ? '(opsional)' : ''}</span>
-          <input
-            type="file"
-            accept=".json,application/json"
-            onChange={(event) => setFile(event.target.files?.[0] || null)}
-            required={!editing}
-            disabled={submitting}
-          />
-          <small>
-            {editing
-              ? 'Kosongkan bila hanya mengubah nama atau deskripsi. Mengunggah file baru akan mengganti seluruh item.'
-              : 'Maksimal 5 MB. Setiap item divalidasi terhadap struktur Gherkin dan GUI Elements.'}
-          </small>
-        </label>
+        {!editing && (
+          <div className="golden-mode-toggle" role="group" aria-label="Cara mengisi dataset">
+            <button
+              type="button"
+              className={mode === 'form' ? 'active' : ''}
+              aria-pressed={mode === 'form'}
+              onClick={() => setMode('form')}
+              disabled={submitting}
+            >
+              Isi form
+            </button>
+            <button
+              type="button"
+              className={mode === 'file' ? 'active' : ''}
+              aria-pressed={mode === 'file'}
+              onClick={() => setMode('file')}
+              disabled={submitting}
+            >
+              Unggah file JSON
+            </button>
+          </div>
+        )}
+
+        {!editing && mode === 'form' ? (
+          <>
+            <div className="golden-item-draft">
+              <label className="golden-field">
+                <span>Judul item</span>
+                <input
+                  type="text"
+                  value={draft.item_title}
+                  onChange={(event) => updateDraft('item_title', event.target.value)}
+                  maxLength={200}
+                  disabled={submitting}
+                  placeholder="Contoh: Login berhasil"
+                />
+              </label>
+
+              <label className="golden-field">
+                <span>User story</span>
+                <textarea
+                  value={draft.user_story_text}
+                  onChange={(event) => updateDraft('user_story_text', event.target.value)}
+                  rows={2}
+                  disabled={submitting}
+                  placeholder="Sebagai pengguna, saya ingin … agar …"
+                />
+              </label>
+
+              <label className="golden-field">
+                <span>GUI elements</span>
+                <input
+                  type="text"
+                  value={draft.gui_elements}
+                  onChange={(event) => updateDraft('gui_elements', event.target.value)}
+                  disabled={submitting}
+                  placeholder="Kolom Email, Tombol Login"
+                />
+                <small>Pisahkan tiap elemen dengan koma.</small>
+              </label>
+
+              <label className="golden-field">
+                <span>Skenario bebas</span>
+                <textarea
+                  value={draft.free_scenario_text}
+                  onChange={(event) => updateDraft('free_scenario_text', event.target.value)}
+                  rows={2}
+                  disabled={submitting}
+                  placeholder="Alur singkat yang diuji"
+                />
+              </label>
+
+              <label className="golden-field">
+                <span>Gherkin yang diharapkan</span>
+                <textarea
+                  value={draft.expected_gherkin}
+                  onChange={(event) => updateDraft('expected_gherkin', event.target.value)}
+                  rows={5}
+                  disabled={submitting}
+                  placeholder={'Feature: Login\n  Scenario: Login berhasil'}
+                />
+              </label>
+
+              <button
+                type="button"
+                className="golden-button secondary golden-add-item"
+                onClick={addItem}
+                disabled={submitting}
+              >
+                <Plus size={16} /> Tambah item
+              </button>
+            </div>
+
+            {items.length > 0 && (
+              <ul className="golden-item-list">
+                {items.map((item, index) => (
+                  <li key={item.item_title}>
+                    <span>{item.item_title}</span>
+                    <button
+                      type="button"
+                      className="golden-icon-button"
+                      onClick={() => removeItem(index)}
+                      disabled={submitting}
+                      aria-label={`Hapus ${item.item_title}`}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <small className="golden-item-count">
+              {items.length} item siap diunggah. Minimal 1 item.
+            </small>
+          </>
+        ) : (
+          <>
+            <label className="golden-field">
+              <span>File JSON {editing ? '(opsional)' : ''}</span>
+              <input
+                type="file"
+                accept=".json,application/json"
+                onChange={(event) => setFile(event.target.files?.[0] || null)}
+                required={!editing}
+                disabled={submitting}
+              />
+              <small>
+                {editing
+                  ? 'Kosongkan bila hanya mengubah nama atau deskripsi. Mengunggah file baru akan mengganti seluruh item.'
+                  : 'Maksimal 5 MB. Setiap item divalidasi terhadap struktur Gherkin dan GUI Elements.'}
+              </small>
+            </label>
+
+            {!editing && (
+              <button
+                type="button"
+                className="golden-template-link"
+                onClick={downloadTemplate}
+                disabled={submitting}
+              >
+                <Download size={15} /> Unduh template JSON
+              </button>
+            )}
+          </>
+        )}
 
         {error && (
           <p className="golden-form-error" role="alert">
