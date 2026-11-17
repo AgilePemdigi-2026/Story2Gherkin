@@ -1,0 +1,352 @@
+.evaluation-report {
+  --report-muted: #64748b;
+  --report-border: #e7edf5;
+  --report-blue: #2563eb;
+}
+
+.evaluation-report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(275px, 0.48fr);
+  align-items: start;
+  gap: 24px;
+}
+
+.evaluation-report-main {
+  display: grid;
+  min-width: 0;
+  gap: 22px;
+}
+
+.evaluation-report-back,
+.evaluation-report-pagination a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+}
+
+.evaluation-report-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.evaluation-report-heading .generate-page-heading {
+  margin: 0;
+}
+
+.evaluation-report-download {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  background: var(--report-blue);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.evaluation-report-download:hover:enabled {
+  background: #1d4ed8;
+}
+
+.evaluation-report-download:disabled {
+  color: #475569;
+  background: #e2e8f0;
+  cursor: default;
+}
+
+.evaluation-report-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+
+.evaluation-report-card {
+  min-width: 0;
+  padding: clamp(14px, 1.6vw, 24px);
+  border: 1px solid var(--report-border);
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgb(15 23 42 / 4%);
+}
+
+.evaluation-report-card h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+}
+
+.evaluation-report-card h3 {
+  margin: 20px 0 10px;
+  font-size: 14px;
+}
+
+.evaluation-report-card p,
+.evaluation-report-summary dt,
+.evaluation-report-caption {
+  color: var(--report-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.evaluation-report-summary dt {
+  margin-bottom: 10px;
+  font-weight: 650;
+}
+
+.evaluation-report-summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.evaluation-report-summary .evaluation-report-number {
+  font-size: 26px;
+  line-height: 1.05;
+}
+
+.evaluation-report-summary .evaluation-report-caption {
+  margin-top: 5px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.evaluation-report-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.evaluation-report-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.evaluation-report-table :is(th, td) {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--report-border);
+}
+
+.evaluation-report-table thead th {
+  color: var(--report-muted);
+  font-weight: 700;
+}
+
+.evaluation-report-table tbody th {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.evaluation-report-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.evaluation-report-cases {
+  min-width: 435px;
+}
+
+.evaluation-report-table .selected {
+  background: #f4f8ff;
+}
+
+.evaluation-report :is(a, button:not(.evaluation-report-download)) {
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.evaluation-report button:not(.evaluation-report-download) {
+  min-height: 32px;
+  padding: 3px 6px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.evaluation-report :is(a, button:not(.evaluation-report-download)):hover {
+  text-decoration: underline;
+}
+
+.evaluation-report :focus-visible {
+  outline: 2px solid var(--report-blue);
+  outline-offset: 2px;
+}
+
+.evaluation-report-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  color: var(--report-muted);
+  font-size: 13px;
+}
+
+.evaluation-report-case-detail {
+  scroll-margin-top: 96px;
+}
+
+.evaluation-report-card .evaluation-report-case-name {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.evaluation-report-case-detail pre {
+  max-height: 19rem;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  border: 1px solid #e4ecf9;
+  border-radius: 14px;
+  background: #f6f9fd;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.evaluation-report-case-detail :is(.review-code-feature, .review-code-scenario) {
+  color: #1d4ed8;
+}
+
+.evaluation-report-case-detail .review-code-step {
+  color: #047857;
+}
+
+.evaluation-report-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.evaluation-report-status {
+  color: var(--report-muted);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.evaluation-report .evaluation-report-positive,
+.evaluation-report-status.pass {
+  color: #047857;
+}
+
+.evaluation-report-status.warn {
+  color: #92400e;
+}
+
+.evaluation-report-status.fail {
+  color: #be123c;
+}
+
+.evaluation-report-badges .evaluation-report-status {
+  flex: 1 0 auto;
+  padding: 8px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  text-align: center;
+}
+
+.evaluation-report-badges .pass { background: #ecfdf5; }
+.evaluation-report-badges .warn { background: #fffbeb; }
+.evaluation-report-badges .fail { background: #fff1f2; }
+
+.evaluation-report-coverage {
+  margin-top: 10px;
+  color: #1d4ed8;
+  font-size: 13px;
+}
+
+.evaluation-report-coverage.rule {
+  color: #047857;
+}
+
+.evaluation-report-coverage > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.evaluation-report-coverage span {
+  color: var(--report-muted);
+  font-weight: 600;
+}
+
+.evaluation-report-coverage progress {
+  display: block;
+  width: 100%;
+  height: 8px;
+  margin-top: 6px;
+  appearance: none;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: #e9eff6;
+  color: inherit;
+}
+
+.evaluation-report-coverage progress::-webkit-progress-bar {
+  background: #e9eff6;
+}
+
+.evaluation-report-coverage progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.evaluation-report-coverage progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.evaluation-report-note,
+.evaluation-report-error {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 13px;
+}
+
+.evaluation-report-error {
+  border-color: #fecdd3;
+  background: #fff1f2;
+  color: #9f1239;
+}
+
+@media (max-width: 1150px) {
+  .evaluation-report-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .evaluation-report-main,
+  .evaluation-report-grid { gap: 16px; }
+
+  .evaluation-report-heading { flex-wrap: wrap; }
+  .evaluation-report-summary { grid-template-columns: minmax(0, 1fr); }
+  .evaluation-report-summary dt { margin-bottom: 4px; }
+  .evaluation-report-table th,
+  .evaluation-report-table td { padding-inline: 6px; }
+}

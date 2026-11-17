@@ -90,6 +90,7 @@ export function roleHome(role: UserRole) {
 export function loginDestination(from: unknown, role: UserRole) {
   if (typeof from !== 'string' || !from.startsWith('/') || from.startsWith('//') || from.includes('\\')) return roleHome(role)
   const path = from.split(/[?#]/)[0]
+  if (role === 'qa' && /^\/evaluation\/reports(?:\/[\w-]+)?\/?$/.test(path)) return from
   const allowed = ['/about', '/documentation', ...(role === 'system_analyst' ? ['/generate', '/review'] : ['/evaluation'])]
   return allowed.includes(path) ? from : roleHome(role)
 }

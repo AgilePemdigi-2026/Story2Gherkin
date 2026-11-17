@@ -15,9 +15,8 @@ export default function EvaluationPage() {
           <div className="generate-page-heading"><h1>Evaluation</h1><p>Ruang kerja Quality Assurance untuk mengevaluasi kualitas skenario Gherkin.</p></div>
           <section className="documentation-card" aria-labelledby="evaluation-status-title">
             <FileCheck2 className="documentation-icon" size={32} />
-            <h2 id="evaluation-status-title">Fitur evaluasi sedang dikembangkan</h2>
-            <span className="documentation-status">Belum tersedia</span>
-            <p>Golden Dataset, Run Evaluation, dan Evaluation Report akan tersedia setelah pengembangannya selesai. Saat ini Anda dapat membaca panduan penggunaan Story2Gherkin.</p>
+            <h2 id="evaluation-status-title">Ruang Kerja Evaluasi</h2>
+            <p>Kelola skenario acuan melalui menu Golden Dataset dan buka Evaluation Report untuk melihat hasil yang tersedia.</p>
             <Link to="/documentation#qa" className="documentation-action">Baca Panduan QA <ArrowRight size={18} /></Link>
           </section>
         </main>
