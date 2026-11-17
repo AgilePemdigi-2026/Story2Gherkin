@@ -11,6 +11,8 @@ func Migrate(db *gorm.DB) error {
 		&entities.RefreshToken{},
 		&entities.GenerationRequest{},
 		&entities.GherkinScenario{},
+		&entities.GoldenDataset{},
+		&entities.GoldenDatasetItem{},
 	)
 
 	if err != nil {

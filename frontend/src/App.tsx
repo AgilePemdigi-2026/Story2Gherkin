@@ -11,7 +11,10 @@ import GenerateScenarioPage from './pages/GenerateScenarioPage'
 import ReviewScenarioPage from './pages/ReviewScenarioPage'
 import DocumentationPage from './pages/DocumentationPage'
 import EvaluationPage from './pages/EvaluationPage'
+import GoldenDatasetPage from './pages/GoldenDatasetPage'
 import RequireRole from './components/RequireRole'
+import HistoryPage from './pages/HistoryPage'
+import HistoryDetailPage from './pages/HistoryDetailPage'
 
 // A data router enables useBlocker to protect unsaved review corrections.
 const router = createBrowserRouter([
@@ -24,7 +27,10 @@ const router = createBrowserRouter([
   { path: '/documentation', element: <DocumentationPage /> },
   { path: '/generate', element: <RequireRole role="system_analyst"><GenerateScenarioPage /></RequireRole> },
   { path: '/review', element: <RequireRole role="system_analyst"><ReviewScenarioPage /></RequireRole> },
+  {  path: '/history',  element: (    <RequireRole role="system_analyst">      <HistoryPage />    </RequireRole>),},
+  {  path: '/history/:id',  element: (<RequireRole role="system_analyst"><HistoryDetailPage /></RequireRole>)},
   { path: '/evaluation', element: <RequireRole role="qa"><EvaluationPage /></RequireRole> },
+  { path: '/evaluation/golden-dataset', element: <RequireRole role="qa"><GoldenDatasetPage /></RequireRole> },
   { path: '*', element: <Navigate to="/" replace /> },
 ])
 

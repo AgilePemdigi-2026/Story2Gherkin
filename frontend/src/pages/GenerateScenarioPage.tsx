@@ -1,4 +1,5 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useAuthSession } from '../hooks/useAuthSession'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   Plus,
@@ -18,6 +19,7 @@ import {
 } from '../services/scenarioApi'
 import './GenerateScenarioPage.css'
 
+
 interface GuiElement {
   id: number
   value: string
@@ -27,6 +29,51 @@ interface FormErrors {
   userStory?: string
   guiElements?: string
   freeScenario?: string
+}
+
+interface GenerateDraft {
+  userStory: string
+  guiElements: string[]
+  freeScenario: string
+}
+
+const getDraftKey = (userId: string) =>
+  `story2gherkin:generate-draft:v1:${userId}`
+
+function loadDraft(userId?: string): GenerateDraft | null {
+  if (!userId) return null
+
+  try {
+    const stored = localStorage.getItem(getDraftKey(userId))
+    if (!stored) return null
+
+    const draft: unknown = JSON.parse(stored)
+
+    if (!draft || typeof draft !== 'object') return null
+
+    const data = draft as Record<string, unknown>
+
+    if (
+      typeof data.userStory !== 'string' ||
+      typeof data.freeScenario !== 'string' ||
+      !Array.isArray(data.guiElements) ||
+      !data.guiElements.every(
+        (value: unknown) => typeof value === 'string'
+      )
+    ) {
+      return null
+    }
+
+    return {
+      userStory: data.userStory.slice(0, 8000),
+      freeScenario: data.freeScenario.slice(0, 4000),
+      guiElements: data.guiElements
+        .slice(0, 30)
+        .map((value: string) => value.slice(0, 200)),
+    }
+  } catch {
+    return null
+  }
 }
 
 // Only used when preview=success; real responses always use backend Gherkin.
@@ -66,15 +113,35 @@ function renderGherkin(source: string) {
 
 function GenerateScenarioPage() {
   const navigate = useNavigate()
+  const session = useAuthSession()
+
+  // Load saved draft when the page opens
+  const [initialDraft] = useState(() =>
+    loadDraft(session?.userId)
+  )
+
   // FORM STATE
-  const [userStory, setUserStory] = useState('')
-  const [freeScenario, setFreeScenario] = useState('')
+  const [userStory, setUserStory] = useState(
+    initialDraft?.userStory ?? ''
+  )
 
-  const [guiElements, setGuiElements] = useState<GuiElement[]>([
-    { id: 1, value: '' },
-  ])
+  const [freeScenario, setFreeScenario] = useState(
+    initialDraft?.freeScenario ?? ''
+  )
 
-  const nextGuiId = useRef(4)
+  const [guiElements, setGuiElements] = useState<GuiElement[]>(
+    () =>
+      initialDraft?.guiElements.length
+        ? initialDraft.guiElements.map((value, index) => ({
+            id: index + 1,
+            value,
+          }))
+        : [{ id: 1, value: '' }]
+  )
+
+  const nextGuiId = useRef(
+    (initialDraft?.guiElements.length ?? 1) + 1
+  )
 
   // VALIDATION
   const [errors, setErrors] = useState<FormErrors>({})
@@ -88,6 +155,35 @@ function GenerateScenarioPage() {
 
   const [generateError, setGenerateError] = useState('')
 
+  // AUTOSAVE DRAFT
+useEffect(() => {
+  if (!session?.userId) return
+
+  const draft: GenerateDraft = {
+    userStory,
+    guiElements: guiElements.map((element) => element.value),
+    freeScenario,
+  }
+
+  const hasContent =
+    userStory.trim() !== '' ||
+    freeScenario.trim() !== '' ||
+    guiElements.some((element) => element.value.trim() !== '')
+
+  try {
+    if (hasContent) {
+      localStorage.setItem(
+        getDraftKey(session.userId),
+        JSON.stringify(draft)
+      )
+    } else {
+      localStorage.removeItem(getDraftKey(session.userId))
+    }
+  } catch {
+    // Storage may be unavailable or full.
+    // The form remains usable even if autosave fails.
+  }
+}, [session?.userId, userStory, freeScenario, guiElements])
 
   // ADD GUI ELEMENT
   const addGuiElement = () => {
@@ -468,26 +564,7 @@ function GenerateScenarioPage() {
             {/* RESULT HEADER */}
             <div className="generate-result-heading">
                 <h2>Hasil Generate</h2>
-
-            <span
-              className={`generate-status ${
-                hasErrors
-                  ? 'failed'
-                  : isProcessing
-                    ? 'processing'
-                    : isSuccess
-                      ? 'success'
-                      : 'ready'
-              }`}
-            >
-              {hasErrors
-                ? 'Gagal'
-                : isProcessing
-                  ? 'Sedang proses...'
-                  : isSuccess
-                    ? 'Berhasil'
-                    : 'Siap generate'}
-            </span>
+                
             </div>
 
             {hasErrors ? (

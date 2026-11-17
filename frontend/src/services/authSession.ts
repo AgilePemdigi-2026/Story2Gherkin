@@ -1,6 +1,7 @@
 import type { LoginResult, UserRole } from './authApi'
 
 export interface AuthSession {
+  userId: string
   role: UserRole
   expiresAt: number
 }
@@ -19,7 +20,7 @@ function decodeSession(token: string): AuthSession | null {
     const { role, exp, user_id } = claims as Record<string, unknown>
     if ((role !== 'system_analyst' && role !== 'qa') || typeof exp !== 'number' ||
       !Number.isFinite(exp) || typeof user_id !== 'string' || !user_id) return null
-    return { role, expiresAt: exp * 1000 }
+    return { userId: user_id, role, expiresAt: exp * 1000 }
   } catch { return null }
 }
 

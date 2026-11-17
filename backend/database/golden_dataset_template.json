@@ -1,0 +1,28 @@
+{
+  "items": [
+    {
+      "item_title": "Checkout berhasil",
+      "user_story_text": "Sebagai pembeli, saya ingin menyelesaikan checkout agar pesanan diproses.",
+      "gui_elements": [
+        "Keranjang",
+        "Tombol Checkout",
+        "Alamat Pengiriman",
+        "Metode Pembayaran",
+        "Tombol Konfirmasi"
+      ],
+      "free_scenario_text": "Pembeli membuka keranjang, mengisi alamat, memilih pembayaran, lalu konfirmasi.",
+      "expected_gherkin": "Feature: Checkout\n  Scenario: Checkout pesanan berhasil\n    Given pembeli memiliki 1 produk di keranjang\n    When pembeli menekan tombol Checkout\n    And pembeli mengisi Alamat Pengiriman dengan \"Jl. Merdeka 1\"\n    And pembeli memilih Metode Pembayaran \"Transfer Bank\"\n    And pembeli menekan tombol Konfirmasi\n    Then pesanan tercatat dengan status \"Menunggu Pembayaran\""
+    },
+    {
+      "item_title": "Checkout keranjang kosong",
+      "user_story_text": "Sebagai pembeli, saya ingin dicegah checkout saat keranjang kosong agar tidak membuat pesanan kosong.",
+      "gui_elements": [
+        "Keranjang",
+        "Tombol Checkout",
+        "Pesan Error"
+      ],
+      "free_scenario_text": "Pembeli menekan Checkout dengan keranjang kosong.",
+      "expected_gherkin": "Feature: Checkout\n  Scenario: Checkout ditolak saat keranjang kosong\n    Given keranjang pembeli kosong\n    When pembeli menekan tombol Checkout\n    Then pesan Error menampilkan \"Keranjang masih kosong\"\n    And tidak ada pesanan yang dibuat"
+    }
+  ]
+}
