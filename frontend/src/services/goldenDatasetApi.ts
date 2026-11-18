@@ -62,22 +62,44 @@ export class GoldenDatasetApiError extends Error {
   }
 }
 
-function failureMessage(status: number, result: { message?: string; error?: unknown } | null) {
-  if (status === 401) return 'Sesi berakhir. Silakan login kembali.'
-  if (status === 403) return 'Hanya pengguna Quality Assurance yang dapat mengelola Golden Dataset.'
-  if (status === 404) return 'Golden Dataset tidak ditemukan.'
-  if (status === 409) return 'Golden Dataset sudah dipakai evaluasi sehingga tidak dapat diubah atau dihapus.'
-  if (status === 413) return 'Ukuran unggahan melebihi batas 5 MB.'
-  if (status === 415) return 'Unggahan harus dikirim sebagai multipart/form-data.'
-  if (status === 502 || status === 503 || status === 504) return 'Validator Gherkin sedang tidak tersedia. Coba lagi.'
+function failureMessage(
+  status: number,
+  result: { message?: string; error?: unknown } | null,
+) {
+  if (status === 401) {
+    return 'Your session has expired. Please log in again.'
+  }
+  if (status === 403) {
+    return 'Only Quality Assurance users can manage Golden Datasets.'
+  }
+  if (status === 404) {
+    return 'Golden Dataset not found.'
+  }
+  if (status === 409) {
+    return 'This Golden Dataset has already been used for evaluation and cannot be edited or deleted.'
+  }
+  if (status === 413) {
+    return 'The upload exceeds the 5 MB size limit.'
+  }
+  if (status === 415) {
+    return 'Uploads must use multipart/form-data.'
+  }
+  if (status === 502 || status === 503 || status === 504) {
+    return 'The Gherkin validator is currently unavailable. Please try again.'
+  }
   if (typeof result?.error === 'string' && result.error) return result.error
   if (typeof result?.message === 'string' && result.message) return result.message
-  return 'Permintaan Golden Dataset gagal.'
+  return 'The Golden Dataset request failed.'
 }
 
 async function request(path: string, options: RequestInit = {}) {
   const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token')
-  if (!token) throw new GoldenDatasetApiError('Sesi berakhir. Silakan login kembali.', 401)
+  if (!token) {
+  throw new GoldenDatasetApiError(
+    'Your session has expired. Please log in again.',
+    401,
+  )
+}
 
   let response: Response
   try {
@@ -90,7 +112,9 @@ async function request(path: string, options: RequestInit = {}) {
     })
   } catch (error) {
     if (options.signal?.aborted) throw error
-    throw new GoldenDatasetApiError('Server tidak dapat dihubungi atau permintaan melewati batas waktu. Coba lagi.')
+    throw new GoldenDatasetApiError(
+  'Unable to reach the server or the request timed out. Please try again.',
+)
   }
 
   if (!response.ok) {
@@ -105,7 +129,7 @@ async function jsonRequest<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await request(path, options)
   const result = await response.json()
   if (result.status !== true || result.data === undefined) {
-    throw new GoldenDatasetApiError('Respons Golden Dataset tidak valid.')
+    throw new GoldenDatasetApiError('Invalid Golden Dataset response.')
   }
   return result.data as T
 }
@@ -130,7 +154,7 @@ export async function uploadGoldenDataset({ name, description, file }: GoldenDat
   const response = await request('', { method: 'POST', body: form })
   const result = await response.json()
   if (result.status !== true || result.data === undefined) {
-    throw new GoldenDatasetApiError('Respons Golden Dataset tidak valid.')
+    throw new GoldenDatasetApiError('Invalid Golden Dataset response.')
   }
   return result.data as GoldenDatasetSummary
 }
@@ -144,7 +168,7 @@ export async function updateGoldenDataset(id: string, { name, description, file 
   const response = await request(`/${encodeURIComponent(id)}`, { method: 'PUT', body: form })
   const result = await response.json()
   if (result.status !== true || result.data === undefined) {
-    throw new GoldenDatasetApiError('Respons Golden Dataset tidak valid.')
+    throw new GoldenDatasetApiError('Invalid Golden Dataset response.')
   }
   return result.data as GoldenDatasetSummary
 }
@@ -153,6 +177,6 @@ export async function deleteGoldenDataset(id: string) {
   const response = await request(`/${encodeURIComponent(id)}`, { method: 'DELETE' })
   const result = await response.json()
   if (result.status !== true) {
-    throw new GoldenDatasetApiError('Respons Golden Dataset tidak valid.')
+    throw new GoldenDatasetApiError('Invalid Golden Dataset response.')
   }
 }

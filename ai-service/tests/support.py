@@ -6,7 +6,7 @@ import httpx
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.config import Settings
+from app.core.config import Settings
 
 PROVIDER_API_KEY = "test-only-openrouter-api-key-123456789"
 SERVICE_KEY = "unit-test-only-service-key-123456789"
