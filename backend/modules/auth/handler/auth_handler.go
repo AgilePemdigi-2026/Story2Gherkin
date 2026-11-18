@@ -63,7 +63,7 @@ func (c *authHandler) Register(ctx *gin.Context) {
 		if errors.Is(err, userDto.ErrEmailAlreadyExists) {
 			res := utils.BuildResponseFailed(
 				userDto.MESSAGE_FAILED_REGISTER_USER,
-				"Email sudah terdaftar.",
+				"This email address is already registered.",
 				nil,
 			)
 			ctx.JSON(http.StatusConflict, res)
@@ -74,7 +74,7 @@ func (c *authHandler) Register(ctx *gin.Context) {
 
 		res := utils.BuildResponseFailed(
 			userDto.MESSAGE_FAILED_REGISTER_USER,
-			"Terjadi kesalahan pada server.",
+			"An internal server error occurred.",
 			nil,
 		)
 		ctx.JSON(http.StatusInternalServerError, res)
@@ -103,7 +103,7 @@ func (c *authHandler) Login(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		res := utils.BuildResponseFailed(
 			userDto.MESSAGE_FAILED_LOGIN,
-			"Request harus berupa JSON dengan email valid dan password terisi.",
+			"The request must contain JSON with a valid email address and a non-empty password.",
 			nil,
 		)
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
@@ -119,7 +119,7 @@ func (c *authHandler) Login(ctx *gin.Context) {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			res := utils.BuildResponseFailed(
 				userDto.MESSAGE_FAILED_LOGIN,
-				"Email atau password salah.",
+				"Incorrect email or password.",
 				nil,
 			)
 			ctx.JSON(http.StatusUnauthorized, res)
@@ -128,7 +128,7 @@ func (c *authHandler) Login(ctx *gin.Context) {
 
 		res := utils.BuildResponseFailed(
 			userDto.MESSAGE_FAILED_LOGIN,
-			"Terjadi kesalahan pada server.",
+			"An internal server error occurred.",
 			nil,
 		)
 		ctx.JSON(http.StatusInternalServerError, res)

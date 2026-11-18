@@ -11,7 +11,11 @@ import { roleHome } from '../services/authSession'
 
 function HomePage() {
   const session = useAuthSession()
-  const actionLabel = !session ? 'Mulai Menggunakan' : session.role === 'system_analyst' ? 'Mulai Generate' : 'Buka Evaluation'
+  const actionLabel = !session
+  ? 'Get Started'
+  : session.role === 'system_analyst'
+    ? 'Generate Scenarios'
+    : 'Open Evaluation'
 
   return (
     <div className="home-page">
@@ -38,9 +42,9 @@ function HomePage() {
 
             {/* DESCRIPTION */}
             <p className="home-hero-description">
-              Bantu System Analyst menyusun dan meninjau skenario Gherkin,
-              serta QA mengevaluasi kualitasnya dalam satu platform.
-              Masuk ke ruang kerja sesuai peran Anda.
+              Help system analysts create and review Gherkin scenarios
+              and QA teams evaluate their quality in one platform.
+              Access the workspace for your role.
             </p>
 
             {/* ACTION BUTTONS */}
@@ -58,7 +62,7 @@ function HomePage() {
                 to="/documentation"
                 className="home-secondary-button"
               >
-                Baca Panduan
+                Read Documentation
                 <ChevronRight size={20} />
               </Link>
 

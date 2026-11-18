@@ -76,7 +76,7 @@ async function historyRequest<T>(
 
   if (!accessToken) {
     throw new HistoryApiError(
-      'Sesi berakhir. Silakan login kembali.',
+      'Your session has expired. Please log in again.',
       401
     )
   }
@@ -100,7 +100,7 @@ async function historyRequest<T>(
     if (signal?.aborted) throw error
 
     throw new HistoryApiError(
-      'Tidak dapat terhubung ke server.'
+      'Unable to connect to the server.'
     )
   }
 
@@ -109,21 +109,21 @@ async function historyRequest<T>(
 
   if (response.status === 401) {
     throw new HistoryApiError(
-      'Sesi berakhir. Silakan login kembali.',
+      'Your session has expired. Please log in again.',
       401
     )
   }
 
   if (response.status === 403) {
     throw new HistoryApiError(
-      'Hanya System Analyst yang dapat mengakses History.',
+      'Only System Analysts can access generation history.',
       403
     )
   }
 
   if (response.status === 404) {
     throw new HistoryApiError(
-      'Riwayat tidak ditemukan.',
+      'History not found.',
       404
     )
   }
@@ -132,14 +132,14 @@ async function historyRequest<T>(
     throw new HistoryApiError(
       result?.error ||
         result?.message ||
-        'Gagal mengambil riwayat Generate.',
+        'Failed to retrieve generation history.',
       response.status
     )
   }
 
   if (result.data === undefined || result.data === null) {
     throw new HistoryApiError(
-      'Respons History dari server tidak valid.'
+      'Invalid history response from the server.'
     )
   }
 

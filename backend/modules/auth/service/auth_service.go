@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var ErrInvalidCredentials = errors.New("email atau password salah")
+var ErrInvalidCredentials = errors.New("incorrect email or password")
 
 type AuthService interface {
 	Register(

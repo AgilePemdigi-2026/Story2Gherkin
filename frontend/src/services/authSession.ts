@@ -69,7 +69,7 @@ function removeTokens() {
 export function saveAuthSession(result: LoginResult, rememberMe: boolean) {
   const session = decodeSession(result.access_token)
   if (!session || session.expiresAt <= Date.now() || session.role !== result.role) {
-    throw new Error('Respons sesi tidak valid. Silakan login kembali.')
+    throw new Error('Invalid session response. Please log in again.')
   }
   removeTokens()
   const storage = rememberMe ? localStorage : sessionStorage
