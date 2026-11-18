@@ -60,13 +60,13 @@ export default function ScenarioSidebar() {
               Golden Dataset
             </NavLink>
 
-            <span
-              className="generate-sidebar-link disabled"
-              aria-disabled="true"
-              title="Coming soon"
+            <NavLink
+              to="/evaluation"
+              end
+              className={sidebarLinkClassName}
             >
               Run Evaluation
-            </span>
+            </NavLink>
 
             <NavLink
               to="/evaluation/reports"
