@@ -20,9 +20,10 @@ import (
 // AI-service (bukan langsung ke provider) sehingga tetap agnostik
 // mau backend-nya Ollama maupun OpenRouter.
 type LLMClient struct {
-	endpoint string
-	key      string
-	client   *http.Client
+	endpoint  string
+	ruleBased string
+	key       string
+	client    *http.Client
 }
 
 func NewLLMClient(baseURL, key string) (*LLMClient, error) {
@@ -33,9 +34,11 @@ func NewLLMClient(baseURL, key string) (*LLMClient, error) {
 	if len(strings.TrimSpace(key)) < 32 || strings.HasPrefix(key, "REPLACE_") {
 		return nil, fmt.Errorf("AI_SERVICE_KEY must contain a random secret of at least 32 characters")
 	}
+	base := strings.TrimRight(baseURL, "/") + "/internal/scenarios"
 	return &LLMClient{
-		endpoint: strings.TrimRight(baseURL, "/") + "/internal/scenarios/generate",
-		key:      key,
+		endpoint:  base + "/generate",
+		ruleBased: base + "/generate-rule-based",
+		key:       key,
 		client: &http.Client{
 			Timeout: 150 * time.Second,
 			// Never forward the internal service key to a redirected URL.
@@ -45,11 +48,19 @@ func NewLLMClient(baseURL, key string) (*LLMClient, error) {
 }
 
 func (c *LLMClient) Generate(ctx context.Context, input dto.GenerateRequest) (dto.GenerateResponse, error) {
+	return c.postGenerate(ctx, c.endpoint, input)
+}
+
+func (c *LLMClient) GenerateRuleBased(ctx context.Context, input dto.GenerateRequest) (dto.GenerateResponse, error) {
+	return c.postGenerate(ctx, c.ruleBased, input)
+}
+
+func (c *LLMClient) postGenerate(ctx context.Context, target string, input dto.GenerateRequest) (dto.GenerateResponse, error) {
 	body, err := json.Marshal(input)
 	if err != nil {
 		return dto.GenerateResponse{}, err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, target, bytes.NewReader(body))
 	if err != nil {
 		return dto.GenerateResponse{}, err
 	}

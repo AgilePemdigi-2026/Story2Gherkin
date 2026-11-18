@@ -20,6 +20,7 @@ func TestRegisterRoutesRegistersGoldenDatasetAndEvaluationReport(t *testing.T) {
 	do.ProvideValue(injector, handler.NewScenarioHandler(nil))
 	do.ProvideValue(injector, handler.NewReviewHandler(nil))
 	do.ProvideValue(injector, handler.NewGoldenDatasetHandler(nil))
+	do.ProvideValue(injector, handler.NewEvaluationRunHandler(nil))
 	do.ProvideValue(injector, handler.NewEvaluationReportHandler(nil))
 	do.ProvideValue(injector, handler.NewHistoryHandler(nil))
 
@@ -45,6 +46,8 @@ func TestRegisterRoutesRegistersGoldenDatasetAndEvaluationReport(t *testing.T) {
 		"GET /api/v1/evaluation-runs",
 		"GET /api/v1/evaluation-runs/:run_id",
 		"GET /api/v1/evaluation-runs/:run_id/download",
+		"POST /api/v1/evaluation-runs",
+		"GET /api/v1/evaluation-runs/:run_id/progress",
 	} {
 		if !registered[want] {
 			t.Errorf("route %q is not registered", want)
