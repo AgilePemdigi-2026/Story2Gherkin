@@ -1,73 +1,81 @@
 import { NavLink } from 'react-router-dom'
 import { useAuthSession } from '../hooks/useAuthSession'
 
+function sidebarLinkClassName({
+  isActive,
+}: {
+  isActive: boolean
+}) {
+  return `generate-sidebar-link${isActive ? ' active' : ''}`
+}
+
 export default function ScenarioSidebar() {
   const session = useAuthSession()
+
   return (
     <aside className="generate-sidebar">
-      <nav className="generate-sidebar-nav" aria-label="Workspace navigation">
-        {session?.role === 'system_analyst' && <div className="generate-sidebar-section">
-          <p className="generate-sidebar-heading">GENERATE</p>
-          <NavLink
-  to="/generate"
-  className={({ isActive }) =>
-    `generate-sidebar-link ${isActive ? 'active' : ''}`
-  }
->
-  Generate Scenario
-</NavLink>
+      <nav
+        className="generate-sidebar-nav"
+        aria-label="Workspace navigation"
+      >
+        {session?.role === 'system_analyst' && (
+          <div className="generate-sidebar-section">
+            <p className="generate-sidebar-heading">
+              GENERATE
+            </p>
 
-<NavLink
-  to="/review"
-  className={({ isActive }) =>
-    `generate-sidebar-link ${isActive ? 'active' : ''}`
-  }
->
-  Review Scenario
-</NavLink>
+            <NavLink
+              to="/generate"
+              className={sidebarLinkClassName}
+            >
+              Generate Scenario
+            </NavLink>
 
-<NavLink
-  to="/history"
-  className={({ isActive }) =>
-    `generate-sidebar-link ${isActive ? 'active' : ''}`
-  }
->
-  History
-</NavLink>
-        </div>}
-        {session?.role === 'qa' && <div className="generate-sidebar-section">
-          <p className="generate-sidebar-heading">EVALUATION</p>
-          <NavLink
-            to="/evaluation/golden-dataset"
-            className={({ isActive }) =>
-              `generate-sidebar-link ${isActive ? 'active' : ''}`
-            }
-          >
-            Golden Dataset
-          </NavLink>
-          <span className="generate-sidebar-link disabled" aria-disabled="true" title="Belum tersedia">Run Evaluation</span>
-          <NavLink
-            to="/evaluation/reports"
-            className={({ isActive }) => `generate-sidebar-link ${isActive ? 'active' : ''}`}
-          >
-            Evaluation Report
-          </NavLink>
-          <span
-            className="generate-sidebar-link disabled"
-            aria-disabled="true"
-            title="Not yet available"
-          >
-            Run Evaluation
-          </span>
+            <NavLink
+              to="/review"
+              className={sidebarLinkClassName}
+            >
+              Review Scenario
+            </NavLink>
 
-          <span
-            className="generate-sidebar-link disabled"
-            aria-disabled="true"
-            title="Not yet available"
-          >
-            Evaluation Report
-          </span>
-        </div>}
+            <NavLink
+              to="/history"
+              className={sidebarLinkClassName}
+            >
+              History
+            </NavLink>
+          </div>
+        )}
+
+        {session?.role === 'qa' && (
+          <div className="generate-sidebar-section">
+            <p className="generate-sidebar-heading">
+              EVALUATION
+            </p>
+
+            <NavLink
+              to="/evaluation/golden-dataset"
+              className={sidebarLinkClassName}
+            >
+              Golden Dataset
+            </NavLink>
+
+            <span
+              className="generate-sidebar-link disabled"
+              aria-disabled="true"
+              title="Coming soon"
+            >
+              Run Evaluation
+            </span>
+
+            <NavLink
+              to="/evaluation/reports"
+              className={sidebarLinkClassName}
+            >
+              Evaluation Report
+            </NavLink>
+          </div>
+        )}
       </nav>
     </aside>
   )
