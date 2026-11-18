@@ -5,9 +5,10 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 
-from app.generator import ScenarioGenerator
-from app.llm_client import OpenRouterClient
-from app.main import create_app, get_generator
+from app.api.deps import get_generator
+from app.clients.openrouter import OpenRouterClient
+from app.main import create_app
+from app.services.generator import ScenarioGenerator
 from tests.support import Harness, OpenRouterResponder, settings
 
 

@@ -134,7 +134,7 @@ func (f *reviewFeature) invalidDraft(doc *godog.DocString) error {
 	available := false
 	f.validator.reports[f.draft] = dto.ScenarioValidation{
 		Valid: false, FeatureName: "User Login", Checks: dto.StructureChecks{Feature: true, Scenario: true, When: true, Then: true},
-		Issues:       []dto.ValidationIssue{{Line: 3, Column: 5, Message: "Given belum memiliki deskripsi langkah."}},
+		Issues:       []dto.ValidationIssue{{Line: 3, Column: 5, Message: "Given is missing a step description. Add a description after Given."}},
 		UsedElements: []string{}, NotCoveredElements: []string{}, CoverageAvailable: &available,
 	}
 	return nil
@@ -305,7 +305,7 @@ func (f *reviewFeature) validationIssue(line int) error {
 		return err
 	}
 	v := envelope.Data.Validation
-	if envelope.Status || v.Valid || !v.Checks.Feature || !v.Checks.Scenario || v.Checks.Given || len(v.Issues) != 1 || v.Issues[0].Line != line || !strings.Contains(v.Issues[0].Message, "Given belum memiliki deskripsi") || v.CoverageAvailable == nil || *v.CoverageAvailable {
+	if envelope.Status || v.Valid || !v.Checks.Feature || !v.Checks.Scenario || v.Checks.Given || len(v.Issues) != 1 || v.Issues[0].Line != line || !strings.Contains(v.Issues[0].Message, "Given is missing a step description.") || v.CoverageAvailable == nil || *v.CoverageAvailable {
 		return fmt.Errorf("invalid response lost specific diagnostics: %s", f.response.Body.String())
 	}
 	return nil

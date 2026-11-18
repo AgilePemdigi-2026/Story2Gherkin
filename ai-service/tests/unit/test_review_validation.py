@@ -40,18 +40,18 @@ def test_normalization_ignores_quotes_punctuation_case_and_whitespace():
 
 
 @pytest.mark.parametrize("text,fragment", [
-    ("", "kosong"),
+    ("", "empty"),
     ("# comment only", "Feature"),
     (VALID.replace("Feature: Delete user", "Feature:"), "Feature"),
     ("Feature: No scenarios\n", "Scenario"),
-    (VALID.replace("Given the user list table is visible", "And the user list table is visible"), "langkah pertama"),
+    (VALID.replace("Given the user list table is visible", "And the user list table is visible"), "first step"),
     (VALID.replace("Given the user list table is visible", "When the user list table is visible"), "Given"),
     (VALID.replace("When I click the Delete button", "Then I click the Delete button"), "When"),
-    (VALID.replace("Then the account is removed", "Given the account is removed"), "Given harus"),
-    (VALID.replace("When I click the Delete button", "When "), "deskripsi"),
-    (VALID.replace("Scenario: Delete successfully", "Scenario:"), "Nama Scenario"),
-    (VALID + VALID, "satu Feature"),
-    (VALID.replace("And I accept", "But I accept"), "Hanya Given"),
+    (VALID.replace("Then the account is removed", "Given the account is removed"), "Given must"),
+    (VALID.replace("When I click the Delete button", "When "), "description"),
+    (VALID.replace("Scenario: Delete successfully", "Scenario:"), "Scenario name"),
+    (VALID + VALID, "One Feature"),
+    (VALID.replace("And I accept", "But I accept"), "Only Given"),
     (VALID.replace("Scenario:", "Scenario Outline:"), "Scenario Outline"),
     (VALID.replace("  Scenario:", "  Background:\n    Given preparation\n  Scenario:"), "Background"),
 ])
@@ -65,7 +65,9 @@ def test_invalid_structure_has_line_and_reason(text, fragment):
 def test_duplicate_names_are_rejected():
     scenario = VALID[VALID.index("  Scenario:"):]
     report = validate_gherkin(VALID + scenario, ELEMENTS)
-    assert not report.valid and any("unik" in item.message for item in report.issues)
+    assert not report.valid and any(
+    "unique" in item.message for item in report.issues
+)
 
 
 def test_each_scenario_needs_all_three_steps():
@@ -96,7 +98,10 @@ def test_bare_keywords_keep_present_headings_and_explain_each_empty_step():
     assert report.checks.feature and report.checks.scenario
     assert not report.checks.given and not report.checks.when and not report.checks.then
     assert [(item.line, item.message.split()[0]) for item in report.issues] == [(4, 'Given'), (5, 'When'), (6, 'Then')]
-    assert all('belum memiliki deskripsi langkah' in item.message for item in report.issues)
+    assert all(
+    'is missing a step description.' in item.message
+    for item in report.issues
+)
     assert not report.coverage_available
     assert report.used_elements == report.not_covered_elements == []
 
@@ -106,7 +111,10 @@ def test_empty_step_has_a_friendly_reason_even_when_parser_accepts_description(k
     text = VALID.replace(f'{keyword} ', f'{keyword}\n    # ', 1)
     report = validate_gherkin(text, ELEMENTS)
     assert not report.valid
-    assert any(item.message.startswith(f'{keyword} belum memiliki deskripsi langkah') for item in report.issues)
+    assert any(
+    item.message.startswith(f'{keyword} is missing a step description.')
+    for item in report.issues
+)
 
 
 def test_parser_failure_does_not_expose_internal_tokens_or_invent_zero_coverage():
