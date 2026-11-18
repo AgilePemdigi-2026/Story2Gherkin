@@ -174,39 +174,115 @@ func (c *authHandler) RefreshToken(ctx *gin.Context) {
 }
 
 func (c *authHandler) SendPasswordReset(ctx *gin.Context) {
+	ctx.Header("Cache-Control", "no-store")
+
+	ctx.Request.Body = http.MaxBytesReader(
+		ctx.Writer,
+		ctx.Request.Body,
+		16*1024,
+	)
+
 	var req authDto.SendPasswordResetRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		res := utils.BuildResponseFailed(userDto.MESSAGE_FAILED_GET_DATA_FROM_BODY, err.Error(), nil)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.BuildResponseFailed(
+				authDto.MESSAGE_FAILED_SEND_PASSWORD_RESET,
+				"Please provide a valid email address.",
+				nil,
+			),
+		)
 		return
 	}
 
-	err := c.authService.SendPasswordReset(ctx.Request.Context(), req)
-	if err != nil {
-		res := utils.BuildResponseFailed(authDto.MESSAGE_FAILED_SEND_PASSWORD_RESET, err.Error(), nil)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+	if err := c.authService.SendPasswordReset(
+		ctx.Request.Context(),
+		req,
+	); err != nil {
+		log.Printf("password reset email failed: %v", err)
+
+		ctx.AbortWithStatusJSON(
+			http.StatusInternalServerError,
+			utils.BuildResponseFailed(
+				authDto.MESSAGE_FAILED_SEND_PASSWORD_RESET,
+				"Unable to process your password reset request. Please try again later.",
+				nil,
+			),
+		)
 		return
 	}
 
-	res := utils.BuildResponseSuccess(authDto.MESSAGE_SUCCESS_SEND_PASSWORD_RESET, nil)
-	ctx.JSON(http.StatusOK, res)
+	ctx.JSON(
+		http.StatusOK,
+		utils.BuildResponseSuccess(
+			"If an account exists for this email, a password reset link will be sent.",
+			nil,
+		),
+	)
 }
 
 func (c *authHandler) ResetPassword(ctx *gin.Context) {
+	ctx.Header("Cache-Control", "no-store")
+
+	ctx.Request.Body = http.MaxBytesReader(
+		ctx.Writer,
+		ctx.Request.Body,
+		16*1024,
+	)
+
 	var req authDto.ResetPasswordRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		res := utils.BuildResponseFailed(userDto.MESSAGE_FAILED_GET_DATA_FROM_BODY, err.Error(), nil)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, res)
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.BuildResponseFailed(
+				authDto.MESSAGE_FAILED_RESET_PASSWORD,
+				"Please provide a reset token and a valid new password.",
+				nil,
+			),
+		)
 		return
 	}
 
-	err := c.authService.ResetPassword(ctx.Request.Context(), req)
+	err := c.authService.ResetPassword(
+		ctx.Request.Context(),
+		req,
+	)
+
 	if err != nil {
-		res := utils.BuildResponseFailed(authDto.MESSAGE_FAILED_RESET_PASSWORD, err.Error(), nil)
-		ctx.JSON(http.StatusBadRequest, res)
+		status := http.StatusInternalServerError
+		message := "Unable to reset your password. Please try again later."
+
+		switch {
+		case errors.Is(err, authDto.ErrPasswordResetToken):
+			status = http.StatusBadRequest
+			message = "This password reset link is invalid or has expired. Please request a new link."
+
+		case errors.Is(err, authDto.ErrInvalidNewPassword):
+			status = http.StatusBadRequest
+			message = authDto.ErrInvalidNewPassword.Error()
+
+		default:
+			log.Printf("password reset failed: %v", err)
+		}
+
+		ctx.AbortWithStatusJSON(
+			status,
+			utils.BuildResponseFailed(
+				authDto.MESSAGE_FAILED_RESET_PASSWORD,
+				message,
+				nil,
+			),
+		)
 		return
 	}
 
-	res := utils.BuildResponseSuccess(authDto.MESSAGE_SUCCESS_RESET_PASSWORD, nil)
-	ctx.JSON(http.StatusOK, res)
+	ctx.JSON(
+		http.StatusOK,
+		utils.BuildResponseSuccess(
+			"Your password has been reset. Please sign in with your new password.",
+			nil,
+		),
+	)
 }

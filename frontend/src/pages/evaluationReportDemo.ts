@@ -2,6 +2,7 @@ import type { EvaluationReport } from '../services/evaluationReportApi'
 
 export const demoReport: EvaluationReport = {
   run_id: 'demo',
+  report_code: 'ER-0000',
   dataset_name: 'Golden Dataset v1',
   created_at: '2026-11-17T09:00:00+07:00',
   total_cases: 4,

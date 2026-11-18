@@ -81,15 +81,25 @@ function ReportList({ data, page }: { data: EvaluationRunList; page: number }) {
       {data.runs.length === 0 ? <p>Belum ada hasil evaluasi pada halaman ini.</p> : (
         <div className="evaluation-report-table-wrap" tabIndex={0} aria-label="Daftar hasil evaluasi">
           <table className="evaluation-report-table">
-            <thead><tr><th scope="col">Dataset</th><th scope="col">Waktu</th><th scope="col">Total Kasus</th><th scope="col">Status</th><th scope="col">Aksi</th></tr></thead>
+            <thead>
+              <tr>
+                <th scope="col">Report Code</th>
+                <th scope="col">Dataset</th>
+                <th scope="col">Waktu</th>
+                <th scope="col">Total Kasus</th>
+                <th scope="col">Status</th>
+                <th scope="col">Aksi</th>
+              </tr>
+            </thead>
             <tbody>
               {data.runs.map((run) => (
                 <tr key={run.run_id}>
-                  <th scope="row">{run.dataset_name}</th>
+                  <th scope="row">{run.report_code}</th>
+                  <td>{run.dataset_name}</td>
                   <td>{formatDate(run.created_at)}</td>
                   <td>{run.total_cases}</td>
                   <td>{runStatusLabel[run.status]}</td>
-                  <td><Link to={`${REPORTS_PATH}/${encodeURIComponent(run.run_id)}`} aria-label={`Lihat laporan ${run.dataset_name}`}>Lihat Report</Link></td>
+                  <td><Link to={`${REPORTS_PATH}/${encodeURIComponent(run.run_id)}`} aria-label={`Lihat laporan ${run.report_code} untuk ${run.dataset_name}`}>Lihat Report</Link></td>
                 </tr>
               ))}
             </tbody>
@@ -128,7 +138,11 @@ function ReportDetail({ report, demo, reload }: { report: EvaluationReport; demo
     setDownloading(true)
     setDownloadError('')
     try {
-      await downloadEvaluationReport(report.run_id, controller.signal)
+      await downloadEvaluationReport(
+        report.run_id,
+        controller.signal,
+        report.report_code,
+      )
     } catch (error) {
       if (!controller.signal.aborted) {
         setDownloadError(error instanceof Error ? error.message : 'Laporan gagal diunduh.')
@@ -145,7 +159,7 @@ function ReportDetail({ report, demo, reload }: { report: EvaluationReport; demo
         <Link className="evaluation-report-back" to={REPORTS_PATH}><ArrowLeft size={16} aria-hidden="true" /> Riwayat Evaluasi</Link>
         <div className="evaluation-report-heading">
           <div className="generate-page-heading">
-            <h1>Evaluation Report</h1>
+            <h1>Evaluation Report {report.report_code}</h1>
             <p>Ringkasan hasil evaluasi LLM dan Rule-Based terhadap Golden Dataset.</p>
           </div>
           <button className="evaluation-report-download" type="button" disabled={!canDownload || downloading} onClick={handleDownload}>

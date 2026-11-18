@@ -5,6 +5,7 @@ export type EvaluationCaseStatus = 'PASS' | 'WARN' | 'FAIL'
 
 export interface EvaluationRun {
   run_id: string
+  report_code: string
   dataset_name: string
   created_at: string
   total_cases: number
@@ -52,11 +53,24 @@ function isPercent(value: unknown) {
   return value === null || (typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 100)
 }
 
+function isReportCode(value: unknown): value is string {
+  return typeof value === 'string' && /^ER-[0-9]{4,}$/.test(value)
+}
+
 function isRun(value: unknown): value is EvaluationRun {
-  return isRecord(value) && typeof value.run_id === 'string' && value.run_id.length > 0 &&
-    typeof value.dataset_name === 'string' && typeof value.created_at === 'string' &&
+  return isRecord(value) &&
+    typeof value.run_id === 'string' &&
+    value.run_id.length > 0 &&
+    isReportCode(value.report_code) &&
+    typeof value.dataset_name === 'string' &&
+    typeof value.created_at === 'string' &&
     isCount(value.total_cases) &&
-    (value.status === 'QUEUED' || value.status === 'RUNNING' || value.status === 'COMPLETED' || value.status === 'FAILED')
+    (
+      value.status === 'QUEUED' ||
+      value.status === 'RUNNING' ||
+      value.status === 'COMPLETED' ||
+      value.status === 'FAILED'
+    )
 }
 
 function isMethodSummary(value: unknown) {
@@ -130,19 +144,41 @@ export async function getEvaluationReport(runId: string, signal: AbortSignal) {
   return data
 }
 
-export async function downloadEvaluationReport(runId: string, signal: AbortSignal) {
-  const response = await request(`/${encodeURIComponent(runId)}/download`, signal)
-  const contentType = response.headers.get('content-type')?.split(';')[0].trim()
-  if (contentType !== 'text/csv') throw new Error('Server tidak mengembalikan file CSV yang valid.')
+export async function downloadEvaluationReport(
+  runId: string,
+  signal: AbortSignal,
+  reportCode: string,
+) {
+  if (!isReportCode(reportCode)) {
+    throw new Error('Invalid evaluation report code.')
+  }
+
+  const response = await request(
+    `/${encodeURIComponent(runId)}/download`,
+    signal,
+  )
+
+  const contentType = response.headers
+    .get('content-type')
+    ?.split(';')[0]
+    .trim()
+
+  if (contentType !== 'text/csv') {
+    throw new Error('Server tidak mengembalikan file CSV yang valid.')
+  }
+
   const file = await response.blob()
   if (signal.aborted) return
 
   const url = URL.createObjectURL(file)
   const link = document.createElement('a')
+
   link.href = url
-  link.download = `evaluation-report-${runId}.csv`
+  link.download = `${reportCode}.csv`
+
   document.body.append(link)
   link.click()
   link.remove()
+
   window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
