@@ -64,7 +64,10 @@ func (r *evalBDDRunRepo) CreateWithCases(
 	run.RunNumber = int64(r.created)
 	run.Status = entities.EvaluationRunQueued
 
-	r.runs[run.ID] = run
+	// Store a copy: the caller keeps reading its own run after starting the
+	// background worker, exactly as a database row would behave.
+	stored := *run
+	r.runs[run.ID] = &stored
 
 	for _, item := range cases {
 		r.caseRun[item.ID] = run.ID
