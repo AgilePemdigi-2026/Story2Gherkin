@@ -172,6 +172,34 @@ func RegisterDependencies(injector *do.Injector) {
 		},
 	)
 
+	// Run Evaluation
+	do.Provide(
+		injector,
+		func(i *do.Injector) (*scenHandler.EvaluationRunHandler, error) {
+			baseURL := os.Getenv("AI_SERVICE_URL")
+			if baseURL == "" {
+				baseURL = "http://127.0.0.1:8001"
+			}
+
+			client, err := scenService.NewLLMClient(
+				baseURL,
+				os.Getenv("AI_SERVICE_KEY"),
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			runService := scenService.NewEvaluationRunService(
+				scenRepo.NewEvaluationRunRepository(db),
+				scenRepo.NewGoldenDatasetRepository(db),
+				userRepository,
+				client,
+			)
+
+			return scenHandler.NewEvaluationRunHandler(runService), nil
+		},
+	)
+
 	// Generation History
 	do.Provide(
 		injector,
