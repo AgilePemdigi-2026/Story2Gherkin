@@ -14,6 +14,8 @@ func RegisterRoutes(server *gin.RouterGroup, injector *do.Injector) {
 	h := do.MustInvoke[handler.ScenarioHandler](injector)
 	review := do.MustInvoke[*handler.ReviewHandler](injector)
 	golden := do.MustInvoke[*handler.GoldenDatasetHandler](injector)
+	reports := do.MustInvoke[*handler.EvaluationReportHandler](injector)
+	history := do.MustInvoke[*handler.HistoryHandler](injector)
 	jwt := do.MustInvokeNamed[authService.JWTService](injector, constants.JWTService)
 	routes := server.Group("/scenarios", middlewares.Authenticate(jwt))
 	routes.POST("/generate", h.Generate)
@@ -24,6 +26,15 @@ func RegisterRoutes(server *gin.RouterGroup, injector *do.Injector) {
 
 	datasets := server.Group("/golden-datasets", middlewares.Authenticate(jwt))
 	RegisterGoldenDatasetRoutes(datasets, golden)
+
+	RegisterEvaluationReportRoutes(server, jwt, reports)
+
+	historyRoutes := server.Group(
+		"/history",
+		middlewares.Authenticate(jwt),
+	)
+	historyRoutes.GET("", history.List)
+	historyRoutes.GET("/:id", history.Detail)
 }
 
 func RegisterGoldenDatasetRoutes(

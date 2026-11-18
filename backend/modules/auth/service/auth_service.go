@@ -12,7 +12,6 @@ import (
 	userDto "github.com/story2gherkin/modules/user/dto"
 	"github.com/story2gherkin/modules/user/repository"
 	"github.com/story2gherkin/pkg/helpers"
-	"github.com/story2gherkin/pkg/utils"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -183,52 +182,4 @@ func (s *authService) RefreshToken(ctx context.Context, req authDto.RefreshToken
 		RefreshToken: newRefreshTokenString,
 		Role:         string(refreshToken.User.Role),
 	}, nil
-}
-
-func (s *authService) SendPasswordReset(ctx context.Context, req authDto.SendPasswordResetRequest) error {
-	user, err := s.userRepository.GetUserByEmail(ctx, s.db, req.Email)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil
-		}
-
-		return userDto.ErrEmailNotFound
-	}
-
-	resetToken := s.jwtService.GenerateAccessToken(user.ID.String(), "password_reset")
-
-	subject := "Password Reset"
-	body := "Please reset your password using this token: " + resetToken
-
-	return utils.SendMail(user.Email, subject, body)
-}
-
-func (s *authService) ResetPassword(ctx context.Context, req authDto.ResetPasswordRequest) error {
-	token, err := s.jwtService.ValidateToken(req.Token)
-	if err != nil || !token.Valid {
-		return authDto.ErrPasswordResetToken
-	}
-
-	userId, err := s.jwtService.GetUserIDByToken(req.Token)
-	if err != nil {
-		return authDto.ErrPasswordResetToken
-	}
-
-	user, err := s.userRepository.GetUserById(ctx, s.db, userId)
-	if err != nil {
-		return userDto.ErrUserNotFound
-	}
-
-	hashedPassword, err := helpers.HashPassword(req.NewPassword)
-	if err != nil {
-		return err
-	}
-
-	user.Password = hashedPassword
-	_, err = s.userRepository.Update(ctx, s.db, user)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

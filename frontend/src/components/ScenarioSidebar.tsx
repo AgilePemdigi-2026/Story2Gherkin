@@ -45,6 +45,13 @@ export default function ScenarioSidebar() {
           >
             Golden Dataset
           </NavLink>
+          <span className="generate-sidebar-link disabled" aria-disabled="true" title="Belum tersedia">Run Evaluation</span>
+          <NavLink
+            to="/evaluation/reports"
+            className={({ isActive }) => `generate-sidebar-link ${isActive ? 'active' : ''}`}
+          >
+            Evaluation Report
+          </NavLink>
           <span
             className="generate-sidebar-link disabled"
             aria-disabled="true"

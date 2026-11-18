@@ -12,6 +12,7 @@ import ReviewScenarioPage from './pages/ReviewScenarioPage'
 import DocumentationPage from './pages/DocumentationPage'
 import EvaluationPage from './pages/EvaluationPage'
 import GoldenDatasetPage from './pages/GoldenDatasetPage'
+import EvaluationReportPage from './pages/EvaluationReportPage'
 import RequireRole from './components/RequireRole'
 import HistoryPage from './pages/HistoryPage'
 import HistoryDetailPage from './pages/HistoryDetailPage'
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
   {  path: '/history/:id',  element: (<RequireRole role="system_analyst"><HistoryDetailPage /></RequireRole>)},
   { path: '/evaluation', element: <RequireRole role="qa"><EvaluationPage /></RequireRole> },
   { path: '/evaluation/golden-dataset', element: <RequireRole role="qa"><GoldenDatasetPage /></RequireRole> },
+  { path: '/evaluation/reports/:runId?', element: <RequireRole role="qa"><EvaluationReportPage /></RequireRole> },
   { path: '*', element: <Navigate to="/" replace /> },
 ])
 

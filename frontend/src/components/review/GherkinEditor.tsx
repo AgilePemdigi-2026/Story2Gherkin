@@ -5,7 +5,7 @@ interface Props {
   onChange: (value: string) => void
 }
 
-function HighlightedGherkin({ value }: { value: string }) {
+export function HighlightedGherkin({ value }: { value: string }) {
   const lines = value.split(/\r\n|\r|\n/)
   return lines.map((line, index) => {
     const match = line.match(/^(\s*)(Feature:|Scenario:|Given\b|When\b|Then\b|And\b)(.*)$/)

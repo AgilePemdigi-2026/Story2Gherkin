@@ -154,4 +154,36 @@ func RegisterDependencies(injector *do.Injector) {
 			), nil
 		},
 	)
+
+	// Evaluation Report
+	do.Provide(
+		injector,
+		func(*do.Injector) (*scenHandler.EvaluationReportHandler, error) {
+			reportRepository := scenRepo.NewEvaluationReportRepository(db)
+
+			reportService := scenService.NewEvaluationReportService(
+				userRepository,
+				reportRepository,
+			)
+
+			return scenHandler.NewEvaluationReportHandler(
+				reportService,
+			), nil
+		},
+	)
+
+	// Generation History
+	do.Provide(
+		injector,
+		func(*do.Injector) (*scenHandler.HistoryHandler, error) {
+			historyRepository := scenRepo.NewHistoryRepository(db)
+
+			historyService := scenService.NewHistoryService(
+				userRepository,
+				historyRepository,
+			)
+
+			return scenHandler.NewHistoryHandler(historyService), nil
+		},
+	)
 }
