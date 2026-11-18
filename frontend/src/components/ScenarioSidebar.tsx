@@ -60,33 +60,22 @@ export default function ScenarioSidebar() {
               Golden Dataset
             </NavLink>
 
-<NavLink
-  to="/history"
-  className={({ isActive }) =>
-    `generate-sidebar-link ${isActive ? 'active' : ''}`
-  }
->
-  History
-</NavLink>
-        </div>}
-        {session?.role === 'qa' && <div className="generate-sidebar-section">
-          <p className="generate-sidebar-heading">EVALUATION</p>
-          <NavLink
-            to="/evaluation/golden-dataset"
-            className={({ isActive }) =>
-              `generate-sidebar-link ${isActive ? 'active' : ''}`
-            }
-          >
-            Golden Dataset
-          </NavLink>
-          <span className="generate-sidebar-link disabled" aria-disabled="true" title="Belum tersedia">Run Evaluation</span>
-          <NavLink
-            to="/evaluation/reports"
-            className={({ isActive }) => `generate-sidebar-link ${isActive ? 'active' : ''}`}
-          >
-            Evaluation Report
-          </NavLink>
-        </div>}
+            <span
+              className="generate-sidebar-link disabled"
+              aria-disabled="true"
+              title="Coming soon"
+            >
+              Run Evaluation
+            </span>
+
+            <NavLink
+              to="/evaluation/reports"
+              className={sidebarLinkClassName}
+            >
+              Evaluation Report
+            </NavLink>
+          </div>
+        )}
       </nav>
     </aside>
   )
