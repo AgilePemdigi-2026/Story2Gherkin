@@ -8,6 +8,7 @@ from app.api.deps import get_generator
 from app.clients.base import InvalidModelOutput, ModelUnavailable
 from app.schemas.generate import GenerateRequest, GenerateResponse
 from app.services.generator import ScenarioGenerator
+from app.services.rule_based import generate_rule_based
 
 logger = logging.getLogger(__name__)
 
@@ -36,3 +37,8 @@ async def generate(request_body: GenerateRequest, request: Request,
         raise HTTPException(status_code=500, detail="Scenario generation failed")
     finally:
         gate.release()
+
+
+@router.post("/internal/scenarios/generate-rule-based", response_model=GenerateResponse)
+async def generate_rule_based_route(request_body: GenerateRequest):
+    return generate_rule_based(request_body)

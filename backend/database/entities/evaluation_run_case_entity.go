@@ -34,6 +34,9 @@ type EvaluationRunCase struct {
 	Title           string `gorm:"type:varchar(200);not null"`
 	ExpectedGherkin string `gorm:"type:text;not null;check:expected_gherkin <> ''"`
 
+	// Processed flips once both generators finished, even when both failed.
+	Processed bool `gorm:"not null;default:false"`
+
 	// Each method can remain unavailable independently.
 	LLM       *EvaluationCaseMethodResult `gorm:"column:llm;type:jsonb;serializer:json"`
 	RuleBased *EvaluationCaseMethodResult `gorm:"column:rule_based;type:jsonb;serializer:json"`
