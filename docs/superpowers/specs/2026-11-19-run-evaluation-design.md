@@ -9,8 +9,13 @@ kasus, dan melihat progres sampai selesai. Hasil disimpan ke `evaluation_runs` d
 `evaluation_run_cases` yang sudah ada lalu dibaca oleh Evaluation Report.
 
 Tidak dibangun: skor kemiripan terhadap golden, `winner`, Overall Score, antrean
-worker terpisah, kolom progres baru, status `PENDING` (tetap `QUEUED`). Teks Gherkin
-hasil generate tidak disimpan.
+worker terpisah, status `PENDING` (tetap `QUEUED`). Teks Gherkin hasil generate tidak
+disimpan.
+
+Revisi implementasi: kolom progres baru tetap dipakai, yaitu
+`evaluation_run_cases.processed` (boolean), karena kasus yang gagal dihasilkan oleh
+kedua metode menyimpan hasil `null` sehingga jumlah kasus terisi tidak dapat
+menghitung progres secara andal.
 
 ## Alur
 
@@ -27,8 +32,8 @@ hasil generate tidak disimpan.
      kegagalan satu kasus tidak menghentikan run.
 4. Selesai: hitung metrik, `COMPLETED`. Error fatal (dataset hilang, DB gagal) → `FAILED`
    dengan `error_message` publik.
-5. `GET /api/v1/evaluations/:runId` (QA) → status + `processed`/`total` (processed
-   dihitung dari baris kasus yang sudah terisi), untuk polling UI.
+5. `GET /api/v1/evaluation-runs/:run_id/progress` (QA) → status +
+   `processed_cases`/`total_cases` (dihitung dari `processed = true`), untuk polling UI.
 
 ## Aturan status dan metrik
 

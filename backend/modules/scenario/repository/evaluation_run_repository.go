@@ -138,7 +138,7 @@ func (r *evaluationRunRepository) GetProgress(
 	err := r.db.WithContext(ctx).
 		Model(&entities.EvaluationRun{}).
 		Select(
-			"evaluation_runs.status, evaluation_runs.total_cases, evaluation_runs.error_message, " +
+			"evaluation_runs.status, evaluation_runs.total_cases, evaluation_runs.error_message, "+
 				"(SELECT count(*) FROM evaluation_run_cases WHERE run_id = evaluation_runs.id AND processed) AS processed",
 		).
 		Where("evaluation_runs.id = ?", runID).
