@@ -52,21 +52,6 @@ export default function ScenarioSidebar() {
           >
             Evaluation Report
           </NavLink>
-          <span
-            className="generate-sidebar-link disabled"
-            aria-disabled="true"
-            title="Not yet available"
-          >
-            Run Evaluation
-          </span>
-
-          <span
-            className="generate-sidebar-link disabled"
-            aria-disabled="true"
-            title="Not yet available"
-          >
-            Evaluation Report
-          </span>
         </div>}
       </nav>
     </aside>
