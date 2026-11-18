@@ -120,20 +120,18 @@ def _steps_for(chunk: list[str]) -> list[str]:
 
 def generate_rule_based(request: GenerateRequest) -> GenerateResponse:
     started = time.monotonic()
-    scenarios = [
-        Scenario(
+    scenarios = []
+    offset = 0
+    for index, chunk in enumerate(_chunks(request.gui_elements, ELEMENTS_PER_SCENARIO), start=1):
+        scenarios.append(Scenario(
             name=f"Rule-based check {index}",
             kind="positive",
             gui_element_ids=list(range(offset + 1, offset + len(chunk) + 1)),
             given=["the user is on the page described by the user story"],
             when=_steps_for(chunk),
             then=[f"the system shows the expected result: {request.free_scenario[:200]}"],
-        )
-        for index, chunk in enumerate(
-            _chunks(request.gui_elements, ELEMENTS_PER_SCENARIO), start=1
-        )
-        for offset in [(index - 1) * ELEMENTS_PER_SCENARIO]
-    ]
+        ))
+        offset += len(chunk)
     feature = GeneratedFeature(feature_name=_feature_name(request.user_story), scenarios=scenarios)
     return GenerateResponse(
         feature=feature,
@@ -392,7 +390,7 @@ func TestRunCasesComputesStatusesAndMetrics(t *testing.T) {
 			return dto.ScenarioValidation{Valid: false, CoveragePercent: 50}
 		},
 	}
-	svc := newEvaluationRunner(repo, client)
+	svc := &evaluationRunService{runs: repo, client: client}
 
 	svc.runCases(context.Background(), uuid.New(), []entities.GoldenDatasetItem{
 		{ItemTitle: "A", UserStoryText: "story long enough", GUIElements: []string{"X"}, FreeScenarioText: "scenario long enough"},
@@ -417,12 +415,31 @@ func TestRunCasesComputesStatusesAndMetrics(t *testing.T) {
 }
 
 func TestCaseFailureDoesNotStopRun(t *testing.T) {
-	// generator mengembalikan error untuk kasus 1, sukses untuk kasus 2;
-	// assert kedua kasus tersimpan dan run COMPLETED.
+	repo := &fakeRunRepo{cases: []entities.EvaluationRunCase{{ID: uuid.New()}, {ID: uuid.New()}}}
+	client := &fakeEvalClient{
+		generateErr:  map[string]error{"case-1": errors.New("llm down")},
+		generate:     map[string]dto.GenerateResponse{"case-2": {Gherkin: "valid"}},
+		rule:         dto.GenerateResponse{Gherkin: "valid"},
+		validate:     func(string, []string) dto.ScenarioValidation { return dto.ScenarioValidation{Valid: true, CoveragePercent: 100} },
+	}
+	svc := &evaluationRunService{runs: repo, client: client}
+
+	svc.runCases(context.Background(), uuid.New(), twoItems())
+
+	if len(repo.saved) != 2 || repo.saved[0].LLM != nil {
+		t.Fatalf("failed case must be saved with nil LLM: %+v", repo.saved)
+	}
+	if repo.finishedStatus != entities.EvaluationRunCompleted {
+		t.Fatalf("status = %s", repo.finishedStatus)
+	}
 }
 
 func TestStartRejectsWhenActiveRunExists(t *testing.T) {
-	// repo.HasActive -> true; assert errors.Is(err, ErrEvaluationRunActive).
+	svc := &evaluationRunService{runs: &fakeRunRepo{active: true}}
+	_, err := svc.Start(context.Background(), validQAID, uuid.NewString())
+	if !errors.Is(err, ErrEvaluationRunActive) {
+		t.Fatalf("err = %v", err)
+	}
 }
 ```
 
@@ -550,7 +567,56 @@ type EvaluationRunProgress struct {
 
 - [ ] **Step 2: Test handler (fake service)**
 
-Uji tiga hal: body invalid → 400; service mengembalikan `ErrEvaluationRunActive` → 409; sukses → 201 dan `data.run_id` terisi. Gunakan `gin.CreateTestContext`, set `user_id`, `c.Request = httptest.NewRequest(...)`.
+```go
+func TestCreateMapsActiveRunToConflict(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Set("user_id", uuid.NewString())
+	c.Request = httptest.NewRequest(http.MethodPost, "/evaluation-runs",
+		strings.NewReader(`{"golden_dataset_id":"`+uuid.NewString()+`"}`))
+	c.Request.Header.Set("Content-Type", "application/json")
+	h := NewEvaluationRunHandler(fakeRunService{startErr: service.ErrEvaluationRunActive})
+
+	h.Create(c)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d body = %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestCreateReturnsCreatedRun(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Set("user_id", uuid.NewString())
+	c.Request = httptest.NewRequest(http.MethodPost, "/evaluation-runs",
+		strings.NewReader(`{"golden_dataset_id":"`+uuid.NewString()+`"}`))
+	c.Request.Header.Set("Content-Type", "application/json")
+	h := NewEvaluationRunHandler(fakeRunService{created: dto.EvaluationRunCreated{
+		RunID: "abc", ReportCode: "ER-0001", Status: entities.EvaluationRunQueued, TotalCases: 3,
+	}})
+
+	h.Create(c)
+
+	if rec.Code != http.StatusCreated || !strings.Contains(rec.Body.String(), `"run_id":"abc"`) {
+		t.Fatalf("status = %d body = %s", rec.Code, rec.Body.String())
+	}
+}
+
+type fakeRunService struct {
+	created  dto.EvaluationRunCreated
+	startErr error
+}
+
+func (f fakeRunService) Start(context.Context, string, string) (dto.EvaluationRunCreated, error) {
+	return f.created, f.startErr
+}
+
+func (f fakeRunService) Progress(context.Context, string, string) (dto.EvaluationRunProgress, error) {
+	return dto.EvaluationRunProgress{}, nil
+}
+```
 
 - [ ] **Step 3: Implementasi handler**
 
