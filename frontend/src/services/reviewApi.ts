@@ -39,7 +39,7 @@ export class ReviewApiError extends Error {
 
 async function request(path: string, options: RequestInit = {}) {
   const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token')
-  if (!token) throw new ReviewApiError('Sesi berakhir. Silakan login kembali.', 401)
+  if (!token) throw new ReviewApiError('Your session has expired. Please log in again.', 401)
   let response: Response
   try {
     const timeout = AbortSignal.timeout(15000)
@@ -51,15 +51,15 @@ async function request(path: string, options: RequestInit = {}) {
     })
   } catch (error) {
     if (options.signal?.aborted) throw error
-    throw new ReviewApiError('Server tidak dapat dihubungi atau permintaan melewati batas waktu. Coba lagi.')
+    throw new ReviewApiError('Unable to reach the server or the request timed out. Please try again.')
   }
   if (!response.ok) {
     const result = await response.json().catch(() => null)
     const message = response.status === 401
-      ? 'Sesi berakhir. Silakan login kembali.'
+      ? 'Your session has expired. Please log in again.'
       : response.status === 422 && result?.data?.validation
-        ? 'Perubahan belum disimpan. Perbaiki kesalahan pada struktur Gherkin terlebih dahulu.'
-        : result?.error || result?.message || 'Permintaan skenario gagal.'
+        ? 'Changes have not been saved. Fix the Gherkin structure errors first.'
+        : result?.error || result?.message || 'The scenario request failed.'
     throw new ReviewApiError(message, response.status, result?.data?.validation)
   }
   return response
@@ -69,7 +69,7 @@ async function jsonRequest<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await request(path, options)
   const result = await response.json()
   if (result.status !== true || result.data === undefined) {
-    throw new ReviewApiError('Respons skenario tidak valid.')
+    throw new ReviewApiError('Invalid scenario response.')
   }
   return result.data as T
 }

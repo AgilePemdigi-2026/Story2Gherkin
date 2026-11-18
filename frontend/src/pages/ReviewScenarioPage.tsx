@@ -13,12 +13,12 @@ import './ReviewScenarioPage.css'
 type Feedback = { kind: 'success' | 'error'; message: string } | null
 
 function ReviewShell({ children }: { children: ReactNode }) {
-  return <div className="generate-page review-page"><PublicHeader /><div className="generate-layout"><ScenarioSidebar /><main className="generate-main"><div className="generate-page-heading review-heading"><h1>Review &amp; Koreksi Skenario</h1><p>Periksa hasil skenario, lakukan koreksi bila diperlukan, simpan perubahan, lalu unduh file .feature.</p></div>{children}</main></div></div>
+  return <div className="generate-page review-page"><PublicHeader /><div className="generate-layout"><ScenarioSidebar /><main className="generate-main"><div className="generate-page-heading review-heading"><h1>Review &amp; Correct Scenarios</h1><p>Review the generated scenarios, make corrections as needed, save your changes, and download the .feature file.</p></div>{children}</main></div></div>
 }
 
 function ErrorState({ error, retry }: { error: Error; retry: () => void }) {
   const status = error instanceof ReviewApiError ? error.status : 0
-  return <section className="review-panel review-state" role="alert"><AlertCircle size={36} /><h2>{status === 403 ? 'Akses terbatas' : status === 404 ? 'Skenario tidak ditemukan' : 'Skenario belum dapat dimuat'}</h2><p>{error.message}</p>{status === 401 ? <Link to="/login" state={{ from: window.location.pathname + window.location.search }}>Login kembali <ArrowRight size={17} /></Link> : status !== 403 && <button className="review-button primary" onClick={retry}>Coba lagi</button>}</section>
+  return <section className="review-panel review-state" role="alert"><AlertCircle size={36} /><h2>{status === 403 ? 'Access Restricted' : status === 404 ? 'Scenario Not Found' : 'Unable to Load Scenario'}</h2><p>{error.message}</p>{status === 401 ? <Link to="/login" state={{ from: window.location.pathname + window.location.search }}>Log In Again <ArrowRight size={17} /></Link> : status !== 403 && <button className="review-button primary" onClick={retry}>Try Again</button>}</section>
 }
 
 function ReviewWorkspace() {
@@ -39,8 +39,8 @@ function ReviewWorkspace() {
     setScenarios((current) => current?.map((row) => row.id === item.id ? item : row) || null)
   }
   if (error) return <ReviewShell><ErrorState error={error} retry={() => { setError(null); setScenarios(null); setAttempt((n) => n + 1) }} /></ReviewShell>
-  if (!scenarios) return <ReviewShell><div className="review-panel review-state" role="status"><LoaderCircle className="review-spin" size={32} /><p>Memuat daftar skenario…</p></div></ReviewShell>
-  if (!selected) return <ReviewShell><section className="review-panel review-state"><FileText size={42} /><h2>Belum ada skenario untuk ditinjau</h2><p>Generate skenario terlebih dahulu untuk melakukan review dan koreksi.</p><Link className="review-button primary" to="/generate">Generate Scenario <ArrowRight size={18} /></Link></section></ReviewShell>
+  if (!scenarios) return <ReviewShell><div className="review-panel review-state" role="status"><LoaderCircle className="review-spin" size={32} /><p>Loading scenarios…</p></div></ReviewShell>
+  if (!selected) return <ReviewShell><section className="review-panel review-state"><FileText size={42} /><h2>No Scenarios to Review</h2><p>Generate scenarios first to review and correct them.</p><Link className="review-button primary" to="/generate">Generate Scenario <ArrowRight size={18} /></Link></section></ReviewShell>
   return <ReviewShell><ScenarioReview key={selected} id={selected} selector={<ScenarioSelector scenarios={scenarios} selected={selected} onSelect={(id) => setParams({ scenario: id })} />} onSaved={updateSummary} /></ReviewShell>
 }
 
@@ -61,7 +61,7 @@ function ScenarioReview({ id, selector, onSaved }: { id: string; selector: React
 
   useEffect(() => {
     function beforeLogout(event: Event) {
-      if (dirty && !window.confirm('Perubahan belum disimpan. Tetap logout dan tinggalkan perubahan?')) {
+      if (dirty && !window.confirm('You have unsaved changes. Log out and discard them?')) {
         event.preventDefault()
       } else {
         confirmedLogout.current = true
@@ -102,7 +102,7 @@ function ScenarioReview({ id, selector, onSaved }: { id: string; selector: React
       onSaved(result)
     } catch (reason) {
       if (reason instanceof ReviewApiError && reason.validation) setDraftValidation(reason.validation)
-      setFeedback({ kind: 'error', message: reason instanceof Error ? reason.message : 'Perubahan gagal disimpan. Coba lagi.' })
+      setFeedback({ kind: 'error', message: reason instanceof Error ? reason.message : '	Failed to save changes. Try Again.' })
     } finally { setSaving(false) }
   }
 
@@ -110,39 +110,39 @@ function ScenarioReview({ id, selector, onSaved }: { id: string; selector: React
     if (!scenario || !scenario.validation.valid || scenario.status !== 'VALID' || downloading) return
     setDownloading(true)
     try { await downloadScenario(scenario) }
-    catch (reason) { setFeedback({ kind: 'error', message: reason instanceof Error ? reason.message : 'Download gagal. Coba lagi.' }) }
+    catch (reason) { setFeedback({ kind: 'error', message: reason instanceof Error ? reason.message : 'Download failed. Try Again.' }) }
     finally { setDownloading(false) }
   }
 
   if (error) return <>{selector}<ErrorState error={error} retry={() => { setError(null); setAttempt((n) => n + 1) }} /></>
-  if (!scenario) return <div className="review-panel review-state" role="status"><LoaderCircle className="review-spin" size={32} /><p>Memuat skenario dan validasi…</p></div>
+  if (!scenario) return <div className="review-panel review-state" role="status"><LoaderCircle className="review-spin" size={32} /><p>Loading scenario and validation results…</p></div>
 
   return <>
     <div className="review-panels">
-      <section className="review-panel review-editor-panel" aria-label="Review skenario">
+      <section className="review-panel review-editor-panel" aria-label="Scenario review">
         {selector}
-        <div className="review-editor-heading"><h2>Generated Gherkin</h2>{dirty && <span className="review-unsaved">Belum disimpan</span>}</div>
+        <div className="review-editor-heading"><h2>Generated Gherkin</h2>{dirty && <span className="review-unsaved">Unsaved Changes</span>}</div>
         <GherkinEditor value={draft} editing={editing} disabled={saving} onChange={(value) => { setDraft(value); setDraftValidation(null); setFeedback(null) }} />
         <div className="review-actions">
           <button className="review-button secondary" disabled={saving} onClick={() => {
             if (editing) {
-              if (dirty && !window.confirm('Batalkan perubahan yang belum disimpan?')) return
+              if (dirty && !window.confirm('Discard unsaved changes?')) return
               setDraft(scenario.gherkin)
               setDraftValidation(null)
               setEditing(false)
             } else { setEditing(true) }
             setFeedback(null)
-          }}>{editing ? 'Batal Edit' : 'Edit Skenario'}</button>
-          <button className="review-button primary" disabled={!editing || !dirty || saving} onClick={handleSave}>{saving ? <><LoaderCircle className="review-spin" size={19} />Menyimpan…</> : 'Simpan Perubahan'}</button>
-          <button className="review-button download" disabled={!scenario.validation.valid || scenario.status !== 'VALID' || saving || downloading} onClick={handleDownload}>{downloading ? 'Mengunduh…' : 'Download .feature'}</button>
+          }}>{editing ? 'Cancel Editing' : 'Edit Scenario'}</button>
+          <button className="review-button primary" disabled={!editing || !dirty || saving} onClick={handleSave}>{saving ? <><LoaderCircle className="review-spin" size={19} />Saving…</> : 'Save Changes'}</button>
+          <button className="review-button download" disabled={!scenario.validation.valid || scenario.status !== 'VALID' || saving || downloading} onClick={handleDownload}>{downloading ? 'Downloading…' : 'Download .feature'}</button>
         </div>
-        {dirty && <p className="review-saved-note">Download menggunakan versi valid terakhir yang tersimpan, bukan draft di editor.</p>}
+        {dirty && <p className="review-saved-note">Downloads use the latest saved valid version, not the draft in the editor.</p>}
       </section>
       <ValidationPanel validation={draftValidation || scenario.validation} draft={dirty} validatedDraft={draftValidation !== null} feedback={feedback} />
     </div>
     <dialog ref={dialog} className="review-leave-dialog" aria-labelledby="review-leave-title" onCancel={(event) => { event.preventDefault(); if (blocker.state === 'blocked') blocker.reset() }}>
-      <h2 id="review-leave-title">Perubahan belum disimpan</h2><p>Perubahan di editor akan hilang jika Anda berpindah skenario atau meninggalkan halaman ini.</p>
-      <div><button className="review-button secondary" autoFocus onClick={() => { if (blocker.state === 'blocked') blocker.reset() }}>Tetap di sini</button><button className="review-button primary" onClick={() => { if (blocker.state === 'blocked') blocker.proceed() }}>Tinggalkan perubahan</button></div>
+      <h2 id="review-leave-title">Unsaved Changes</h2><p>Your changes will be lost if you switch scenarios or leave this page.</p>
+      <div><button className="review-button secondary" autoFocus onClick={() => { if (blocker.state === 'blocked') blocker.reset() }}>Stay Here</button><button className="review-button primary" onClick={() => { if (blocker.state === 'blocked') blocker.proceed() }}>Discard Changes</button></div>
     </dialog>
   </>
 }

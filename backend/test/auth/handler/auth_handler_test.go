@@ -187,8 +187,8 @@ func TestRegisterHandlerEmailAlreadyExists(t *testing.T) {
 	if res["status"] != false {
 		t.Errorf("status response = %v, want false", res["status"])
 	}
-	if res["error"] != "Email sudah terdaftar." {
-		t.Errorf("error = %v, want %q", res["error"], "Email sudah terdaftar.")
+	if res["error"] != "This email address is already registered." {
+		t.Errorf("error = %v, want %q", res["error"], "This email address is already registered.")
 	}
 }
 
@@ -215,8 +215,8 @@ func TestRegisterHandlerServiceError(t *testing.T) {
 	if res["status"] != false {
 		t.Errorf("status response = %v, want false", res["status"])
 	}
-	if res["error"] != "Terjadi kesalahan pada server." {
-		t.Errorf("error = %v, want %q", res["error"], "Terjadi kesalahan pada server.")
+	if res["error"] != "An internal server error occurred." {
+		t.Errorf("error = %v, want %q", res["error"], "An internal server error occurred.")
 	}
 }
 
@@ -380,7 +380,7 @@ func TestLoginHandler(t *testing.T) {
 			}
 
 			if tt.wantStatus == http.StatusUnauthorized {
-				if response.Error != "Email atau password salah." {
+				if response.Error != "Incorrect email or password." {
 					t.Errorf(
 						"pesan kredensial salah tidak sesuai: %q",
 						response.Error,

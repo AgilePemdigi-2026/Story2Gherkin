@@ -39,7 +39,10 @@ type ListState = { data: GoldenDatasetList | null; error: string; loading: boole
 function formatDate(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+  return new Intl.DateTimeFormat('en-GB', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date)
 }
 
 function Shell({ children }: { children: ReactNode }) {
@@ -59,7 +62,11 @@ export default function GoldenDatasetPage() {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
   const [attempt, setAttempt] = useState(0)
-  const [state, setState] = useState<ListState>({ data: null, error: '', loading: true })
+  const [state, setState] = useState<ListState>({
+    data: null,
+    error: '',
+    loading: true,
+  })
   const [uploadOpen, setUploadOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<GoldenDatasetSummary | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<GoldenDatasetSummary | null>(null)
@@ -76,13 +83,24 @@ export default function GoldenDatasetPage() {
 
   useEffect(() => {
     const controller = new AbortController()
-    listGoldenDatasets({ search: query, page, pageSize: PAGE_SIZE, signal: controller.signal })
+    listGoldenDatasets({
+      search: query,
+      page,
+      pageSize: PAGE_SIZE,
+      signal: controller.signal,
+    })
       .then((data) => {
-        if (!controller.signal.aborted) setState({ data, error: '', loading: false })
+        if (!controller.signal.aborted) {
+          setState({ data, error: '', loading: false })
+        }
       })
       .catch((reason: Error) => {
         if (!controller.signal.aborted) {
-          setState((current) => ({ ...current, error: reason.message, loading: false }))
+          setState((current) => ({
+            ...current,
+            error: reason.message,
+            loading: false,
+          }))
         }
       })
     return () => controller.abort()
@@ -96,10 +114,16 @@ export default function GoldenDatasetPage() {
       <div className="golden-heading-row">
         <div className="generate-page-heading">
           <h1>Golden Dataset</h1>
-          <p>Kelola dataset Golden Gherkin yang digunakan sebagai acuan dalam proses evaluasi.</p>
+          <p>
+            Manage Golden Gherkin datasets used as references for evaluation.
+          </p>
         </div>
-        <button type="button" className="golden-button primary" onClick={() => setUploadOpen(true)}>
-          <Plus size={18} /> Tambah Dataset
+        <button
+          type="button"
+          className="golden-button primary"
+          onClick={() => setUploadOpen(true)}
+        >
+          <Plus size={18} /> Add Dataset
         </button>
       </div>
 
@@ -109,8 +133,8 @@ export default function GoldenDatasetPage() {
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Cari dataset..."
-          aria-label="Cari dataset"
+          placeholder="Search datasets..."
+          aria-label="Search datasets"
         />
       </label>
 
@@ -118,7 +142,7 @@ export default function GoldenDatasetPage() {
         {state.loading && (
           <div className="golden-state" role="status">
             <LoaderCircle className="golden-spin" size={28} />
-            <p>Memuat Golden Dataset…</p>
+            <p>Loading Golden Datasets…</p>
           </div>
         )}
 
@@ -126,8 +150,12 @@ export default function GoldenDatasetPage() {
           <div className="golden-state" role="alert">
             <AlertCircle size={30} />
             <p>{state.error}</p>
-            <button type="button" className="golden-button secondary" onClick={() => setAttempt((value) => value + 1)}>
-              Coba lagi
+            <button
+              type="button"
+              className="golden-button secondary"
+              onClick={() => setAttempt((value) => value + 1)}
+            >
+              Try Again
             </button>
           </div>
         )}
@@ -135,15 +163,21 @@ export default function GoldenDatasetPage() {
         {!state.loading && !state.error && datasets.length === 0 && (
           <div className="golden-state">
             <Database size={34} />
-            <h2>{query ? 'Dataset tidak ditemukan' : 'Belum ada Golden Dataset'}</h2>
+            <h2>
+              {query ? 'No Datasets Found' : 'No Golden Datasets Yet'}
+            </h2>
             <p>
               {query
-                ? 'Coba kata kunci lain atau kosongkan pencarian.'
-                : 'Unggah file JSON berisi skenario acuan untuk memulai evaluasi.'}
+                ? 'Try another keyword or clear the search.'
+                : 'Upload a JSON file containing reference scenarios to start evaluating.'}
             </p>
             {!query && (
-              <button type="button" className="golden-button primary" onClick={() => setUploadOpen(true)}>
-                <Plus size={18} /> Tambah Dataset
+              <button
+                type="button"
+                className="golden-button primary"
+                onClick={() => setUploadOpen(true)}
+              >
+                <Plus size={18} /> Add Dataset
               </button>
             )}
           </div>
@@ -154,8 +188,10 @@ export default function GoldenDatasetPage() {
             <table className="golden-table">
               <thead>
                 <tr>
-                  <th scope="col">Nama Dataset</th>
-                  <th scope="col" className="golden-actions-heading">Aksi</th>
+                  <th scope="col">Dataset Name</th>
+                  <th scope="col" className="golden-actions-heading">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -164,12 +200,18 @@ export default function GoldenDatasetPage() {
                     <td>
                       <span className="golden-name">{dataset.name}</span>
                       <span className="golden-meta">
-                        {dataset.item_count} item &middot; dibuat {formatDate(dataset.created_at)}
+                        {dataset.item_count}{' '}
+                        {dataset.item_count === 1 ? 'item' : 'items'} &middot; created{' '}
+                        {formatDate(dataset.created_at)}
                       </span>
                     </td>
                     <td>
                       <div className="golden-actions">
-                        <button type="button" className="golden-action view" onClick={() => setDetailId(dataset.id)}>
+                        <button
+                          type="button"
+                          className="golden-action view"
+                          onClick={() => setDetailId(dataset.id)}
+                        >
                           <Eye size={15} /> View
                         </button>
                         <button
@@ -177,7 +219,11 @@ export default function GoldenDatasetPage() {
                           className="golden-action"
                           onClick={() => setEditTarget(dataset)}
                           disabled={Boolean(dataset.used_at)}
-                          title={dataset.used_at ? 'Sudah dipakai evaluasi, tidak dapat diubah' : 'Edit dataset'}
+                          title={
+                            dataset.used_at
+                              ? 'Already used for evaluation and cannot be edited'
+                              : 'Edit dataset'
+                          }
                         >
                           <Pencil size={15} /> Edit
                         </button>
@@ -186,7 +232,11 @@ export default function GoldenDatasetPage() {
                           className="golden-action delete"
                           onClick={() => setDeleteTarget(dataset)}
                           disabled={Boolean(dataset.used_at)}
-                          title={dataset.used_at ? 'Sudah dipakai evaluasi, tidak dapat dihapus' : 'Hapus dataset'}
+                          title={
+                            dataset.used_at
+                              ? 'Already used for evaluation and cannot be deleted'
+                              : 'Delete dataset'
+                          }
                         >
                           <Trash2 size={15} /> Delete
                         </button>
@@ -198,17 +248,23 @@ export default function GoldenDatasetPage() {
             </table>
 
             {totalPages > 1 && (
-              <nav className="golden-pagination" aria-label="Navigasi halaman dataset">
+              <nav
+                className="golden-pagination"
+                aria-label="Dataset pagination"
+              >
                 <button
                   type="button"
                   className="golden-page-arrow"
                   onClick={() => setPage((value) => Math.max(1, value - 1))}
                   disabled={page <= 1}
-                  aria-label="Halaman sebelumnya"
+                  aria-label="Previous page"
                 >
                   <ChevronLeft size={16} />
                 </button>
-                {Array.from({ length: totalPages }, (_, index) => index + 1).map((number) => (
+                {Array.from(
+                  { length: totalPages },
+                  (_, index) => index + 1,
+                ).map((number) => (
                   <button
                     key={number}
                     type="button"
@@ -224,7 +280,7 @@ export default function GoldenDatasetPage() {
                   className="golden-page-arrow"
                   onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
                   disabled={page >= totalPages}
-                  aria-label="Halaman berikutnya"
+                  aria-label="Next page"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -265,7 +321,13 @@ export default function GoldenDatasetPage() {
           }}
         />
       )}
-      {detailId && <DetailDialog key={detailId} id={detailId} onClose={() => setDetailId('')} />}
+      {detailId && (
+        <DetailDialog
+          key={detailId}
+          id={detailId}
+          onClose={() => setDetailId('')}
+        />
+      )}
     </Shell>
   )
 }
@@ -297,17 +359,19 @@ const emptyDraft: ItemDraft = {
 }
 
 const templateItem: GoldenItemInput = {
-  item_title: 'Login berhasil',
-  user_story_text: 'Sebagai pengguna, saya ingin masuk dengan email dan password agar dapat mengakses dashboard.',
-  gui_elements: ['Kolom Email', 'Kolom Password', 'Tombol Login'],
-  free_scenario_text: 'Pengguna mengisi email dan password yang valid lalu menekan tombol Login.',
+  item_title: 'Successful login',
+  user_story_text:
+    'As a user, I want to log in with my email and password so that I can access the dashboard.',
+  gui_elements: ['Email field', 'Password field', 'Login button'],
+  free_scenario_text:
+    'The user enters a valid email and password, then clicks the Login button.',
   expected_gherkin: `Feature: Login
-  Scenario: Login berhasil dengan kredensial valid
-    Given pengguna berada di halaman login
-    When pengguna mengisi kolom Email dengan "user@example.com"
-    And pengguna mengisi kolom Password dengan "rahasia123"
-    And pengguna menekan tombol Login
-    Then pengguna diarahkan ke halaman dashboard`,
+  Scenario: Successful login with valid credentials
+    Given the user is on the login page
+    When the user enters "user@example.com" in the Email field
+    And the user enters "password123" in the Password field
+    And the user clicks the Login button
+    Then the user is redirected to the dashboard`,
 }
 
 function parseElements(value: string) {
@@ -379,13 +443,17 @@ function DatasetFormDialog({
       !item.expected_gherkin ||
       item.gui_elements.length === 0
     ) {
-      return setError('Lengkapi semua field item, termasuk minimal satu GUI element.')
+      return setError(
+        'Complete all item fields, including at least one GUI element.',
+      )
     }
 
     const duplicate = items.some(
       (existing) => existing.item_title.toLowerCase() === item.item_title.toLowerCase(),
     )
-    if (duplicate) return setError(`Item "${item.item_title}" sudah ada di daftar.`)
+    if (duplicate) {
+      return setError(`Item "${item.item_title}" already exists in the list.`)
+    }
 
     setItems((current) => [...current, item])
     setDraft(emptyDraft)
@@ -398,27 +466,41 @@ function DatasetFormDialog({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!name.trim()) return setError('Nama dataset wajib diisi.')
+    if (!name.trim()) return setError('Dataset name is required.')
 
     let upload = file
     if (!editing && mode === 'form') {
-      if (items.length === 0) return setError('Tambahkan minimal satu item terlebih dahulu.')
+      if (items.length === 0) return setError('Add at least one item first.')
       upload = itemsFile(items)
     }
-    if (!editing && !upload) return setError('Pilih file JSON terlebih dahulu.')
-    if (upload && upload.size > MAX_FILE_BYTES) return setError('Ukuran file melebihi batas 5 MB.')
+    if (!editing && !upload) return setError('Select a JSON file first.')
+    if (upload && upload.size > MAX_FILE_BYTES) {
+      return setError('The file exceeds the 5 MB size limit.')
+    }
 
     setSubmitting(true)
     setError('')
     try {
       if (dataset) {
-        await updateGoldenDataset(dataset.id, { name: name.trim(), description, file: upload })
+        await updateGoldenDataset(dataset.id, {
+          name: name.trim(),
+          description,
+          file: upload,
+        })
       } else {
-        await uploadGoldenDataset({ name: name.trim(), description, file: upload as File })
+        await uploadGoldenDataset({
+          name: name.trim(),
+          description,
+          file: upload as File,
+        })
       }
       onSaved()
     } catch (reason) {
-      setError(reason instanceof GoldenDatasetApiError ? reason.message : 'Golden Dataset gagal disimpan.')
+      setError(
+        reason instanceof GoldenDatasetApiError
+          ? reason.message
+          : 'Failed to save the Golden Dataset.',
+      )
     } finally {
       setSubmitting(false)
     }
@@ -436,14 +518,22 @@ function DatasetFormDialog({
     >
       <form onSubmit={submit} className="golden-upload-form">
         <div className="golden-dialog-heading">
-          <h2 id="golden-upload-title">{editing ? 'Edit Golden Dataset' : 'Tambah Golden Dataset'}</h2>
-          <button type="button" className="golden-icon-button" onClick={onClose} disabled={submitting} aria-label="Tutup">
+          <h2 id="golden-upload-title">
+            {editing ? 'Edit Golden Dataset' : 'Add Golden Dataset'}
+          </h2>
+          <button
+            type="button"
+            className="golden-icon-button"
+            onClick={onClose}
+            disabled={submitting}
+            aria-label="Close"
+          >
             <X size={18} />
           </button>
         </div>
 
         <label className="golden-field">
-          <span>Nama dataset</span>
+          <span>Dataset name</span>
           <input
             type="text"
             value={name}
@@ -451,24 +541,28 @@ function DatasetFormDialog({
             maxLength={200}
             required
             disabled={submitting}
-            placeholder="Contoh: Golden Dataset v1"
+            placeholder="Example: Golden Dataset v1"
           />
         </label>
 
         <label className="golden-field">
-          <span>Deskripsi (opsional)</span>
+          <span>Description (optional)</span>
           <textarea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             maxLength={2000}
             rows={2}
             disabled={submitting}
-            placeholder="Catatan singkat tentang dataset ini"
+            placeholder="Brief notes about this dataset"
           />
         </label>
 
         {!editing && (
-          <div className="golden-mode-toggle" role="group" aria-label="Cara mengisi dataset">
+          <div
+            className="golden-mode-toggle"
+            role="group"
+            aria-label="Dataset input method"
+          >
             <button
               type="button"
               className={mode === 'form' ? 'active' : ''}
@@ -476,7 +570,7 @@ function DatasetFormDialog({
               onClick={() => setMode('form')}
               disabled={submitting}
             >
-              Isi form
+              Fill Out Form
             </button>
             <button
               type="button"
@@ -485,7 +579,7 @@ function DatasetFormDialog({
               onClick={() => setMode('file')}
               disabled={submitting}
             >
-              Unggah file JSON
+              Upload JSON File
             </button>
           </div>
         )}
@@ -494,14 +588,14 @@ function DatasetFormDialog({
           <>
             <div className="golden-item-draft">
               <label className="golden-field">
-                <span>Judul item</span>
+                <span>Item title</span>
                 <input
                   type="text"
                   value={draft.item_title}
                   onChange={(event) => updateDraft('item_title', event.target.value)}
                   maxLength={200}
                   disabled={submitting}
-                  placeholder="Contoh: Login berhasil"
+                  placeholder="Example: Successful login"
                 />
               </label>
 
@@ -512,7 +606,7 @@ function DatasetFormDialog({
                   onChange={(event) => updateDraft('user_story_text', event.target.value)}
                   rows={2}
                   disabled={submitting}
-                  placeholder="Sebagai pengguna, saya ingin … agar …"
+                  placeholder="As a user, I want to … so that …"
                 />
               </label>
 
@@ -523,30 +617,30 @@ function DatasetFormDialog({
                   value={draft.gui_elements}
                   onChange={(event) => updateDraft('gui_elements', event.target.value)}
                   disabled={submitting}
-                  placeholder="Kolom Email, Tombol Login"
+                  placeholder="Email field, Login button"
                 />
-                <small>Pisahkan tiap elemen dengan koma.</small>
+                <small>Separate each element with a comma.</small>
               </label>
 
               <label className="golden-field">
-                <span>Skenario bebas</span>
+                <span>Free-form scenario</span>
                 <textarea
                   value={draft.free_scenario_text}
                   onChange={(event) => updateDraft('free_scenario_text', event.target.value)}
                   rows={2}
                   disabled={submitting}
-                  placeholder="Alur singkat yang diuji"
+                  placeholder="A brief description of the flow being tested"
                 />
               </label>
 
               <label className="golden-field">
-                <span>Gherkin yang diharapkan</span>
+                <span>Expected Gherkin</span>
                 <textarea
                   value={draft.expected_gherkin}
                   onChange={(event) => updateDraft('expected_gherkin', event.target.value)}
                   rows={5}
                   disabled={submitting}
-                  placeholder={'Feature: Login\n  Scenario: Login berhasil'}
+                  placeholder={'Feature: Login\n  Scenario: Successful login'}
                 />
               </label>
 
@@ -556,7 +650,7 @@ function DatasetFormDialog({
                 onClick={addItem}
                 disabled={submitting}
               >
-                <Plus size={16} /> Tambah item
+                <Plus size={16} /> Add Item
               </button>
             </div>
 
@@ -570,7 +664,7 @@ function DatasetFormDialog({
                       className="golden-icon-button"
                       onClick={() => removeItem(index)}
                       disabled={submitting}
-                      aria-label={`Hapus ${item.item_title}`}
+                      aria-label={`Remove ${item.item_title}`}
                     >
                       <Trash2 size={15} />
                     </button>
@@ -580,13 +674,14 @@ function DatasetFormDialog({
             )}
 
             <small className="golden-item-count">
-              {items.length} item siap diunggah. Minimal 1 item.
+              {items.length} {items.length === 1 ? 'item' : 'items'} ready to upload.
+              At least 1 item is required.
             </small>
           </>
         ) : (
           <>
             <label className="golden-field">
-              <span>File JSON {editing ? '(opsional)' : ''}</span>
+              <span>JSON file {editing ? '(optional)' : ''}</span>
               <input
                 type="file"
                 accept=".json,application/json"
@@ -596,8 +691,8 @@ function DatasetFormDialog({
               />
               <small>
                 {editing
-                  ? 'Kosongkan bila hanya mengubah nama atau deskripsi. Mengunggah file baru akan mengganti seluruh item.'
-                  : 'Maksimal 5 MB. Setiap item divalidasi terhadap struktur Gherkin dan GUI Elements.'}
+                  ? 'Leave empty when updating only the name or description. Uploading a new file will replace all items.'
+                  : 'Maximum file size: 5 MB. Each item is validated against the Gherkin structure and GUI elements.'}
               </small>
             </label>
 
@@ -608,7 +703,7 @@ function DatasetFormDialog({
                 onClick={downloadTemplate}
                 disabled={submitting}
               >
-                <Download size={15} /> Unduh template JSON
+                <Download size={15} /> Download JSON Template
               </button>
             )}
           </>
@@ -621,12 +716,29 @@ function DatasetFormDialog({
         )}
 
         <div className="golden-dialog-actions">
-          <button type="button" className="golden-button secondary" onClick={onClose} disabled={submitting}>
-            Batal
+          <button
+            type="button"
+            className="golden-button secondary"
+            onClick={onClose}
+            disabled={submitting}
+          >
+            Cancel
           </button>
-          <button type="submit" className="golden-button primary" disabled={submitting}>
-            {submitting ? <LoaderCircle className="golden-spin" size={17} /> : <Upload size={17} />}
-            {submitting ? 'Menyimpan…' : editing ? 'Simpan Perubahan' : 'Unggah Dataset'}
+          <button
+            type="submit"
+            className="golden-button primary"
+            disabled={submitting}
+          >
+            {submitting ? (
+              <LoaderCircle className="golden-spin" size={17} />
+            ) : (
+              <Upload size={17} />
+            )}
+            {submitting
+              ? 'Saving…'
+              : editing
+                ? 'Save Changes'
+                : 'Upload Dataset'}
           </button>
         </div>
       </form>
@@ -658,7 +770,11 @@ function DeleteDialog({
       await deleteGoldenDataset(dataset.id)
       onDeleted()
     } catch (reason) {
-      setError(reason instanceof GoldenDatasetApiError ? reason.message : 'Golden Dataset gagal dihapus.')
+      setError(
+        reason instanceof GoldenDatasetApiError
+          ? reason.message
+          : 'Failed to delete the Golden Dataset.',
+      )
     } finally {
       setDeleting(false)
     }
@@ -675,15 +791,21 @@ function DeleteDialog({
       }}
     >
       <div className="golden-dialog-heading">
-        <h2 id="golden-delete-title">Hapus Golden Dataset</h2>
-        <button type="button" className="golden-icon-button" onClick={onClose} disabled={deleting} aria-label="Tutup">
+        <h2 id="golden-delete-title">Delete Golden Dataset</h2>
+        <button
+          type="button"
+          className="golden-icon-button"
+          onClick={onClose}
+          disabled={deleting}
+          aria-label="Close"
+        >
           <X size={18} />
         </button>
       </div>
 
       <p className="golden-delete-message">
-        Hapus <strong>{dataset.name}</strong> beserta {dataset.item_count} item di dalamnya? Tindakan ini tidak dapat
-        dibatalkan.
+        Delete <strong>{dataset.name}</strong> and its {dataset.item_count}{' '}
+        {dataset.item_count === 1 ? 'item' : 'items'}? This action cannot be undone.
       </p>
 
       {error && (
@@ -693,12 +815,26 @@ function DeleteDialog({
       )}
 
       <div className="golden-dialog-actions">
-        <button type="button" className="golden-button secondary" onClick={onClose} disabled={deleting}>
-          Batal
+        <button
+          type="button"
+          className="golden-button secondary"
+          onClick={onClose}
+          disabled={deleting}
+        >
+          Cancel
         </button>
-        <button type="button" className="golden-button danger" onClick={confirm} disabled={deleting}>
-          {deleting ? <LoaderCircle className="golden-spin" size={17} /> : <Trash2 size={17} />}
-          {deleting ? 'Menghapus…' : 'Hapus Dataset'}
+        <button
+          type="button"
+          className="golden-button danger"
+          onClick={confirm}
+          disabled={deleting}
+        >
+          {deleting ? (
+            <LoaderCircle className="golden-spin" size={17} />
+          ) : (
+            <Trash2 size={17} />
+          )}
+          {deleting ? 'Deleting…' : 'Delete Dataset'}
         </button>
       </div>
     </dialog>
@@ -737,8 +873,15 @@ function DetailDialog({ id, onClose }: { id: string; onClose: () => void }) {
       }}
     >
       <div className="golden-dialog-heading">
-        <h2 id="golden-detail-title">{detail?.name || 'Detail Golden Dataset'}</h2>
-        <button type="button" className="golden-icon-button" onClick={onClose} aria-label="Tutup">
+        <h2 id="golden-detail-title">
+          {detail?.name || 'Golden Dataset Details'}
+        </h2>
+        <button
+          type="button"
+          className="golden-icon-button"
+          onClick={onClose}
+          aria-label="Close"
+        >
           <X size={18} />
         </button>
       </div>
@@ -746,7 +889,7 @@ function DetailDialog({ id, onClose }: { id: string; onClose: () => void }) {
       {!detail && !error && (
         <div className="golden-state" role="status">
           <LoaderCircle className="golden-spin" size={26} />
-          <p>Memuat detail dataset…</p>
+          <p>Loading dataset details…</p>
         </div>
       )}
 
@@ -760,11 +903,20 @@ function DetailDialog({ id, onClose }: { id: string; onClose: () => void }) {
       {detail && !error && (
         <>
           <div className="golden-detail-meta">
-            <span>{detail.item_count} item</span>
-            <span>Dibuat {formatDate(detail.created_at)}</span>
-            <span>{detail.used_at ? `Dipakai ${formatDate(detail.used_at)}` : 'Belum dipakai evaluasi'}</span>
+            <span>
+              {detail.item_count}{' '}
+              {detail.item_count === 1 ? 'item' : 'items'}
+            </span>
+            <span>Created {formatDate(detail.created_at)}</span>
+            <span>
+              {detail.used_at
+                ? `Used for evaluation on ${formatDate(detail.used_at)}`
+                : 'Not yet used for evaluation'}
+            </span>
           </div>
-          {detail.description && <p className="golden-detail-description">{detail.description}</p>}
+          {detail.description && (
+            <p className="golden-detail-description">{detail.description}</p>
+          )}
 
           <ol className="golden-items">
             {detail.items.map((item) => (

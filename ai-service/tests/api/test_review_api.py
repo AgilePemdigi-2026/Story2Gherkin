@@ -24,5 +24,8 @@ def test_review_validation_is_private_and_does_not_call_llm():
         assert report['checks'] == {'feature': True, 'scenario': True, 'given': False, 'when': False, 'then': False}
         assert not report['coverage_available']
         assert len(report['issues']) == 3
-        assert all('deskripsi langkah' in issue['message'] for issue in report['issues'])
+        assert all(
+    'is missing a step description.' in issue['message']
+    for issue in report['issues']
+)
         assert client.post(ENDPOINT, json={**payload, "gui_elements": []}, headers={"X-AI-Service-Key": KEY}).status_code == 422

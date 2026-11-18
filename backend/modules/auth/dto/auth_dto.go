@@ -18,11 +18,15 @@ var (
 	ErrRefreshTokenExpired  = errors.New("refresh token expired")
 	ErrInvalidCredentials   = errors.New("invalid credentials")
 	ErrPasswordResetToken   = errors.New("password reset token invalid")
+	ErrInvalidNewPassword   = errors.New(
+		"Password must contain at least 8 characters, including uppercase and lowercase letters, and must not exceed 72 bytes.",
+	)
 )
 
 type (
 	RefreshTokenRequest struct {
 		RefreshToken string `json:"refresh_token" binding:"required"`
+		NewPassword  string `json:"new_password" binding:"required,min=8,max=72"`
 	}
 
 	TokenResponse struct {

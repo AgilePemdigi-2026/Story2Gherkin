@@ -332,10 +332,10 @@ useEffect(() => {
 
           {/* TITLE */}
           <div className="generate-page-heading">
-            <h1>Generate Skenario Gherkin</h1>
+            <h1>Generate Gherkin Scenarios</h1>
             <p>
-              Masukkan user story, elemen GUI, dan skenario bebas
-              untuk menghasilkan skenario Gherkin secara otomatis.
+              Enter a user story, GUI elements, and a free-form scenario
+              to automatically generate Gherkin scenarios.
             </p>
           </div>
 
@@ -370,7 +370,7 @@ useEffect(() => {
                     className={`generate-textarea ${
                       errors.userStory ? 'has-error' : ''
                     }`}
-                    placeholder="Contoh: As an admin, I want to delete user data"
+                    placeholder="Example: As an admin, I want to delete user data..."
                     value={userStory}
                     maxLength={8000}
                     disabled={isProcessing}
@@ -450,7 +450,7 @@ useEffect(() => {
                     disabled={isProcessing || guiElements.length >= 30}
                   >
                     <Plus size={19} />
-                    Tambah Elemen
+                    Add Element
                   </button>
 
                   {errors.guiElements && (
@@ -472,7 +472,7 @@ useEffect(() => {
                     className={`generate-textarea generate-free-textarea ${
                       errors.freeScenario ? 'has-error' : ''
                     }`}
-                    placeholder="Admin login, membuka halaman, klik delete..."
+                    placeholder="The admin logs in, opens the user list, and clicks Delete..."
                     value={freeScenario}
                     maxLength={4000}
                     disabled={isProcessing}
@@ -518,14 +518,14 @@ useEffect(() => {
                         setErrors({})
                       }}
                     >
-                      Generate Skenario Lain
+                      Generate More Scenarios
                     </button>
                   ) : (
                     <Link
                       to="/generate"
                       className="generate-submit-button generate-again-link"
                     >
-                      Generate Skenario Lain
+                      Generate Scenarios Lain
                     </Link>
                   )
                 ) : (
@@ -543,7 +543,7 @@ useEffect(() => {
                         Generating scenario...
                       </>
                     ) : (
-                      'Generate Skenario'
+                      'Generate Scenarios'
                     )}
                   </button>
                 )}
@@ -563,7 +563,7 @@ useEffect(() => {
 
             {/* RESULT HEADER */}
             <div className="generate-result-heading">
-                <h2>Hasil Generate</h2>
+                <h2>Generation Results</h2>
                 
             </div>
 
@@ -579,12 +579,12 @@ useEffect(() => {
                     </span>
                 </div>
 
-                <h3>Gagal melakukan generate</h3>
+                <h3>Generation Failed</h3>
 
                 <p>
                      {generateError
-                       ? 'Skenario belum dapat dihasilkan. Periksa pesan kesalahan dan coba kembali.'
-                       : 'Mohon lengkapi semua field yang diperlukan untuk menghasilkan skenario Gherkin.'}
+                        ? 'Scenarios could not be generated. Check the error message and try again.'
+                        : 'Please complete all required fields to generate Gherkin scenarios.'}
                 </p>
 
                 {/* ERROR ALERT */}
@@ -615,8 +615,8 @@ useEffect(() => {
                     <div className="generate-processing-text">
                     <h3>Generating Gherkin scenario...</h3>
                     <p>
-                        AI sedang memproses user story, elemen GUI,
-                        dan skenario Anda. Mohon tunggu beberapa saat.
+                      AI is processing your user story, GUI elements,
+                      and scenario. Please wait.
                     </p>
                     </div>
                 </div>
@@ -626,7 +626,7 @@ useEffect(() => {
                     className="generate-progress-track"
                     role="progressbar"
                     aria-label="Generating Gherkin scenario"
-                    aria-valuetext="Sedang memproses"
+                    aria-valuetext="Processing"
                 >
                     <div className="generate-progress-indicator" />
                 </div>
@@ -701,8 +701,8 @@ useEffect(() => {
           </div>
 
           <div>
-            <strong>Struktur Gherkin valid</strong>
-            <p>Given / When / Then lengkap</p>
+            <strong>Valid Gherkin structure</strong>
+            <p>Given / When / Then steps are complete</p>
           </div>
         </div>
 
@@ -737,9 +737,9 @@ useEffect(() => {
 
         <div>
           <strong>
-            Semua elemen GUI sudah tercakup dalam skenario
+            All GUI elements are covered by the scenarios
           </strong>
-          <p>3 dari 3 elemen GUI telah ditambahkan</p>
+          <p>3 of 3 GUI elements have been added</p>
         </div>
       </div>
     </div>
@@ -749,7 +749,7 @@ useEffect(() => {
       <div className="generate-tips" role="note">
         <div className="generate-tips-heading">
           <AlertCircle size={18} />
-          <strong>Peringatan dari generator</strong>
+          <strong>Generator Warnings</strong>
         </div>
         {generatedResult.feature.warnings.map((warning, index) => (
           <p key={index}>{warning}</p>
@@ -765,9 +765,13 @@ useEffect(() => {
       onClick={() => {
         if (generatedResult?.scenario_id) navigate(`/review?scenario=${encodeURIComponent(generatedResult.scenario_id)}`)
       }}
-      title={generatedResult?.scenario_id ? 'Review hasil generate ini' : 'Generate skenario tersimpan terlebih dahulu'}
+      title={
+        generatedResult?.scenario_id
+          ? 'Review these generated scenarios'
+          : 'Generate and save scenarios first'
+      }
     >
-      Review Skenario
+     Review Scenarios 
       <ArrowRight size={18} />
     </button>
 
@@ -778,10 +782,10 @@ useEffect(() => {
                 <div className="generate-empty-icon">
                   <FileText size={43} strokeWidth={1.8} />
                 </div>
-                <h3>Belum ada hasil generate</h3>
+                <h3>No Scenarios Generated Yet</h3>
                 <p>
-                  Lengkapi form di sebelah kiri, lalu klik tombol
-                  “Generate Skenario” untuk melihat hasilnya.
+                  Complete the form on the left, then click
+                  “Generate Scenarios” to view the results.
                 </p>
               </div>
             )}

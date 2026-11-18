@@ -1,28 +1,28 @@
 {
   "items": [
     {
-      "item_title": "Checkout berhasil",
-      "user_story_text": "Sebagai pembeli, saya ingin menyelesaikan checkout agar pesanan diproses.",
+      "item_title": "Successful checkout",
+      "user_story_text": "As a customer, I want to complete checkout so that my order can be processed.",
       "gui_elements": [
-        "Keranjang",
-        "Tombol Checkout",
-        "Alamat Pengiriman",
-        "Metode Pembayaran",
-        "Tombol Konfirmasi"
+        "Cart",
+        "Checkout button",
+        "Shipping Address",
+        "Payment Method",
+        "Confirm button"
       ],
-      "free_scenario_text": "Pembeli membuka keranjang, mengisi alamat, memilih pembayaran, lalu konfirmasi.",
-      "expected_gherkin": "Feature: Checkout\n  Scenario: Checkout pesanan berhasil\n    Given pembeli memiliki 1 produk di keranjang\n    When pembeli menekan tombol Checkout\n    And pembeli mengisi Alamat Pengiriman dengan \"Jl. Merdeka 1\"\n    And pembeli memilih Metode Pembayaran \"Transfer Bank\"\n    And pembeli menekan tombol Konfirmasi\n    Then pesanan tercatat dengan status \"Menunggu Pembayaran\""
+      "free_scenario_text": "The customer opens the cart, enters a shipping address, selects a payment method, and confirms the order.",
+      "expected_gherkin": "Feature: Checkout\n  Scenario: Successful order checkout\n    Given the customer has 1 product in the Cart\n    When the customer clicks the Checkout button\n    And the customer enters \"1 Merdeka Street\" in the Shipping Address\n    And the customer selects \"Bank Transfer\" as the Payment Method\n    And the customer clicks the Confirm button\n    Then the order is recorded with the status \"Awaiting Payment\""
     },
     {
-      "item_title": "Checkout keranjang kosong",
-      "user_story_text": "Sebagai pembeli, saya ingin dicegah checkout saat keranjang kosong agar tidak membuat pesanan kosong.",
+      "item_title": "Checkout with an empty cart",
+      "user_story_text": "As a customer, I want checkout to be prevented when my cart is empty so that I do not create an empty order.",
       "gui_elements": [
-        "Keranjang",
-        "Tombol Checkout",
-        "Pesan Error"
+        "Cart",
+        "Checkout button",
+        "Error message"
       ],
-      "free_scenario_text": "Pembeli menekan Checkout dengan keranjang kosong.",
-      "expected_gherkin": "Feature: Checkout\n  Scenario: Checkout ditolak saat keranjang kosong\n    Given keranjang pembeli kosong\n    When pembeli menekan tombol Checkout\n    Then pesan Error menampilkan \"Keranjang masih kosong\"\n    And tidak ada pesanan yang dibuat"
+      "free_scenario_text": "The customer clicks Checkout with an empty cart.",
+      "expected_gherkin": "Feature: Checkout\n  Scenario: Checkout is rejected when the cart is empty\n    Given the customer's Cart is empty\n    When the customer clicks the Checkout button\n    Then the Error message displays \"The cart is still empty\"\n    And no order is created"
     }
   ]
 }

@@ -11,21 +11,29 @@ import (
 	"github.com/story2gherkin/pkg/constants"
 )
 
-// Guards the production wiring: handlers that exist but are never
-// registered return 404 in the running app, which unit tests miss.
-func TestRegisterRoutesRegistersGoldenDataset(t *testing.T) {
+// Verify that the production router registers Golden Dataset and Report routes.
+func TestRegisterRoutesRegistersGoldenDatasetAndEvaluationReport(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	injector := do.New()
+
 	do.ProvideValue(injector, handler.NewScenarioHandler(nil))
 	do.ProvideValue(injector, handler.NewReviewHandler(nil))
 	do.ProvideValue(injector, handler.NewGoldenDatasetHandler(nil))
-	do.ProvideNamedValue[authService.JWTService](injector, constants.JWTService, authService.NewJWTService())
+	do.ProvideValue(injector, handler.NewEvaluationReportHandler(nil))
+	do.ProvideValue(injector, handler.NewHistoryHandler(nil))
+
+	do.ProvideNamedValue[authService.JWTService](
+		injector,
+		constants.JWTService,
+		authService.NewJWTService(),
+	)
 
 	engine := gin.New()
 	scenario.RegisterRoutes(engine.Group("/api/v1"), injector)
 
 	registered := make(map[string]bool, len(engine.Routes()))
+
 	for _, route := range engine.Routes() {
 		registered[route.Method+" "+route.Path] = true
 	}
@@ -34,6 +42,9 @@ func TestRegisterRoutesRegistersGoldenDataset(t *testing.T) {
 		"POST /api/v1/golden-datasets",
 		"GET /api/v1/golden-datasets",
 		"GET /api/v1/golden-datasets/:id",
+		"GET /api/v1/evaluation-runs",
+		"GET /api/v1/evaluation-runs/:run_id",
+		"GET /api/v1/evaluation-runs/:run_id/download",
 	} {
 		if !registered[want] {
 			t.Errorf("route %q is not registered", want)

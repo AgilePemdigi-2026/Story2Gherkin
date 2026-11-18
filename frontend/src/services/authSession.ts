@@ -69,7 +69,7 @@ function removeTokens() {
 export function saveAuthSession(result: LoginResult, rememberMe: boolean) {
   const session = decodeSession(result.access_token)
   if (!session || session.expiresAt <= Date.now() || session.role !== result.role) {
-    throw new Error('Respons sesi tidak valid. Silakan login kembali.')
+    throw new Error('Invalid session response. Please log in again.')
   }
   removeTokens()
   const storage = rememberMe ? localStorage : sessionStorage
@@ -90,6 +90,7 @@ export function roleHome(role: UserRole) {
 export function loginDestination(from: unknown, role: UserRole) {
   if (typeof from !== 'string' || !from.startsWith('/') || from.startsWith('//') || from.includes('\\')) return roleHome(role)
   const path = from.split(/[?#]/)[0]
+  if (role === 'qa' && /^\/evaluation\/reports(?:\/[\w-]+)?\/?$/.test(path)) return from
   const allowed = ['/about', '/documentation', ...(role === 'system_analyst' ? ['/generate', '/review'] : ['/evaluation'])]
   return allowed.includes(path) ? from : roleHome(role)
 }
