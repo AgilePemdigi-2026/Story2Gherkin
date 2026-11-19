@@ -23,9 +23,7 @@ var (
 )
 
 const (
-	// ponytail: 1 attempt karena Ollama dipanggil temperature 0 — retry menghasilkan output identik.
-	// Naikkan lagi kalau provider diganti ke yang non-deterministik.
-	MaxAttempts  = 1
+	MaxAttempts  = 3
 	MaxScenarios = 6
 )
 
