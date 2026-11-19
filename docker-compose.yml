@@ -44,6 +44,9 @@ services:
       LLM_PROVIDER: ollama
       OLLAMA_URL: ${OLLAMA_URL:?Set OLLAMA_URL}
       OLLAMA_MODEL: ${OLLAMA_MODEL:?Set OLLAMA_MODEL}
+      OLLAMA_NUM_CTX: ${OLLAMA_NUM_CTX:-8192}
+      OLLAMA_NUM_PREDICT: ${OLLAMA_NUM_PREDICT:-2048}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-120}
     restart: unless-stopped
 
   frontend:
