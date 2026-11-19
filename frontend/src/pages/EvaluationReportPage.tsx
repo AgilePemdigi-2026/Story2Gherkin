@@ -5,10 +5,12 @@ import PublicHeader from '../components/PublicHeader'
 import ScenarioSidebar from '../components/ScenarioSidebar'
 import { HighlightedGherkin } from '../components/review/GherkinEditor'
 import {
+  deleteEvaluationRun,
   downloadEvaluationReport,
   getEvaluationReport,
   listEvaluationRuns,
   type EvaluationReport,
+  type EvaluationRun,
   type EvaluationRunList,
   type EvaluationRunStatus,
   type MethodResult,
@@ -74,10 +76,29 @@ function Coverage({ method, result, variant }: { method: string; result: MethodR
   )
 }
 
-function ReportList({ data, page }: { data: EvaluationRunList; page: number }) {
+function ReportList({ data, page, onDeleted }: { data: EvaluationRunList; page: number; onDeleted: () => void }) {
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState('')
+
+  async function remove(run: EvaluationRun) {
+    if (!window.confirm(`Hapus laporan ${run.report_code} dan hasil evaluasinya?`)) return
+
+    setDeletingId(run.run_id)
+    setDeleteError('')
+    try {
+      await deleteEvaluationRun(run.run_id)
+      onDeleted()
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Laporan gagal dihapus.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <section className="evaluation-report-card" aria-labelledby="evaluation-report-list-title">
       <h2 id="evaluation-report-list-title">Riwayat Evaluasi</h2>
+      {deleteError && <p className="evaluation-report-error" role="alert">{deleteError}</p>}
       {data.runs.length === 0 ? <p>Belum ada hasil evaluasi pada halaman ini.</p> : (
         <div className="evaluation-report-table-wrap" tabIndex={0} aria-label="Daftar hasil evaluasi">
           <table className="evaluation-report-table">
@@ -99,7 +120,14 @@ function ReportList({ data, page }: { data: EvaluationRunList; page: number }) {
                   <td>{formatDate(run.created_at)}</td>
                   <td>{run.total_cases}</td>
                   <td>{runStatusLabel[run.status]}</td>
-                  <td><Link to={`${REPORTS_PATH}/${encodeURIComponent(run.run_id)}`} aria-label={`Lihat laporan ${run.report_code} untuk ${run.dataset_name}`}>Lihat Report</Link></td>
+                  <td>
+                    <Link to={`${REPORTS_PATH}/${encodeURIComponent(run.run_id)}`} aria-label={`Lihat laporan ${run.report_code} untuk ${run.dataset_name}`}>Lihat Report</Link>
+                    {run.can_delete === true && (
+                      <button type="button" disabled={deletingId !== null} onClick={() => void remove(run)} aria-label={`Hapus laporan ${run.report_code}`}>
+                        {deletingId === run.run_id ? 'Menghapus…' : 'Hapus'}
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -245,7 +273,7 @@ type ReportState =
 
 export default function EvaluationReportPage() {
   const { runId } = useParams()
-  const [params] = useSearchParams()
+  const [params, setParams] = useSearchParams()
   const requestedPage = Number(params.get('page'))
   const page = !runId && Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1
   const demo = import.meta.env.DEV && runId === 'demo'
@@ -291,7 +319,15 @@ export default function EvaluationReportPage() {
               </div>
               {!state && <p className="evaluation-report-card" role="status">Memuat hasil evaluasi…</p>}
               {state?.kind === 'error' && <section className="evaluation-report-card"><p role="alert">{state.message}</p><button type="button" onClick={reload}>Coba Lagi</button></section>}
-              {state?.kind === 'list' && <ReportList data={state.data} page={page} />}
+              {state?.kind === 'list' && (
+                <ReportList data={state.data} page={page} onDeleted={() => {
+                  if (page > 1 && state.data.runs.length === 1) {
+                    setParams({ page: String(page - 1) }, { replace: true })
+                  } else {
+                    reload()
+                  }
+                }} />
+              )}
             </>
           )}
         </main>

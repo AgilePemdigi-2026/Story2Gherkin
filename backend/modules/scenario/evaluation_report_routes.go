@@ -22,4 +22,5 @@ func RegisterEvaluationReportRoutes(
 	routes.GET("", reports.List)
 	routes.GET("/:run_id", reports.Detail)
 	routes.GET("/:run_id/download", reports.Download)
+	routes.DELETE("/:run_id", reports.Delete)
 }

@@ -10,6 +10,8 @@ type EvaluationRunSummary struct {
 	CreatedAt   time.Time `json:"created_at"`
 	TotalCases  int       `json:"total_cases"`
 	Status      string    `json:"status"`
+	CanDelete   bool      `json:"can_delete"`
+	CreatedBy   string    `json:"-"`
 }
 
 // EvaluationRunListResponse contains one page of evaluation runs.

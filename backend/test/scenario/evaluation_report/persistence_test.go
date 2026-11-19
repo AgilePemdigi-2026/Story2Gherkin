@@ -22,6 +22,44 @@ const evaluationPersistenceGolden = `Feature: Login
     When the user submits valid credentials
     Then the dashboard appears`
 
+func TestDeleteFinishedReportKeepsActiveRunsAndRemovesStoredCases(t *testing.T) {
+	db := evaluationPersistenceDatabase(t)
+	ctx := context.Background()
+	runs := repository.NewEvaluationRunRepository(db)
+	reports := repository.NewEvaluationReportRepository(db)
+	active := evaluationPersistenceRun(entities.EvaluationRunRunning)
+	if err := db.Create(&active).Error; err != nil {
+		t.Fatal(err)
+	}
+	finished := evaluationPersistenceRun(entities.EvaluationRunFailed)
+	item := evaluationPersistenceCase(finished.ID, "GC-001", 1)
+	if err := runs.CreateWithCases(ctx, &finished, []entities.EvaluationRunCase{item}); err != nil {
+		t.Fatal(err)
+	}
+	if err := reports.DeleteFinished(ctx, active.ID, active.CreatedBy); !errors.Is(err, repository.ErrEvaluationReportActive) {
+		t.Fatalf("active report delete returned %v", err)
+	}
+	if err := reports.DeleteFinished(ctx, finished.ID, uuid.NewString()); !errors.Is(err, repository.ErrEvaluationReportNotFound) {
+		t.Fatalf("another QA user's delete returned %v", err)
+	}
+	if _, err := reports.GetByID(ctx, finished.ID); err != nil {
+		t.Fatalf("report lost after unauthorized delete: %v", err)
+	}
+	if err := reports.DeleteFinished(ctx, finished.ID, finished.CreatedBy); err != nil {
+		t.Fatal(err)
+	}
+	if progress, err := runs.GetProgress(ctx, active.ID); err != nil || progress.Status != entities.EvaluationRunRunning {
+		t.Fatalf("active run changed after report deletion: %+v, %v", progress, err)
+	}
+	if _, err := reports.GetByID(ctx, finished.ID); !errors.Is(err, repository.ErrEvaluationReportNotFound) {
+		t.Fatalf("report still available after deletion: %v", err)
+	}
+	var remaining int64
+	if err := db.Model(&entities.EvaluationRunCase{}).Where("run_id = ?", finished.ID).Count(&remaining).Error; err != nil || remaining != 0 {
+		t.Fatalf("case snapshots after deleting report: %d, %v", remaining, err)
+	}
+}
+
 func TestEvaluationReportPostgresList(t *testing.T) {
 	db := evaluationPersistenceDatabase(t)
 	repo := repository.NewEvaluationReportRepository(db)
