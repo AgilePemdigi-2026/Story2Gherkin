@@ -59,7 +59,9 @@ func (s *authService) Register(
 	ctx context.Context,
 	req userDto.UserCreateRequest,
 ) (userDto.UserResponse, error) {
-
+	if !validNewPassword(req.Password) {
+		return userDto.UserResponse{}, authDto.ErrInvalidNewPassword
+	}
 	req.Name = strings.TrimSpace(req.Name)
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 	_, isExist, err := s.userRepository.CheckEmail(ctx, s.db, req.Email)

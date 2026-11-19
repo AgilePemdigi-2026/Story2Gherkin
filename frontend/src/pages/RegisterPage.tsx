@@ -42,12 +42,20 @@ function RegisterPage() {
 
   // Password validation
   const validatePassword = (value: string): string => {
+    if (/[\p{White_Space}\uFEFF]/u.test(value)) {
+      return 'Password must not contain spaces, tabs, or line breaks.'
+    }
+
     const hasUppercase = /[A-Z]/.test(value)
     const hasLowercase = /[a-z]/.test(value)
-    const isValidLength = value.length >= 8
+    const isValidLength = Array.from(value).length >= 8
 
     if (!isValidLength || !hasUppercase || !hasLowercase) {
-      return 'Password should be at least 8 characters long and use a mix of uppercase and lowercase letters.'
+      return 'Password must contain at least 8 characters, including uppercase and lowercase letters.'
+    }
+
+    if (new TextEncoder().encode(value).length > 72) {
+      return 'Password must not exceed 72 bytes.'
     }
 
     return ''

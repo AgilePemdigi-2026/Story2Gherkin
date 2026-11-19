@@ -19,7 +19,7 @@ var (
 	ErrInvalidCredentials   = errors.New("invalid credentials")
 	ErrPasswordResetToken   = errors.New("password reset token invalid")
 	ErrInvalidNewPassword   = errors.New(
-		"Password must contain at least 8 characters, including uppercase and lowercase letters, and must not exceed 72 bytes.",
+		"Password must contain at least 8 characters, include uppercase and lowercase letters, contain no spaces or whitespace, and not exceed 72 bytes.",
 	)
 )
 
