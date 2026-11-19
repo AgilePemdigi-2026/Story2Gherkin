@@ -98,7 +98,7 @@ func TestRegisterSuccess(t *testing.T) {
 	result, err := newTestService(repo).Register(context.Background(), userDto.UserCreateRequest{
 		Name:     "  Rizal  ",
 		Email:    "  RIZAL@Example.COM ",
-		Password: "rahasia123",
+		Password: "Rahasia123",
 		Role:     string(entities.RoleQA),
 	})
 	if err != nil {
@@ -117,10 +117,10 @@ func TestRegisterSuccess(t *testing.T) {
 	if repo.registered.Email != "rizal@example.com" {
 		t.Errorf("email tersimpan = %q, want %q", repo.registered.Email, "rizal@example.com")
 	}
-	if repo.registered.Password == "rahasia123" {
+	if repo.registered.Password == "Rahasia123" {
 		t.Error("password tersimpan masih plaintext")
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(repo.registered.Password), []byte("rahasia123")); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(repo.registered.Password), []byte("Rahasia123")); err != nil {
 		t.Errorf("password hash tidak cocok: %v", err)
 	}
 	if repo.registered.Role != entities.RoleQA {
@@ -149,7 +149,7 @@ func TestRegisterEmailAlreadyExists(t *testing.T) {
 	_, err := newTestService(repo).Register(context.Background(), userDto.UserCreateRequest{
 		Name:     "Rizal",
 		Email:    "rizal@example.com",
-		Password: "rahasia123",
+		Password: "Rahasia123",
 		Role:     string(entities.RoleQA),
 	})
 
@@ -172,7 +172,7 @@ func TestRegisterCheckEmailError(t *testing.T) {
 	_, err := newTestService(repo).Register(context.Background(), userDto.UserCreateRequest{
 		Name:     "Rizal",
 		Email:    "rizal@example.com",
-		Password: "rahasia123",
+		Password: "Rahasia123",
 		Role:     string(entities.RoleQA),
 	})
 
@@ -195,7 +195,7 @@ func TestRegisterCreateError(t *testing.T) {
 	_, err := newTestService(repo).Register(context.Background(), userDto.UserCreateRequest{
 		Name:     "Rizal",
 		Email:    "rizal@example.com",
-		Password: "rahasia123",
+		Password: "Rahasia123",
 		Role:     string(entities.RoleQA),
 	})
 

@@ -9,6 +9,7 @@ import (
 	"github.com/story2gherkin/database/entities"
 	"github.com/story2gherkin/modules/auth/dto"
 	"github.com/story2gherkin/modules/auth/service"
+	userDto "github.com/story2gherkin/modules/user/dto"
 	"gorm.io/gorm"
 )
 
@@ -150,6 +151,54 @@ func TestResetPassword_RejectsInvalidPasswords(t *testing.T) {
 		if !errors.Is(err, dto.ErrInvalidNewPassword) {
 			t.Fatalf(
 				"error = %v, want invalid new password",
+				err,
+			)
+		}
+	}
+}
+
+func TestRegisterAndResetRejectWhitespace(t *testing.T) {
+	svc := service.NewAuthService(nil, nil, nil, nil)
+
+	passwords := []string{
+		"Password 123",
+		" Password123",
+		"Password123 ",
+		"Pass\tword123",
+		"Pass\nword123",
+		"Pass\u00A0word123",
+		"Pass\u3000word123",
+	}
+
+	for _, password := range passwords {
+		_, err := svc.Register(
+			context.Background(),
+			userDto.UserCreateRequest{
+				Name:     "Test User",
+				Email:    "test@example.com",
+				Password: password,
+				Role:     "qa",
+			},
+		)
+
+		if !errors.Is(err, dto.ErrInvalidNewPassword) {
+			t.Fatalf(
+				"Register() error = %v, want ErrInvalidNewPassword",
+				err,
+			)
+		}
+
+		err = svc.ResetPassword(
+			context.Background(),
+			dto.ResetPasswordRequest{
+				Token:       strings.Repeat("A", 43),
+				NewPassword: password,
+			},
+		)
+
+		if !errors.Is(err, dto.ErrInvalidNewPassword) {
+			t.Fatalf(
+				"ResetPassword() error = %v, want ErrInvalidNewPassword",
 				err,
 			)
 		}

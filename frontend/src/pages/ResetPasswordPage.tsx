@@ -34,6 +34,13 @@ function ResetPasswordForm({ token }: { token: string }) {
 
     setError('')
 
+    if (/[\p{White_Space}\uFEFF]/u.test(password)) {
+      setError(
+        'Password must not contain spaces, tabs, or line breaks.'
+      )
+      return
+    }
+
     if (
       Array.from(password).length < 8 ||
       !/[A-Z]/.test(password) ||
@@ -170,8 +177,9 @@ function ResetPasswordForm({ token }: { token: string }) {
             id="reset-password-guidance"
             className="password-requirements"
           >
-            Use at least 8 characters, including uppercase
-            and lowercase letters. Maximum 72 bytes.
+            Use at least 8 characters, including uppercase and
+            lowercase letters. Maximum 72 bytes. Spaces, tabs,
+            and line breaks are not allowed.
           </p>
         </div>
 

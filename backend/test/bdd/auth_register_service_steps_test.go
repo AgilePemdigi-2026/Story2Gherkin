@@ -109,10 +109,10 @@ func (f *registerServiceFeature) berhasilDengan(name, email, role string) error 
 	if f.repo.registered.Name != name || f.repo.registered.Email != email || string(f.repo.registered.Role) != role {
 		return fmt.Errorf("tersimpan = %+v, ingin name=%q email=%q role=%q", f.repo.registered, name, email, role)
 	}
-	if f.repo.registered.Password == "" || f.repo.registered.Password == "rahasia123" {
+	if f.repo.registered.Password == "" || f.repo.registered.Password == "Rahasia123" {
 		return fmt.Errorf("password tersimpan plaintext/kosong")
 	}
-	plain := "rahasia123"
+	plain := "Rahasia123"
 	if email == "rizal@example.com" && name == "Rizal" {
 		if err := bcrypt.CompareHashAndPassword([]byte(f.repo.registered.Password), []byte(plain)); err != nil {
 			return fmt.Errorf("password hash tidak cocok: %v", err)

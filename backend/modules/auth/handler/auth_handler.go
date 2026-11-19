@@ -81,6 +81,18 @@ func (c *authHandler) Register(ctx *gin.Context) {
 		return
 	}
 
+	if errors.Is(err, authDto.ErrInvalidNewPassword) {
+		ctx.AbortWithStatusJSON(
+			http.StatusBadRequest,
+			utils.BuildResponseFailed(
+				userDto.MESSAGE_FAILED_REGISTER_USER,
+				authDto.ErrInvalidNewPassword.Error(),
+				nil,
+			),
+		)
+		return
+	}
+
 	res := utils.BuildResponseSuccess(
 		userDto.MESSAGE_SUCCESS_REGISTER_USER,
 		result,

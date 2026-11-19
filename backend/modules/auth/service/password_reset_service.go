@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/google/uuid"
@@ -66,6 +67,10 @@ func validNewPassword(password string) bool {
 	hasLower := false
 
 	for _, character := range password {
+		if unicode.IsSpace(character) || character == '\uFEFF' {
+			return false
+		}
+
 		if character >= 'A' && character <= 'Z' {
 			hasUpper = true
 		}
