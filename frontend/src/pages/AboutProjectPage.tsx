@@ -17,59 +17,66 @@ import aboutIllustration from '../assets/about-project-illustration.png'
 import './AboutProjectPage.css'
 
 const objectives = [
-  'Mengotomatisasi pembuatan scenario Gherkin.',
-  'Mengurangi pekerjaan manual dalam penulisan test scenario.',
-  'Memvalidasi struktur Gherkin secara otomatis.',
-  'Memeriksa cakupan elemen GUI.',
-  'Membandingkan hasil LLM dengan pendekatan rule-based.',
+  'Automate Gherkin scenario generation.',
+  'Reduce manual effort in writing test scenarios.',
+  'Automatically validate Gherkin structure.',
+  'Check GUI element coverage.',
+  'Compare LLM-generated results with a rule-based approach.',
 ]
 
 const benefits = [
-  'Menghemat waktu penyusunan test scenario.',
-  'Membantu menjaga konsistensi format Gherkin.',
-  'Mengurangi human error.',
-  'Membantu analis menemukan elemen GUI yang belum tercakup.',
-  'Menyediakan hasil evaluasi yang lebih objektif.',
+  'Save time when creating test scenarios.',
+  'Maintain consistent Gherkin formatting.',
+  'Reduce human error.',
+  'Help analysts identify GUI elements that are not covered.',
+  'Provide more objective evaluation results.',
 ]
 
 const technologies = [
   { name: 'Python', Icon: Code2, color: '#f59e0b' },
-  { name: 'Open-source Large Language Model', Icon: Bot, color: '#059669' },
+  {
+    name: 'Open-Source Large Language Model',
+    Icon: Bot,
+    color: '#059669',
+  },
   { name: 'Gherkin Parser', Icon: FileCode2, color: '#0ea5e9' },
   { name: 'Behave', Icon: FileCheck2, color: '#6366f1' },
-  { name: 'Rule-Based BDD Generator', Icon: Terminal, color: '#0891b2' },
+  {
+    name: 'Rule-Based BDD Generator',
+    Icon: Terminal,
+    color: '#0891b2',
+  },
   { name: 'Web Application', Icon: Globe2, color: '#2563eb' },
 ]
 
 function AboutProjectPage() {
   return (
     <div className="about-page">
-      {/* NAVBAR */}
+      {/* NAVIGATION */}
       <PublicHeader />
 
       <main className="about-main">
-
         {/* ABOUT HERO */}
         <section className="about-hero">
           <div className="about-hero-content">
             <h1 className="about-title">
-              Tentang
-              <span>Project Story2Gherkin</span>
+              About
+              <span>the Story2Gherkin Project</span>
             </h1>
 
             <p className="about-description">
-              Sistem Generator dan Evaluator Gherkin dikembangkan
-              untuk membantu System Analyst dan QA dalam
-              menghasilkan serta mengevaluasi skenario pengujian
-              secara lebih cepat, konsisten, dan terstruktur
-              dengan memanfaatkan Large Language Model (LLM).
+              Story2Gherkin is a Gherkin generation and evaluation
+              system designed to help System Analysts and QA
+              professionals create and evaluate test scenarios
+              more quickly, consistently, and systematically
+              using a Large Language Model (LLM).
             </p>
           </div>
 
           <div className="about-hero-visual">
             <img
               src={aboutIllustration}
-              alt="Ilustrasi proses User Story menjadi Gherkin Scenario dan evaluasi"
+              alt="Illustration of user stories being converted into Gherkin scenarios and evaluated"
               className="about-illustration"
             />
           </div>
@@ -78,17 +85,17 @@ function AboutProjectPage() {
         {/* INFORMATION CARDS */}
         <section
           className="about-info-section"
-          aria-label="Informasi tentang proyek"
+          aria-label="Project information"
         >
           <div className="about-cards">
-
-            {/* TUJUAN */}
+            {/* OBJECTIVES */}
             <article className="about-card">
               <div className="about-card-header">
                 <div className="about-card-icon objective-icon">
                   <Target size={28} />
                 </div>
-                <h2>Tujuan</h2>
+
+                <h2>Objectives</h2>
               </div>
 
               <ul className="about-card-list">
@@ -104,13 +111,14 @@ function AboutProjectPage() {
               </ul>
             </article>
 
-            {/* TEKNOLOGI */}
+            {/* TECHNOLOGIES */}
             <article className="about-card">
               <div className="about-card-header">
                 <div className="about-card-icon technology-icon">
                   <Settings2 size={28} />
                 </div>
-                <h2>Teknologi</h2>
+
+                <h2>Technologies</h2>
               </div>
 
               <ul className="about-card-list technology-list">
@@ -127,13 +135,14 @@ function AboutProjectPage() {
               </ul>
             </article>
 
-            {/* MANFAAT */}
+            {/* BENEFITS */}
             <article className="about-card">
               <div className="about-card-header">
                 <div className="about-card-icon benefit-icon">
                   <Lightbulb size={28} />
                 </div>
-                <h2>Manfaat</h2>
+
+                <h2>Benefits</h2>
               </div>
 
               <ul className="about-card-list">
@@ -148,10 +157,8 @@ function AboutProjectPage() {
                 ))}
               </ul>
             </article>
-
           </div>
         </section>
-
       </main>
     </div>
   )

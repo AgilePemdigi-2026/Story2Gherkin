@@ -11,6 +11,7 @@ export interface RegisterPayload {
 interface ApiResponse {
   status?: boolean
   message?: string
+  error?: string
   data?: unknown
 }
 
@@ -30,7 +31,9 @@ export async function registerUser(payload: RegisterPayload) {
 
   if (!response.ok || result.status === false) {
     throw new Error(
-      result.message || 'Registration failed. Please try again.'
+      result.error ||
+        result.message ||
+        'Registration failed. Please try again.'
     )
   }
 

@@ -101,7 +101,7 @@ func TestRegisterHandlerSuccess(t *testing.T) {
 	rec := doRegister(t, h, `{
 		"name": "Rizal",
 		"email": "rizal@example.com",
-		"password": "rahasia123",
+		"password": "Rahasia123",
 		"role": "qa"
 	}`)
 
@@ -125,7 +125,7 @@ func TestRegisterHandlerSuccess(t *testing.T) {
 		t.Errorf("data tidak sesuai: %+v", data)
 	}
 
-	if as.gotReq == nil || as.gotReq.Name != "Rizal" || as.gotReq.Password != "rahasia123" {
+	if as.gotReq == nil || as.gotReq.Name != "Rizal" || as.gotReq.Password != "Rahasia123" {
 		t.Errorf("request tidak diteruskan ke service: %+v", as.gotReq)
 	}
 }
@@ -175,7 +175,7 @@ func TestRegisterHandlerEmailAlreadyExists(t *testing.T) {
 	rec := doRegister(t, h, `{
 		"name": "Rizal",
 		"email": "rizal@example.com",
-		"password": "rahasia123",
+		"password": "Rahasia123",
 		"role": "qa"
 	}`)
 
@@ -203,7 +203,7 @@ func TestRegisterHandlerServiceError(t *testing.T) {
 	rec := doRegister(t, h, `{
 		"name": "Rizal",
 		"email": "rizal@example.com",
-		"password": "rahasia123",
+		"password": "Rahasia123",
 		"role": "qa"
 	}`)
 
