@@ -50,7 +50,9 @@ export default function EvaluationPage() {
     const controller = new AbortController()
     const timer = setInterval(() => {
       getEvaluationRunProgress(run.run_id, controller.signal)
-        .then(setProgress)
+        .then((result) => {
+          if (!controller.signal.aborted) setProgress(result)
+        })
         .catch((cause: unknown) => {
           if (controller.signal.aborted) return
           setError(cause instanceof Error ? cause.message : 'Gagal memantau evaluasi.')
@@ -74,9 +76,10 @@ export default function EvaluationPage() {
   const processed = progress?.processed_cases ?? 0
 
   async function start() {
-    if (!selected) return
+    if (!selected || active) return
     setStarting(true)
     setError('')
+    setRun(null)
     setProgress(null)
     try {
       const created = await createEvaluationRun(selected.id)
@@ -214,7 +217,7 @@ export default function EvaluationPage() {
               type="button"
               className="eval-primary"
               onClick={start}
-              disabled={!selected || active || finished}
+              disabled={!selected || active}
             >
               {active ? 'Menjalankan evaluasi…' : 'Jalankan Evaluasi'}
             </button>

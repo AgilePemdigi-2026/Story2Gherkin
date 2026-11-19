@@ -22,6 +22,7 @@ type fakeRunRepo struct {
 	finished entities.EvaluationRunStatus
 	metrics  *entities.EvaluationRunMetrics
 	message  *string
+	saveErr  error
 }
 
 func (f *fakeRunRepo) HasActive(context.Context) (bool, error) { return f.active, nil }
@@ -34,7 +35,7 @@ func (f *fakeRunRepo) MarkRunning(context.Context, uuid.UUID) error { return nil
 
 func (f *fakeRunRepo) SaveCaseResult(_ context.Context, _ uuid.UUID, llm, ruleBased *entities.EvaluationCaseMethodResult) error {
 	f.saved = append(f.saved, caseSave{llm: llm, ruleBased: ruleBased})
-	return nil
+	return f.saveErr
 }
 
 func (f *fakeRunRepo) GetProgress(context.Context, uuid.UUID) (dto.EvaluationRunProgress, error) {
@@ -130,7 +131,10 @@ func TestRunCasesComputesStatusesAndMetrics(t *testing.T) {
 	client := validClient(map[string]bool{"story-a-long": true, "rule": true})
 	svc := &evaluationRunService{runs: repo, client: client}
 
-	metrics := svc.runCases(context.Background(), testCases(), testItems())
+	metrics, err := svc.runCases(context.Background(), testCases(), testItems())
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if *metrics.LLM.ValidationPercent != 50 {
 		t.Fatalf("llm validity = %v", *metrics.LLM.ValidationPercent)
@@ -208,6 +212,26 @@ func TestStartRejectsWhenActiveRunExists(t *testing.T) {
 
 	if !errors.Is(err, ErrEvaluationRunActive) {
 		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestExecuteFailsWhenCaseResultCannotBeSaved(t *testing.T) {
+	repo := &fakeRunRepo{saveErr: errors.New("case persistence unavailable")}
+	svc := &evaluationRunService{
+		runs:   repo,
+		client: validClient(map[string]bool{"story-a-long": true, "rule": true}),
+	}
+
+	svc.execute(uuid.New(), testCases(), testItems())
+
+	if repo.finished != entities.EvaluationRunFailed {
+		t.Fatalf("status = %s, want FAILED when a case cannot be persisted", repo.finished)
+	}
+	if len(repo.saved) != 1 {
+		t.Fatalf("processed %d cases, want to stop after first persistence failure", len(repo.saved))
+	}
+	if repo.metrics != nil || repo.message == nil {
+		t.Fatal("a failed run must have a public error and no completed metrics")
 	}
 }
 
