@@ -116,10 +116,13 @@ func (r *evaluationRunRepository) SaveCaseResult(
 	return r.db.WithContext(ctx).
 		Model(&entities.EvaluationRunCase{}).
 		Where("id = ?", caseID).
-		Updates(map[string]any{
-			"llm":        llm,
-			"rule_based": ruleBased,
-			"processed":  true,
+		// Struct updates apply serializer:json before pgx encodes parameters.
+		// Select also writes nil results when a method is unavailable.
+		Select("LLM", "RuleBased", "Processed").
+		Updates(entities.EvaluationRunCase{
+			LLM:       llm,
+			RuleBased: ruleBased,
+			Processed: true,
 		}).
 		Error
 }
@@ -171,10 +174,11 @@ func (r *evaluationRunRepository) Finish(
 	return r.db.WithContext(ctx).
 		Model(&entities.EvaluationRun{}).
 		Where("id = ?", runID).
-		Updates(map[string]any{
-			"status":        status,
-			"metrics":       metrics,
-			"error_message": message,
+		Select("Status", "Metrics", "ErrorMessage").
+		Updates(entities.EvaluationRun{
+			Status:       status,
+			Metrics:      metrics,
+			ErrorMessage: message,
 		}).
 		Error
 }
