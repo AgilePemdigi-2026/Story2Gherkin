@@ -1,4 +1,5 @@
 demo-backup/
+/graphify-out/
 
 # secrets lokal — jangan commit
 .env
