@@ -10,8 +10,9 @@ import (
 
 // ErrEvaluationReportNotFound indicates that the requested run does not exist.
 var ErrEvaluationReportNotFound = errors.New("evaluation report not found")
+var ErrEvaluationReportActive = errors.New("evaluation is still running")
 
-// EvaluationReportRepository reads stored evaluation results.
+// EvaluationReportRepository manages stored evaluation results.
 // It must not execute evaluations or recalculate metrics.
 type EvaluationReportRepository interface {
 	// List returns one page of runs and the total number of runs.
@@ -37,4 +38,6 @@ type EvaluationReportRepository interface {
 		ctx context.Context,
 		runID uuid.UUID,
 	) (dto.EvaluationReportDetailResponse, error)
+
+	DeleteFinished(ctx context.Context, runID uuid.UUID, creatorID string) error
 }

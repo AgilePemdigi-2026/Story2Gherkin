@@ -444,6 +444,10 @@ func (s *evaluationReportRepositoryStub) List(
 	return s.runs, s.total, s.err
 }
 
+func (s *evaluationReportRepositoryStub) DeleteFinished(context.Context, uuid.UUID, string) error {
+	return s.err
+}
+
 func (s *evaluationReportRepositoryStub) GetByID(
 	_ context.Context,
 	runID uuid.UUID,
