@@ -1,0 +1,39 @@
+{
+  "items": [
+    {
+      "item_title": "Login Pengguna",
+      "user_story_text": "Sebagai pengguna, saya ingin login ke sistem agar dapat mengakses fitur yang tersedia.",
+      "gui_elements": ["Form login", "Tombol masuk", "Pesan error"],
+      "free_scenario_text": "Pengguna mengisi email dan password lalu menekan tombol masuk.",
+      "expected_gherkin": "Feature: Login Pengguna\n  Sebagai pengguna\n  Ingin login ke sistem\n  Agar dapat mengakses fitur yang tersedia\n\n  Scenario: Login berhasil dengan kredensial valid\n    Given halaman login ditampilkan\n    When pengguna mengisi email dan password yang benar\n    And menekan tombol masuk\n    Then sistem menampilkan dashboard utama\n\n  Scenario: Login gagal dengan password salah\n    Given halaman login ditampilkan\n    When pengguna mengisi email yang benar\n    And mengisi password yang salah\n    And menekan tombol masuk\n    Then sistem menampilkan pesan error"
+    },
+    {
+      "item_title": "Cetak Struk Transaksi",
+      "user_story_text": "Sebagai kasir, saya ingin mencetak struk setelah transaksi agar pembeli memiliki bukti pembelian.",
+      "gui_elements": ["Tombol cetak", "Preview struk", "Pilih printer"],
+      "free_scenario_text": "Kasir menekan tombol cetak setelah transaksi selesai.",
+      "expected_gherkin": "Feature: Cetak Struk Transaksi\n  Sebagai kasir\n  Ingin mencetak struk transaksi\n  Agar pembeli memiliki bukti pembelian\n\n  Scenario: Cetak struk berhasil\n    Given layar transaksi ditampilkan\n    When kasir menekan tombol cetak\n    Then sistem menampilkan preview struk\n    And struk dicetak ke printer yang dipilih"
+    },
+    {
+      "item_title": "Kelola Data Produk",
+      "user_story_text": "Sebagai admin gudang, saya ingin menambah dan mengedit data produk agar stok selalu akurat.",
+      "gui_elements": ["Form produk", "Tabel produk", "Tombol simpan", "Tombol hapus"],
+      "free_scenario_text": "Admin menambah produk baru lalu menyimpan perubahan.",
+      "expected_gherkin": "Feature: Kelola Data Produk\n  Sebagai admin gudang\n  Ingin mengelola data produk\n  Agar stok selalu akurat\n\n  Scenario: Tambah produk baru\n    Given halaman tabel produk ditampilkan\n    When admin mengisi form produk\n    And menekan tombol simpan\n    Then produk baru muncul di tabel produk\n\n  Scenario: Hapus produk\n    Given tabel produk ditampilkan\n    When admin menekan tombol hapus pada suatu produk\n    Then produk dihapus dari tabel produk"
+    },
+    {
+      "item_title": "Reset Password",
+      "user_story_text": "Sebagai pengguna, saya ingin mereset password melalui email agar dapat mengakses kembali akun yang terlupa.",
+      "gui_elements": ["Input email", "Tombol kirim reset", "Pesan konfirmasi"],
+      "free_scenario_text": "Pengguna memasukkan email terdaftar dan meminta reset password.",
+      "expected_gherkin": "Feature: Reset Password\n  Sebagai pengguna\n  Ingin mereset password melalui email\n  Agar dapat mengakses kembali akun yang terlupa\n\n  Scenario: Request reset password berhasil\n    Given halaman lupa password ditampilkan\n    When pengguna memasukkan email terdaftar\n    And menekan tombol kirim reset\n    Then sistem menampilkan pesan konfirmasi"
+    },
+    {
+      "item_title": "Export Laporan Keuangan",
+      "user_story_text": "Sebagai manajer, saya ingin mengeksport laporan keuangan ke PDF agar dapat dibagikan ke direksi.",
+      "gui_elements": ["Rentang tanggal", "Tombol export", "Pilih format"],
+      "free_scenario_text": "Manajer memilih rentang tanggal lalu mengeksport laporan ke PDF.",
+      "expected_gherkin": "Feature: Export Laporan Keuangan\n  Sebagai manajer\n  Ingin mengeksport laporan keuangan ke PDF\n  Agar dapat dibagikan ke direksi\n\n  Scenario: Export laporan ke PDF\n    Given halaman laporan keuangan ditampilkan\n    When manajer memilih rentang tanggal\n    And menekan tombol export\n    Then sistem menampilkan opsi format\n    And file PDF diunduh"
+    }
+  ]
+}

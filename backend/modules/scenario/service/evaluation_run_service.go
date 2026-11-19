@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math"
 
 	"github.com/google/uuid"
@@ -179,27 +180,34 @@ func (s *evaluationRunService) execute(
 	ctx := context.Background()
 
 	if err := s.runs.MarkRunning(ctx, runID); err != nil {
-		s.fail(ctx, runID)
+		s.fail(ctx, runID, "mark_running", err)
 		return
 	}
 
-	metrics := s.runCases(ctx, cases, items)
+	metrics, err := s.runCases(ctx, cases, items)
+	if err != nil {
+		s.fail(ctx, runID, "save_case_result", err)
+		return
+	}
 
 	if err := s.runs.Finish(ctx, runID, entities.EvaluationRunCompleted, &metrics, nil); err != nil {
-		s.fail(ctx, runID)
+		s.fail(ctx, runID, "finish", err)
 	}
 }
 
-func (s *evaluationRunService) fail(ctx context.Context, runID uuid.UUID) {
+func (s *evaluationRunService) fail(ctx context.Context, runID uuid.UUID, operation string, cause error) {
+	slog.Error("Evaluation run failed", "run_id", runID, "operation", operation, "error", cause)
 	message := "Evaluation failed due to an internal error."
-	_ = s.runs.Finish(ctx, runID, entities.EvaluationRunFailed, nil, &message)
+	if err := s.runs.Finish(ctx, runID, entities.EvaluationRunFailed, nil, &message); err != nil {
+		slog.Error("Could not persist failed evaluation status", "run_id", runID, "error", err)
+	}
 }
 
 func (s *evaluationRunService) runCases(
 	ctx context.Context,
 	cases []entities.EvaluationRunCase,
 	items []entities.GoldenDatasetItem,
-) entities.EvaluationRunMetrics {
+) (entities.EvaluationRunMetrics, error) {
 	llmResults := make([]*entities.EvaluationCaseMethodResult, 0, len(items))
 	ruleBasedResults := make([]*entities.EvaluationCaseMethodResult, 0, len(items))
 
@@ -220,13 +228,15 @@ func (s *evaluationRunService) runCases(
 		llmResults = append(llmResults, llm)
 		ruleBasedResults = append(ruleBasedResults, ruleBased)
 
-		_ = s.runs.SaveCaseResult(ctx, cases[index].ID, llm, ruleBased)
+		if err := s.runs.SaveCaseResult(ctx, cases[index].ID, llm, ruleBased); err != nil {
+			return entities.EvaluationRunMetrics{}, fmt.Errorf("save case %s: %w", cases[index].ID, err)
+		}
 	}
 
 	return entities.EvaluationRunMetrics{
 		LLM:       summarize(llmResults, len(items)),
 		RuleBased: summarize(ruleBasedResults, len(items)),
-	}
+	}, nil
 }
 
 func (s *evaluationRunService) evaluate(
