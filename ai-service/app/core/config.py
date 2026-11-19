@@ -40,8 +40,12 @@ class Settings:
             provider_order=tuple(
                 p.strip() for p in os.getenv("OPENROUTER_PROVIDER_ORDER", "").split(",") if p.strip()
             ),
-            ollama_url=os.getenv("OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/"),
-            ollama_model=os.getenv("OLLAMA_MODEL", "").strip(),
+            ollama_url=(
+                os.getenv("OLLAMA_URL")
+                or os.getenv("LLM_BASE_URL", "").removesuffix("/v1")
+                or "http://127.0.0.1:11434"
+            ).rstrip("/"),
+            ollama_model=(os.getenv("OLLAMA_MODEL") or os.getenv("LLM_MODEL", "")).strip(),
             ollama_num_ctx=int(os.getenv("OLLAMA_NUM_CTX", "4096")),
             ollama_num_predict=int(os.getenv("OLLAMA_NUM_PREDICT", "2048")),
             service_key=os.getenv("AI_SERVICE_KEY", ""),
