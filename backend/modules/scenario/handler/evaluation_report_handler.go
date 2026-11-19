@@ -46,6 +46,10 @@ func evaluationReportError(c *gin.Context, err error) {
 	case errors.Is(err, service.ErrEvaluationReportNotReady):
 		status = http.StatusConflict
 		message = "CSV downloads are available only for completed evaluation runs."
+
+	case errors.Is(err, service.ErrEvaluationReportActive):
+		status = http.StatusConflict
+		message = "Only completed or failed evaluation reports can be deleted."
 	}
 
 	c.AbortWithStatusJSON(
@@ -56,6 +60,19 @@ func evaluationReportError(c *gin.Context, err error) {
 			nil,
 		),
 	)
+}
+
+func (h *EvaluationReportHandler) Delete(c *gin.Context) {
+	userID, ok := reviewUser(c)
+	if !ok {
+		return
+	}
+
+	if err := h.service.Delete(c.Request.Context(), userID, c.Param("run_id")); err != nil {
+		evaluationReportError(c, err)
+		return
+	}
+	c.Status(http.StatusNoContent)
 }
 
 // List handles GET /api/v1/evaluation-runs.

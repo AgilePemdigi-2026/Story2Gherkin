@@ -10,6 +10,7 @@ export interface EvaluationRun {
   created_at: string
   total_cases: number
   status: EvaluationRunStatus
+  can_delete?: boolean
 }
 
 export interface EvaluationRunList {
@@ -96,19 +97,21 @@ function isReport(value: unknown): value is EvaluationReport {
     (metrics === null || (isRecord(metrics) && isMethodSummary(metrics.llm) && isMethodSummary(metrics.rule_based)))
 }
 
-async function request(path: string, signal: AbortSignal) {
+async function request(path: string, signal?: AbortSignal, method = 'GET') {
   const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token')
   if (!token) throw new Error('Sesi berakhir. Silakan login kembali.')
 
   let response: Response
   try {
+    const timeout = AbortSignal.timeout(30000)
     response = await fetch(`${API_BASE_URL}/evaluation-runs${path}`, {
+      method,
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
-      signal: AbortSignal.any([signal, AbortSignal.timeout(30000)]),
+      signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     })
   } catch (error) {
-    if (signal.aborted) throw error
+    if (signal?.aborted) throw error
     throw new Error('Server tidak dapat dihubungi. Silakan coba lagi.', { cause: error })
   }
 
@@ -116,9 +119,18 @@ async function request(path: string, signal: AbortSignal) {
   if (response.status === 401) throw new Error('Sesi berakhir. Silakan login kembali.')
   if (response.status === 403) throw new Error('Hanya Quality Assurance yang dapat membuka laporan evaluasi.')
   if (response.status === 404) throw new Error('Laporan evaluasi belum tersedia atau tidak ditemukan.')
-  if (response.status === 409) throw new Error('Laporan belum siap diunduh.')
+  if (response.status === 409) {
+    throw new Error(method === 'DELETE'
+      ? 'Hanya laporan yang sudah selesai atau gagal yang dapat dihapus.'
+      : 'Laporan belum siap diunduh.')
+  }
   if (!response.ok) throw new Error('Permintaan laporan evaluasi gagal. Silakan coba lagi.')
   return response
+}
+
+export async function deleteEvaluationRun(runId: string) {
+  const response = await request(`/${encodeURIComponent(runId)}`, undefined, 'DELETE')
+  if (response.status !== 204) throw new Error('Server belum mengonfirmasi penghapusan laporan.')
 }
 
 async function jsonData(path: string, signal: AbortSignal): Promise<unknown> {

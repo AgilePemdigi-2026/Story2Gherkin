@@ -30,6 +30,33 @@ const (
 	evaluationHTTPRunID  = "6b308226-0b1f-4efb-92c6-9b4066132b74"
 )
 
+func TestEvaluationReportHTTPDelete(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		role entities.Role
+		err  error
+		want int
+	}{
+		{"finished", entities.RoleQA, nil, http.StatusNoContent},
+		{"active", entities.RoleQA, repository.ErrEvaluationReportActive, http.StatusConflict},
+		{"missing or different owner", entities.RoleQA, repository.ErrEvaluationReportNotFound, http.StatusNotFound},
+		{"non-QA", entities.RoleSystemAnalyst, nil, http.StatusForbidden},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			f := newEvaluationHTTPFixture(t)
+			f.users.role = test.role
+			f.reports.err = test.err
+			req := httptest.NewRequest(http.MethodDelete, evaluationHTTPBase+"/"+evaluationHTTPRunID, nil)
+			req.Header.Set("Authorization", f.authorization)
+			rec := httptest.NewRecorder()
+			f.router.ServeHTTP(rec, req)
+			if rec.Code != test.want {
+				t.Fatalf("status = %d, want %d: %s", rec.Code, test.want, rec.Body.String())
+			}
+		})
+	}
+}
+
 func TestEvaluationReportHTTPRequiresAuthentication(t *testing.T) {
 	headers := []struct {
 		name  string
@@ -384,6 +411,10 @@ func (s *evaluationHTTPRepository) List(
 	s.page = page
 	s.pageSize = pageSize
 	return s.runs, s.total, s.err
+}
+
+func (s *evaluationHTTPRepository) DeleteFinished(context.Context, uuid.UUID, string) error {
+	return s.err
 }
 
 func (s *evaluationHTTPRepository) GetByID(

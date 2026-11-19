@@ -11,6 +11,7 @@ import (
 	"github.com/story2gherkin/database/entities"
 	"github.com/story2gherkin/modules/scenario/dto"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type evaluationReportGORMRepository struct {
@@ -23,6 +24,30 @@ func NewEvaluationReportRepository(
 	return &evaluationReportGORMRepository{
 		db: db,
 	}
+}
+
+func (r *evaluationReportGORMRepository) DeleteFinished(
+	ctx context.Context,
+	runID uuid.UUID,
+	creatorID string,
+) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var run entities.EvaluationRun
+		err := tx.Select("id", "status").
+			Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ? AND created_by = ?", runID, creatorID).
+			Take(&run).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrEvaluationReportNotFound
+		}
+		if err != nil {
+			return err
+		}
+		if run.Status != entities.EvaluationRunCompleted && run.Status != entities.EvaluationRunFailed {
+			return ErrEvaluationReportActive
+		}
+		return tx.Delete(&run).Error
+	})
 }
 
 // List reads all evaluation runs without filtering by creator.
@@ -56,6 +81,7 @@ func (r *evaluationReportGORMRepository) List(
 					"created_at",
 					"total_cases",
 					"status",
+					"created_by",
 				).
 				Order("created_at DESC").
 				Order("id DESC").
@@ -199,6 +225,7 @@ func evaluationRunToSummary(
 		CreatedAt:   run.CreatedAt,
 		TotalCases:  run.TotalCases,
 		Status:      string(run.Status),
+		CreatedBy:   run.CreatedBy,
 	}, nil
 }
 

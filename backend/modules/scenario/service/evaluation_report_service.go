@@ -30,6 +30,7 @@ var (
 	ErrEvaluationReportNotReady = errors.New(
 		"only completed evaluation reports can be downloaded",
 	)
+	ErrEvaluationReportActive = errors.New("evaluation is still running")
 )
 
 type EvaluationReportService interface {
@@ -51,6 +52,8 @@ type EvaluationReportService interface {
 		userID string,
 		runID string,
 	) (dto.EvaluationReportDetailResponse, error)
+
+	Delete(ctx context.Context, userID string, runID string) error
 }
 
 type evaluationReportService struct {
@@ -121,6 +124,10 @@ func (s *evaluationReportService) List(
 	if runs != nil {
 		result.Runs = runs
 	}
+	creatorID := uuid.MustParse(userID).String()
+	for i := range result.Runs {
+		setReportDeletePermission(&result.Runs[i], creatorID)
+	}
 
 	result.TotalPages = int(
 		(total + int64(pageSize) - 1) / int64(pageSize),
@@ -158,8 +165,33 @@ func (s *evaluationReportService) Detail(
 	if report.Cases == nil {
 		report.Cases = []dto.EvaluationReportCase{}
 	}
+	setReportDeletePermission(&report.EvaluationRunSummary, uuid.MustParse(userID).String())
 
 	return report, nil
+}
+
+func setReportDeletePermission(report *dto.EvaluationRunSummary, creatorID string) {
+	report.CanDelete = report.CreatedBy == creatorID &&
+		(report.Status == string(entities.EvaluationRunCompleted) || report.Status == string(entities.EvaluationRunFailed))
+}
+
+func (s *evaluationReportService) Delete(ctx context.Context, userID, runID string) error {
+	if err := s.authorizeQA(ctx, userID); err != nil {
+		return err
+	}
+	id, err := uuid.Parse(runID)
+	if err != nil {
+		return ErrEvaluationReportInvalidRequest
+	}
+	err = s.reports.DeleteFinished(ctx, id, uuid.MustParse(userID).String())
+	switch {
+	case errors.Is(err, repository.ErrEvaluationReportNotFound):
+		return ErrEvaluationReportNotFound
+	case errors.Is(err, repository.ErrEvaluationReportActive):
+		return ErrEvaluationReportActive
+	default:
+		return err
+	}
 }
 
 // Download returns a completed report for CSV generation.
