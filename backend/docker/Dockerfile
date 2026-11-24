@@ -11,7 +11,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 
 FROM alpine:3.23 AS runtime
 
-RUN apk --no-cache add ca-certificates tzdata \
+RUN apk --no-cache add ca-certificates tzdata chromium \
     && addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app

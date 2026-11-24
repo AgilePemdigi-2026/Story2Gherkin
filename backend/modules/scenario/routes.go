@@ -16,6 +16,7 @@ func RegisterRoutes(server *gin.RouterGroup, injector *do.Injector) {
 	golden := do.MustInvoke[*handler.GoldenDatasetHandler](injector)
 	reports := do.MustInvoke[*handler.EvaluationReportHandler](injector)
 	runs := do.MustInvoke[*handler.EvaluationRunHandler](injector)
+	behat := do.MustInvoke[*handler.BehatRunHandler](injector)
 	history := do.MustInvoke[*handler.HistoryHandler](injector)
 	jwt := do.MustInvokeNamed[authService.JWTService](injector, constants.JWTService)
 	routes := server.Group("/scenarios", middlewares.Authenticate(jwt))
@@ -30,6 +31,7 @@ func RegisterRoutes(server *gin.RouterGroup, injector *do.Injector) {
 
 	RegisterEvaluationReportRoutes(server, jwt, reports)
 	RegisterEvaluationRunRoutes(server, jwt, runs)
+	RegisterBehatRunRoutes(server, jwt, behat)
 
 	historyRoutes := server.Group(
 		"/history",
