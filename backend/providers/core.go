@@ -124,6 +124,20 @@ func RegisterDependencies(injector *do.Injector) {
 		},
 	)
 
+	// End-to-end test runs
+	do.Provide(
+		injector,
+		func(*do.Injector) (*scenHandler.BehatRunHandler, error) {
+			return scenHandler.NewBehatRunHandler(
+				scenService.NewBehatRunService(
+					scenRepo.NewBehatRunRepository(db),
+					scenRepo.NewReviewRepository(db),
+					userRepository,
+				),
+			), nil
+		},
+	)
+
 	// Golden Dataset
 	do.Provide(
 		injector,
