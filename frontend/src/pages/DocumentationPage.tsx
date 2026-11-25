@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   Link,
   useLocation,
@@ -11,6 +11,8 @@ import {
   ChevronRight,
   Menu,
   Search,
+  X,
+  BookOpen,
 } from 'lucide-react'
 
 import PublicHeader from '../components/PublicHeader'
@@ -59,6 +61,9 @@ function DocumentationWorkspace({
 
   const [query, setQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [visibleSection, setVisibleSection] = useState('')
+  const navRef = useRef<HTMLElement>(null)
+  const indicatorRef = useRef<HTMLSpanElement>(null)
 
   const term = query.trim().toLocaleLowerCase()
 
@@ -71,6 +76,53 @@ function DocumentationWorkspace({
   const index = documentationArticles.indexOf(article)
   const previous = documentationArticles[index - 1]
   const next = documentationArticles[index + 1]
+
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    const indicator = indicatorRef.current
+    if (!nav || !indicator) return
+    const update = () => {
+      const link = nav.querySelector<HTMLAnchorElement>('[aria-current="page"]')
+      if (!link || link.getClientRects().length === 0) {
+        indicator.style.opacity = '0'
+        return
+      }
+      const parent = nav.getBoundingClientRect()
+      const rect = link.getBoundingClientRect()
+      Object.assign(indicator.style, {
+        width: `${rect.width}px`, height: `${rect.height}px`,
+        transform: `translate3d(${rect.left - parent.left}px, ${rect.top - parent.top}px, 0)`,
+        opacity: '1',
+      })
+    }
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(nav)
+    nav.addEventListener('toggle', update, true)
+    return () => {
+      observer.disconnect()
+      nav.removeEventListener('toggle', update, true)
+    }
+  }, [article.slug, term, menuOpen])
+
+  useEffect(() => {
+    let frame = 0
+    const update = () => {
+      const sections = article.sections.map((section) => document.getElementById(section.id))
+      const passed = sections.filter((section) => section && section.getBoundingClientRect().top <= 180)
+      setVisibleSection(passed.at(-1)?.id ?? article.sections[0]?.id ?? '')
+    }
+    const onScroll = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(update)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [article])
 
   useEffect(() => {
     const id = location.hash.slice(1)
@@ -116,6 +168,7 @@ function DocumentationWorkspace({
             to="/documentation"
             className="docs-sidebar-title"
           >
+            <span className="docs-brand-icon"><BookOpen size={22} aria-hidden="true" /></span>
             <span>
               Documentation
               <small>STORY2GHERKIN</small>
@@ -134,9 +187,15 @@ function DocumentationWorkspace({
                 setQuery(event.target.value)
               }
             />
+            {query && (
+              <button type="button" className="docs-search-clear" aria-label="Clear topic search" onClick={() => setQuery('')}>
+                <X size={16} aria-hidden="true" />
+              </button>
+            )}
           </div>
 
-          <nav aria-label="Documentation navigation">
+          <nav ref={navRef} className="docs-topic-nav" aria-label="Documentation navigation">
+            <span ref={indicatorRef} className="docs-nav-indicator" aria-hidden="true" />
             {documentationGroups.map((group) => {
               const items = matches.filter(
                 (item) => item.group === group.id
@@ -182,24 +241,29 @@ function DocumentationWorkspace({
             })}
 
             {matches.length === 0 && (
-              <p
-                className="docs-no-results"
-                role="status"
-              >
-                No topics found for “{query}”. Try another
-                keyword.
-              </p>
+              <div className="docs-no-results" role="status">
+                <Search size={24} aria-hidden="true" />
+                <strong>No topics found</strong>
+                <p>Try a different keyword for “{query}”.</p>
+                <button type="button" onClick={() => setQuery('')}>Clear search</button>
+              </div>
             )}
           </nav>
         </aside>
 
         <main className="docs-main" id="docs-main">
+          <div className="docs-breadcrumb" aria-label="Article path">
+            <Link to="/documentation">Documentation</Link>
+            <ChevronRight size={14} aria-hidden="true" />
+            <span>{documentationGroups.find((group) => group.id === article.group)?.label}</span>
+          </div>
           <article
+            key={article.slug}
             className="docs-article"
             aria-labelledby="docs-article-title"
           >
             <header className="docs-article-heading">
-              <p>STORY2GHERKIN GUIDE</p>
+              <p>STORY2GHERKIN GUIDE <span>{String(index + 1).padStart(2, '0')} / {String(documentationArticles.length).padStart(2, '0')}</span></p>
 
               <h1 id="docs-article-title">
                 {article.title}
@@ -222,12 +286,12 @@ function DocumentationWorkspace({
               <nav aria-label="Article contents">
                 <TableOfContents
                   article={article}
-                  hash={location.hash}
+                  hash={`#${visibleSection}`}
                 />
               </nav>
             </details>
 
-            {article.sections.map((section) => (
+            {article.sections.map((section, sectionIndex) => (
               <section
                 className="docs-section"
                 id={section.id}
@@ -235,6 +299,7 @@ function DocumentationWorkspace({
                 aria-labelledby={`heading-${section.id}`}
               >
                 <h2 id={`heading-${section.id}`}>
+                  <span className="docs-section-number" aria-hidden="true">{String(sectionIndex + 1).padStart(2, '0')}</span>
                   {section.title}
                 </h2>
 
@@ -293,7 +358,7 @@ function DocumentationWorkspace({
           <nav aria-label="Article contents">
             <TableOfContents
               article={article}
-              hash={location.hash}
+              hash={`#${visibleSection}`}
             />
           </nav>
         </aside>
@@ -315,10 +380,7 @@ export default function DocumentationPage() {
     <div className="documentation-page">
       <PublicHeader />
 
-      <DocumentationWorkspace
-        key={article.slug}
-        article={article}
-      />
+      <DocumentationWorkspace article={article} />
     </div>
   )
 }
