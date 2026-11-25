@@ -7,208 +7,6 @@ import { useAuthSession } from '../hooks/useAuthSession'
 import './HomePage.css'
 import WorkflowAnimation from '../components/WorkflowAnimation'
 
-const scenarioLines = [
-  { keyword: 'Feature:', text: ' Password reset' },
-  { keyword: 'Scenario:', text: ' Request a reset link' },
-  { keyword: 'Given', text: ' I am on the password reset page' },
-  { keyword: 'When', text: ' I submit my registered email address' },
-  { keyword: 'Then', text: ' I should receive a password reset link' },
-]
-
-type PreviewMode = 'generate' | 'review' | 'report'
-
-function GherkinPreview() {
-  return (
-    <pre className="s2g-code">
-      <code>
-        {scenarioLines.map((line, index) => (
-          <span
-            className="s2g-code-line"
-            key={line.keyword}
-            style={{ animationDelay: `${index * 0.65}s` }}
-          >
-            <span className="s2g-code-number" aria-hidden="true">
-              {index + 1}
-            </span>
-
-            <span>
-              <span className="s2g-code-keyword">{line.keyword}</span>
-              {line.text}
-            </span>
-          </span>
-        ))}
-      </code>
-    </pre>
-  )
-}
-
-function StoryPreview() {
-  return (
-    <div className="s2g-story-preview">
-      <div className="s2g-preview-label">User story</div>
-
-      <p>
-        As a registered user, I want to reset my password so that I can
-        regain access to my account.
-      </p>
-
-      <div className="s2g-preview-label s2g-gui-label">GUI context</div>
-
-      <div className="s2g-mini-form">
-        <strong>Reset password</strong>
-        <div className="s2g-mini-input">Email address</div>
-        <span className="s2g-mini-submit">Send reset link</span>
-      </div>
-    </div>
-  )
-}
-
-function ReportPreview() {
-  return (
-    <div className="s2g-report-preview">
-      <div className="s2g-report-toolbar">
-        <span>Scenario comparison</span>
-        <span className="s2g-preview-download">Download CSV</span>
-      </div>
-
-      <div className="s2g-table-scroll">
-        <table className="s2g-report-table">
-          <caption className="s2g-sr-only">
-            Illustrative comparison of LLM and rule-based scenarios
-          </caption>
-
-          <thead>
-            <tr>
-              <th scope="col">Scenario</th>
-              <th scope="col">LLM</th>
-              <th scope="col">Rule-based</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            <tr>
-              <th scope="row">Password reset</th>
-              <td><span className="s2g-status">Valid</span></td>
-              <td><span className="s2g-status">Valid</span></td>
-            </tr>
-
-            <tr>
-              <th scope="row">Change email</th>
-              <td><span className="s2g-status">Valid</span></td>
-              <td><span className="s2g-status">Valid</span></td>
-            </tr>
-
-            <tr>
-              <th scope="row">Update profile</th>
-              <td><span className="s2g-status">Valid</span></td>
-              <td>
-                <span className="s2g-status s2g-status-warning">
-                  Needs review
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-function ProductWindow({ mode = 'generate' }: { mode?: PreviewMode }) {
-  const isReport = mode === 'report'
-
-  const title = isReport
-    ? 'Evaluation Report'
-    : mode === 'review'
-      ? 'Review Scenario'
-      : 'Generate Scenario'
-
-  const navigation = isReport
-    ? ['Golden Dataset', 'Run Evaluation', 'Evaluation Report']
-    : ['Generate Scenario', 'Review Scenario', 'History']
-
-  return (
-    <div className={`s2g-product-window s2g-product-${mode}`}>
-      <div className="s2g-window-bar">
-        <span className="s2g-window-controls" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-        </span>
-
-        <span>Story2Gherkin</span>
-        <span className="s2g-window-label">Workspace</span>
-      </div>
-
-      <div className="s2g-product-layout">
-        <div className="s2g-product-sidebar">
-          <strong>Story2Gherkin</strong>
-
-          <span className="s2g-sidebar-caption">
-            {isReport ? 'EVALUATION' : 'SCENARIOS'}
-          </span>
-
-          {navigation.map(item => (
-            <span
-              key={item}
-              className={
-                item === title
-                  ? 's2g-product-nav is-current'
-                  : 's2g-product-nav'
-              }
-            >
-              {item}
-            </span>
-          ))}
-        </div>
-
-        <div className="s2g-product-content">
-          <div className="s2g-product-heading">
-            <strong>{title}</strong>
-            <span className="s2g-preview-tag">
-              {isReport ? 'Completed' : 'Draft'}
-            </span>
-          </div>
-
-          {isReport ? (
-            <ReportPreview />
-          ) : (
-            <>
-              <div className="s2g-editor-layout">
-                <StoryPreview />
-
-                <div className="s2g-preview-editor">
-                  <div className="s2g-editor-toolbar">
-                    <span>Gherkin scenario</span>
-                    <span className="s2g-status">Structure valid</span>
-                  </div>
-
-                  <GherkinPreview />
-                </div>
-              </div>
-
-              {mode === 'review' && (
-                <div className="s2g-validation-summary">
-                  <div>
-                    <span>Structure validation</span>
-                    <strong>Valid Gherkin</strong>
-                  </div>
-
-                  <div>
-                    <span>GUI coverage</span>
-                    <strong>Review matched elements</strong>
-                  </div>
-
-                  <span className="s2g-preview-save">Save changes</span>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function MagneticCTA({
   to,
@@ -359,24 +157,6 @@ function MagneticCTA({
   )
 }
 
-function MediaPlaceholder({
-  variant,
-}: {
-  variant: 'hero' | 'workflow'
-}) {
-  return (
-    <div
-      className={`s2g-media-placeholder s2g-media-placeholder-${variant}`}
-      role="img"
-      aria-label={
-        variant === 'hero'
-          ? 'Reserved space for the Story2Gherkin product demonstration'
-          : 'Reserved space for the System Analyst and QA workflow animation'
-      }
-    />
-  )
-}
-
 export default function HomePage() {
   const session = useAuthSession()
 
@@ -408,7 +188,17 @@ export default function HomePage() {
           </div>
 
           <div className="s2g-hero-visual">
-            <MediaPlaceholder variant="hero" />
+            <video
+  className="s2g-hook-video"
+  src="/videos/story2gherkin-hook.mp4"
+  poster="/videos/story2gherkin-hook-poster.png"
+  autoPlay
+  muted
+  loop
+  playsInline
+  preload="metadata"
+  aria-label="Story2Gherkin: System Analyst and QA workflow"
+/>
           </div>
         </section>
 
@@ -486,7 +276,17 @@ export default function HomePage() {
             </div>
 
             <div className="s2g-role-visual">
-              <ProductWindow mode="review" />
+              <video
+  className="s2g-sa-demo-video"
+  src="/videos/system-analyst-actual-ui-no-mouse.mp4"
+  poster="/videos/system-analyst-actual-ui-poster.png"
+  autoPlay
+  muted
+  loop
+  playsInline
+  preload="metadata"
+  aria-label="System Analyst demo"
+/>
             </div>
           </div>
 
@@ -507,7 +307,17 @@ export default function HomePage() {
             </div>
 
             <div className="s2g-role-visual">
-              <ProductWindow mode="report" />
+              <video
+  className="s2g-qa-demo-video"
+  src="/videos/qa-actual-ui-no-mouse.mp4"
+  poster="/videos/qa-actual-ui-poster.png"
+  autoPlay
+  muted
+  loop
+  playsInline
+  preload="metadata"
+  aria-label="QA workflow demo"
+/>
             </div>
           </div>
 

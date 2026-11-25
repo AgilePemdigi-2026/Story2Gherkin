@@ -1325,3 +1325,34 @@
 .s2g-home .s2g-footer {
   border-top-color: #dfe7f2;
 }
+
+.s2g-sa-demo-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  border: 1px solid #dfe7f2;
+  border-radius: 16px;
+  background: #f1f6fd;
+}
+
+.s2g-qa-demo-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  border: 1px solid #dfe7f2;
+  border-radius: 16px;
+  background: #f1f6fd;
+}
+
+.s2g-hook-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 20px;
+  background: #f1f6fd;
+}
