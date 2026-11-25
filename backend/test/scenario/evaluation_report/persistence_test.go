@@ -484,7 +484,10 @@ func evaluationPersistenceDatabase(t *testing.T) *gorm.DB {
 		t.Skip("set TEST_EVALUATION_REPORT_DATABASE_URL or TEST_DATABASE_URL")
 	}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  dsn,
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {

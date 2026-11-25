@@ -22,6 +22,7 @@ func TestRegisterRoutesRegistersGoldenDatasetAndEvaluationReport(t *testing.T) {
 	do.ProvideValue(injector, handler.NewGoldenDatasetHandler(nil))
 	do.ProvideValue(injector, handler.NewEvaluationRunHandler(nil))
 	do.ProvideValue(injector, handler.NewEvaluationReportHandler(nil))
+	do.ProvideValue(injector, handler.NewBehatRunHandler(nil))
 	do.ProvideValue(injector, handler.NewHistoryHandler(nil))
 
 	do.ProvideNamedValue[authService.JWTService](
@@ -48,6 +49,8 @@ func TestRegisterRoutesRegistersGoldenDatasetAndEvaluationReport(t *testing.T) {
 		"GET /api/v1/evaluation-runs/:run_id/download",
 		"POST /api/v1/evaluation-runs",
 		"GET /api/v1/evaluation-runs/:run_id/progress",
+		"POST /api/v1/scenarios/:id/behat-runs",
+		"GET /api/v1/scenarios/:id/behat-runs",
 	} {
 		if !registered[want] {
 			t.Errorf("route %q is not registered", want)

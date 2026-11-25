@@ -6,6 +6,7 @@ import ScenarioSidebar from '../components/ScenarioSidebar'
 import GherkinEditor from '../components/review/GherkinEditor'
 import ScenarioSelector from '../components/review/ScenarioSelector'
 import ValidationPanel from '../components/review/ValidationPanel'
+import BehatRunPanel from '../components/review/BehatRunPanel'
 import { downloadScenario, getReviewScenario, listReviewScenarios, ReviewApiError, saveCorrection, type ReviewScenario, type ScenarioSummary, type ScenarioValidation } from '../services/reviewApi'
 import './GenerateScenarioPage.css'
 import './ReviewScenarioPage.css'
@@ -137,6 +138,8 @@ function ScenarioReview({ id, selector, onSaved }: { id: string; selector: React
           <button className="review-button download" disabled={!scenario.validation.valid || scenario.status !== 'VALID' || saving || downloading} onClick={handleDownload}>{downloading ? 'Downloading…' : 'Download .feature'}</button>
         </div>
         {dirty && <p className="review-saved-note">Downloads use the latest saved valid version, not the draft in the editor.</p>}
+        {!dirty && !saving && scenario.validation.valid && scenario.status === 'VALID' &&
+          <BehatRunPanel key={scenario.updated_at} saved={scenario} />}
       </section>
       <ValidationPanel validation={draftValidation || scenario.validation} draft={dirty} validatedDraft={draftValidation !== null} feedback={feedback} />
     </div>

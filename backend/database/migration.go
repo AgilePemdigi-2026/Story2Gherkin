@@ -16,6 +16,7 @@ func Migrate(db *gorm.DB) error {
 		&entities.GoldenDatasetItem{},
 		&entities.EvaluationRun{},
 		&entities.EvaluationRunCase{},
+		&entities.BehatRun{},
 	)
 
 	if err != nil {
