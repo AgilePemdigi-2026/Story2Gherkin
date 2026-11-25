@@ -247,3 +247,17 @@
   background: #edf4ff;
   color: #2563eb;
 }
+
+/* Keep case score rings readable inside the sidebar. */
+.evaluation-report .evaluation-report-case-detail .circular-percentage-value { font-size: 15px; }
+.evaluation-report .evaluation-run-status.failed { border-color: #E24747; background: #E24747; color: #230909; }
+
+/* Keep Actions heading, links and buttons aligned across report rows. */
+.evaluation-report-list-table th:last-child,
+.evaluation-report-list-table td:last-child { min-width: 222px; text-align: center; vertical-align: middle; }
+.evaluation-report-list-table .evaluation-report-row-actions { display: grid; grid-template-columns: 110px 76px; align-items: center; justify-content: center; gap: 8px; width: max-content; margin-inline: auto; }
+.evaluation-report .evaluation-report-row-actions > .evaluation-report-button { box-sizing: border-box; width: 100%; height: 40px; min-height: 40px; margin: 0; padding: 8px 10px; line-height: 1.4; }
+.evaluation-report .evaluation-report-button.danger-outline,
+.evaluation-report .evaluation-report-button.danger { border-color: #E24747; background: #E24747; color: #230909; }
+.evaluation-report .evaluation-report-button.danger-outline:hover:not(:disabled),
+.evaluation-report .evaluation-report-button.danger:hover:not(:disabled) { border-color: #d73b3b; background: #d73b3b; color: #230909; }

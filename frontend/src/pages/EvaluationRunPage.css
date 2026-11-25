@@ -278,3 +278,16 @@
   .eval-dataset-trigger > svg,
   .eval-dataset-option { transition: none; }
 }
+
+/* Circular progress with the same typography and spacing as the workspace. */
+.evaluation-run-page .eval-progress-overview { display: flex; align-items: center; gap: 24px; margin-top: 20px; }
+.evaluation-run-page .eval-progress-copy { min-width: 0; flex: 1; }
+.evaluation-run-page .eval-progress-copy > p { margin: 0; color: #526075; font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
+.evaluation-run-page .eval-progress-copy .eval-progress-count { margin-top: 7px; color: #8792a1; font-size: 12px; }
+.evaluation-run-page .eval-progress-copy > a { margin-top: 15px; }
+.evaluation-run-page .eval-progress-copy .eval-failure-message { color: #922929; }
+@media (max-width: 480px) {
+  .evaluation-run-page .eval-progress-overview { align-items: flex-start; gap: 16px; }
+  .evaluation-run-page .eval-progress-overview .circular-percentage { --ring-size: 82px; }
+  .evaluation-run-page .eval-progress-overview .circular-percentage-value { font-size: 14px; }
+}

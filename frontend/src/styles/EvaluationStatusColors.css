@@ -1,0 +1,34 @@
+/* Status labels use explicit backend status classes, not score thresholds. */
+.evaluation-report .evaluation-report-status.warn,
+.evaluation-report .evaluation-report-badges .evaluation-report-status.warn {
+  border: 1px solid #FFC848;
+  background: #FFC848;
+  color: #402d0a;
+}
+.evaluation-report .evaluation-report-status.fail,
+.evaluation-report .evaluation-report-badges .evaluation-report-status.fail {
+  border: 1px solid FF5E5E;
+  background: #ff5f5f;
+  color: #230909;
+}
+.evaluation-report .evaluation-report-status.warn,
+.evaluation-report .evaluation-report-status.fail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+.evaluation-run-page .eval-status-failed {
+  border: 1px solid #FF8585;
+  border-radius: 999px;
+  background: #FF8585;
+  color: #230909;
+}
+.evaluation-run-page .eval-progress-failed { border-color: #FF8585; background: #fff8f8; }
+.evaluation-run-page .eval-progress-failed .circular-percentage-fill { stroke: #FF8585; }
+.evaluation-run-page .eval-progress-completed .circular-percentage-fill { stroke: #49bd68; }

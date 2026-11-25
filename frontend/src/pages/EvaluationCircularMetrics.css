@@ -1,3 +1,4 @@
+@import '../styles/EvaluationStatusColors.css';
 /* Additive styles over the latest merged evaluation pages. */
 .eval-progress.eval-progress-circular { display: flex; align-items: center; gap: 20px; padding: 18px 20px; }
 .eval-progress-circular-copy { min-width: 0; }
