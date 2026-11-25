@@ -189,11 +189,12 @@ func (r *evaluationReportGORMRepository) GetByID(
 		}
 
 		result.Cases = append(result.Cases, dto.EvaluationReportCase{
-			CaseID:          row.CaseID,
-			Title:           row.Title,
-			ExpectedGherkin: row.ExpectedGherkin,
-			LLM:             llm,
-			RuleBased:       ruleBased,
+			CaseID:             row.CaseID,
+			Title:              row.Title,
+			ExpectedGherkin:    row.ExpectedGherkin,
+			AcceptanceCriteria: row.AcceptanceCriteria,
+			LLM:                llm,
+			RuleBased:          ruleBased,
 		})
 	}
 
@@ -239,8 +240,14 @@ func evaluationMetricsToDTO(
 	values := []*float64{
 		metrics.LLM.ValidationPercent,
 		metrics.LLM.GUICoveragePercent,
+		metrics.LLM.AcceptanceCriteriaPrecisionPercent,
+		metrics.LLM.AcceptanceCriteriaRecallPercent,
+		metrics.LLM.AcceptanceCriteriaF1Percent,
 		metrics.RuleBased.ValidationPercent,
 		metrics.RuleBased.GUICoveragePercent,
+		metrics.RuleBased.AcceptanceCriteriaPrecisionPercent,
+		metrics.RuleBased.AcceptanceCriteriaRecallPercent,
+		metrics.RuleBased.AcceptanceCriteriaF1Percent,
 	}
 
 	for _, value := range values {
@@ -251,12 +258,18 @@ func evaluationMetricsToDTO(
 
 	return &dto.EvaluationReportMetrics{
 		LLM: dto.EvaluationMethodSummary{
-			ValidationPercent:  metrics.LLM.ValidationPercent,
-			GUICoveragePercent: metrics.LLM.GUICoveragePercent,
+			ValidationPercent:                  metrics.LLM.ValidationPercent,
+			GUICoveragePercent:                 metrics.LLM.GUICoveragePercent,
+			AcceptanceCriteriaPrecisionPercent: metrics.LLM.AcceptanceCriteriaPrecisionPercent,
+			AcceptanceCriteriaRecallPercent:    metrics.LLM.AcceptanceCriteriaRecallPercent,
+			AcceptanceCriteriaF1Percent:        metrics.LLM.AcceptanceCriteriaF1Percent,
 		},
 		RuleBased: dto.EvaluationMethodSummary{
-			ValidationPercent:  metrics.RuleBased.ValidationPercent,
-			GUICoveragePercent: metrics.RuleBased.GUICoveragePercent,
+			ValidationPercent:                  metrics.RuleBased.ValidationPercent,
+			GUICoveragePercent:                 metrics.RuleBased.GUICoveragePercent,
+			AcceptanceCriteriaPrecisionPercent: metrics.RuleBased.AcceptanceCriteriaPrecisionPercent,
+			AcceptanceCriteriaRecallPercent:    metrics.RuleBased.AcceptanceCriteriaRecallPercent,
+			AcceptanceCriteriaF1Percent:        metrics.RuleBased.AcceptanceCriteriaF1Percent,
 		},
 	}, nil
 }
@@ -281,8 +294,11 @@ func evaluationMethodToDTO(
 	}
 
 	return &dto.EvaluationMethodResult{
-		Status:             string(result.Status),
-		GUICoveragePercent: result.GUICoveragePercent,
+		Status:                             string(result.Status),
+		GUICoveragePercent:                 result.GUICoveragePercent,
+		AcceptanceCriteriaPrecisionPercent: result.AcceptanceCriteriaPrecisionPercent,
+		AcceptanceCriteriaRecallPercent:    result.AcceptanceCriteriaRecallPercent,
+		AcceptanceCriteriaF1Percent:        result.AcceptanceCriteriaF1Percent,
 	}, nil
 }
 

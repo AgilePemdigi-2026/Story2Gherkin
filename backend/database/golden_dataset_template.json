@@ -11,7 +11,13 @@
         "Confirm button"
       ],
       "free_scenario_text": "The customer opens the cart, enters a shipping address, selects a payment method, and confirms the order.",
-      "expected_gherkin": "Feature: Checkout\n  Scenario: Successful order checkout\n    Given the customer has 1 product in the Cart\n    When the customer clicks the Checkout button\n    And the customer enters \"1 Merdeka Street\" in the Shipping Address\n    And the customer selects \"Bank Transfer\" as the Payment Method\n    And the customer clicks the Confirm button\n    Then the order is recorded with the status \"Awaiting Payment\""
+      "expected_gherkin": "Feature: Checkout\n  Scenario: Successful order checkout\n    Given the customer has 1 product in the Cart\n    When the customer clicks the Checkout button\n    And the customer enters \"1 Merdeka Street\" in the Shipping Address\n    And the customer selects \"Bank Transfer\" as the Payment Method\n    And the customer clicks the Confirm button\n    Then the order is recorded with the status \"Awaiting Payment\"",
+      "acceptance_criteria": [
+        "customer clicks the Checkout button",
+        "customer enters shipping address",
+        "customer selects payment method",
+        "order is recorded"
+      ]
     },
     {
       "item_title": "Checkout with an empty cart",
@@ -22,7 +28,12 @@
         "Error message"
       ],
       "free_scenario_text": "The customer clicks Checkout with an empty cart.",
-      "expected_gherkin": "Feature: Checkout\n  Scenario: Checkout is rejected when the cart is empty\n    Given the customer's Cart is empty\n    When the customer clicks the Checkout button\n    Then the Error message displays \"The cart is still empty\"\n    And no order is created"
+      "expected_gherkin": "Feature: Checkout\n  Scenario: Checkout is rejected when the cart is empty\n    Given the customer's Cart is empty\n    When the customer clicks the Checkout button\n    Then the Error message displays \"The cart is still empty\"\n    And no order is created",
+      "acceptance_criteria": [
+        "customer clicks the Checkout button",
+        "Error message displays cart is still empty",
+        "no order is created"
+      ]
     }
   ]
 }

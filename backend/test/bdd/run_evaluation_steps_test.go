@@ -97,6 +97,10 @@ func (f *evalFeature) datasetWithItems(count int) error {
 				"    Given the user is on the login page\n" +
 				"    When the user enters valid credentials\n" +
 				"    Then the dashboard is displayed",
+			AcceptanceCriteria: []string{
+				"valid credentials are entered",
+				"dashboard is displayed",
+			},
 		})
 	}
 
@@ -353,8 +357,35 @@ func (f *evalFeature) metricsAvailable() error {
 	}
 
 	if run.Metrics.LLM.ValidationPercent == nil ||
-		run.Metrics.RuleBased.ValidationPercent == nil {
+		run.Metrics.RuleBased.ValidationPercent == nil ||
+		run.Metrics.LLM.AcceptanceCriteriaPrecisionPercent == nil ||
+		run.Metrics.LLM.AcceptanceCriteriaRecallPercent == nil ||
+		run.Metrics.LLM.AcceptanceCriteriaF1Percent == nil ||
+		run.Metrics.RuleBased.AcceptanceCriteriaPrecisionPercent == nil ||
+		run.Metrics.RuleBased.AcceptanceCriteriaRecallPercent == nil ||
+		run.Metrics.RuleBased.AcceptanceCriteriaF1Percent == nil {
 		return fmt.Errorf("validation_percent is missing for one method")
+	}
+
+	return nil
+}
+
+func (f *evalFeature) acceptanceF1(want float64) error {
+	run, exists := f.runs.snapshot(f.runID)
+	if !exists || run.Metrics == nil ||
+		run.Metrics.LLM.AcceptanceCriteriaF1Percent == nil ||
+		run.Metrics.RuleBased.AcceptanceCriteriaF1Percent == nil {
+		return fmt.Errorf("acceptance criteria F1 is unavailable")
+	}
+
+	if *run.Metrics.LLM.AcceptanceCriteriaF1Percent != want ||
+		*run.Metrics.RuleBased.AcceptanceCriteriaF1Percent != want {
+		return fmt.Errorf(
+			"acceptance criteria F1=%v/%v, want=%v",
+			*run.Metrics.LLM.AcceptanceCriteriaF1Percent,
+			*run.Metrics.RuleBased.AcceptanceCriteriaF1Percent,
+			want,
+		)
 	}
 
 	return nil
@@ -478,6 +509,7 @@ func InitializeEvaluationScenario(ctx *godog.ScenarioContext) {
 		f.finished,
 	)
 	ctx.Step(`^metrik evaluasi menyimpan dua metode$`, f.metricsAvailable)
+	ctx.Step(`^metrik acceptance criteria F1 bernilai (\d+) persen$`, f.acceptanceF1)
 	ctx.Step(
 		`^kasus evaluasi berstatus "([^"]+)" untuk metode "([^"]+)"$`,
 		f.caseStatus,
