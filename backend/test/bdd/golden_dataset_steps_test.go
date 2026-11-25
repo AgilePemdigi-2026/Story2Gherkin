@@ -96,6 +96,10 @@ func validGoldenFile(count int) []byte {
 				"    Given the user is on the login page\n" +
 				"    When the user enters valid credentials\n" +
 				"    Then the dashboard is displayed",
+			"acceptance_criteria": []string{
+				"user enters valid credentials",
+				"dashboard is displayed",
+			},
 		})
 	}
 
@@ -224,6 +228,10 @@ func (f *goldenFeature) existingDataset(count int) error {
 				"    Given a login page\n" +
 				"    When credentials are submitted\n" +
 				"    Then access is granted",
+			AcceptanceCriteria: []string{
+				"credentials are submitted",
+				"access is granted",
+			},
 		})
 	}
 

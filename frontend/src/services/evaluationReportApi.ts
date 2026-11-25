@@ -21,11 +21,17 @@ export interface EvaluationRunList {
 interface MethodSummary {
   validation_percent: number | null
   gui_coverage_percent: number | null
+  acceptance_criteria_precision_percent: number | null
+  acceptance_criteria_recall_percent: number | null
+  acceptance_criteria_f1_percent: number | null
 }
 
 export interface MethodResult {
   status: EvaluationCaseStatus
   gui_coverage_percent: number | null
+  acceptance_criteria_precision_percent: number | null
+  acceptance_criteria_recall_percent: number | null
+  acceptance_criteria_f1_percent: number | null
 }
 
 export interface EvaluationCase {
@@ -75,13 +81,21 @@ function isRun(value: unknown): value is EvaluationRun {
 }
 
 function isMethodSummary(value: unknown) {
-  return isRecord(value) && isPercent(value.validation_percent) && isPercent(value.gui_coverage_percent)
+  return isRecord(value) &&
+    isPercent(value.validation_percent) &&
+    isPercent(value.gui_coverage_percent) &&
+    isPercent(value.acceptance_criteria_precision_percent) &&
+    isPercent(value.acceptance_criteria_recall_percent) &&
+    isPercent(value.acceptance_criteria_f1_percent)
 }
 
 function isMethodResult(value: unknown) {
   return value === null || (isRecord(value) &&
     (value.status === 'PASS' || value.status === 'WARN' || value.status === 'FAIL') &&
-    isPercent(value.gui_coverage_percent))
+    isPercent(value.gui_coverage_percent) &&
+    isPercent(value.acceptance_criteria_precision_percent) &&
+    isPercent(value.acceptance_criteria_recall_percent) &&
+    isPercent(value.acceptance_criteria_f1_percent))
 }
 
 function isCase(value: unknown): value is EvaluationCase {

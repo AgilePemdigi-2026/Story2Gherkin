@@ -14,8 +14,11 @@ const (
 // EvaluationMethodMetrics stores calculated summary metrics for one method.
 // Nil percentages mean unavailable; a pointer to zero means a calculated zero.
 type EvaluationMethodMetrics struct {
-	ValidationPercent  *float64 `json:"validation_percent"`
-	GUICoveragePercent *float64 `json:"gui_coverage_percent"`
+	ValidationPercent                  *float64 `json:"validation_percent"`
+	GUICoveragePercent                 *float64 `json:"gui_coverage_percent"`
+	AcceptanceCriteriaPrecisionPercent *float64 `json:"acceptance_criteria_precision_percent"`
+	AcceptanceCriteriaRecallPercent    *float64 `json:"acceptance_criteria_recall_percent"`
+	AcceptanceCriteriaF1Percent        *float64 `json:"acceptance_criteria_f1_percent"`
 }
 
 // EvaluationRunMetrics stores the summaries produced by Run Evaluation.

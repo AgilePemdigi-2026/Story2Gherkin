@@ -15,7 +15,7 @@ INSERT INTO golden_datasets (id, name, description, created_by, item_count, used
   ('a1000000-0000-4000-8000-000000000002', 'Golden Dataset - Checkout', 'Kasus uji alur pembelian', (SELECT coalesce((SELECT id::text FROM users WHERE role = 'qa' ORDER BY created_at LIMIT 1), 'seed')), 2, NULL),
   ('a1000000-0000-4000-8000-000000000003', 'Golden Dataset - Arsip', 'Sudah dipakai evaluasi, terkunci', (SELECT coalesce((SELECT id::text FROM users WHERE role = 'qa' ORDER BY created_at LIMIT 1), 'seed')), 1, now() - interval '7 days');
 
-INSERT INTO golden_dataset_items (golden_dataset_id, item_title, user_story_text, gui_elements, free_scenario_text, expected_gherkin) VALUES
+INSERT INTO golden_dataset_items (golden_dataset_id, item_title, user_story_text, gui_elements, free_scenario_text, expected_gherkin, acceptance_criteria) VALUES
   ('a1000000-0000-4000-8000-000000000001', 'Login berhasil',
    'Sebagai pengguna, saya ingin masuk dengan email dan password agar dapat mengakses dashboard.',
    '["Kolom Email", "Kolom Password", "Tombol Login"]',
@@ -26,7 +26,8 @@ INSERT INTO golden_dataset_items (golden_dataset_id, item_title, user_story_text
     When pengguna mengisi kolom Email dengan "user@example.com"
     And pengguna mengisi kolom Password dengan "rahasia123"
     And pengguna menekan tombol Login
-    Then pengguna diarahkan ke halaman dashboard'),
+    Then pengguna diarahkan ke halaman dashboard',
+   '["pengguna mengisi kolom Email", "pengguna mengisi kolom Password", "pengguna menekan tombol Login", "pengguna diarahkan ke halaman dashboard"]'),
 
   ('a1000000-0000-4000-8000-000000000001', 'Login password salah',
    'Sebagai pengguna, saya ingin mendapat pesan kesalahan saat password salah agar tahu penyebab gagal masuk.',
@@ -39,7 +40,8 @@ INSERT INTO golden_dataset_items (golden_dataset_id, item_title, user_story_text
     And pengguna mengisi kolom Password dengan "salah"
     And pengguna menekan tombol Login
     Then pesan Error menampilkan "Email atau password salah"
-    And pengguna tetap berada di halaman login'),
+    And pengguna tetap berada di halaman login',
+   '["pengguna mengisi kolom Email", "pengguna mengisi kolom Password", "pengguna menekan tombol Login", "pesan Error menampilkan Email atau password salah"]'),
 
   ('a1000000-0000-4000-8000-000000000001', 'Login kolom kosong',
    'Sebagai pengguna, saya ingin diminta mengisi kolom yang kosong agar tidak mengirim form tidak lengkap.',
@@ -52,7 +54,8 @@ INSERT INTO golden_dataset_items (golden_dataset_id, item_title, user_story_text
     And pengguna mengosongkan kolom Password
     And pengguna menekan tombol Login
     Then pesan Error menampilkan "Email wajib diisi"
-    And permintaan login tidak dikirim'),
+    And permintaan login tidak dikirim',
+   '["pengguna menekan tombol Login", "pesan Error menampilkan Email wajib diisi", "permintaan login tidak dikirim"]'),
 
   ('a1000000-0000-4000-8000-000000000002', 'Checkout berhasil',
    'Sebagai pembeli, saya ingin menyelesaikan checkout agar pesanan diproses.',
@@ -65,7 +68,8 @@ INSERT INTO golden_dataset_items (golden_dataset_id, item_title, user_story_text
     And pembeli mengisi Alamat Pengiriman dengan "Jl. Merdeka 1"
     And pembeli memilih Metode Pembayaran "Transfer Bank"
     And pembeli menekan tombol Konfirmasi
-    Then pesanan tercatat dengan status "Menunggu Pembayaran"'),
+    Then pesanan tercatat dengan status "Menunggu Pembayaran"',
+   '["pembeli menekan tombol Checkout", "pembeli mengisi Alamat Pengiriman", "pembeli memilih Metode Pembayaran", "pembeli menekan tombol Konfirmasi", "pesanan tercatat dengan status Menunggu Pembayaran"]'),
 
   ('a1000000-0000-4000-8000-000000000002', 'Checkout keranjang kosong',
    'Sebagai pembeli, saya ingin dicegah checkout saat keranjang kosong agar tidak membuat pesanan kosong.',
@@ -76,7 +80,8 @@ INSERT INTO golden_dataset_items (golden_dataset_id, item_title, user_story_text
     Given keranjang pembeli kosong
     When pembeli menekan tombol Checkout
     Then pesan Error menampilkan "Keranjang masih kosong"
-    And tidak ada pesanan yang dibuat'),
+    And tidak ada pesanan yang dibuat',
+   '["pembeli menekan Checkout", "pesan Error menampilkan Keranjang masih kosong", "tidak ada pesanan yang dibuat"]'),
 
   ('a1000000-0000-4000-8000-000000000003', 'Logout',
    'Sebagai pengguna, saya ingin keluar dari akun agar sesi berakhir dengan aman.',
@@ -88,4 +93,5 @@ INSERT INTO golden_dataset_items (golden_dataset_id, item_title, user_story_text
     When pengguna membuka menu Profil
     And pengguna menekan tombol Logout
     Then sesi pengguna berakhir
-    And pengguna diarahkan ke halaman login');
+    And pengguna diarahkan ke halaman login',
+   '["pengguna membuka menu Profil", "pengguna menekan tombol Logout", "sesi pengguna berakhir", "pengguna diarahkan ke halaman login"]');

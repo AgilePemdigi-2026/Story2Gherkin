@@ -28,11 +28,12 @@ type GoldenDatasetFile struct {
 // GoldenDatasetItemInput represents a reference
 // scenario inside the uploaded JSON file.
 type GoldenDatasetItemInput struct {
-	ItemTitle        string   `json:"item_title"`
-	UserStoryText    string   `json:"user_story_text"`
-	GUIElements      []string `json:"gui_elements"`
-	FreeScenarioText string   `json:"free_scenario_text"`
-	ExpectedGherkin  string   `json:"expected_gherkin"`
+	ItemTitle          string   `json:"item_title"`
+	UserStoryText      string   `json:"user_story_text"`
+	GUIElements        []string `json:"gui_elements"`
+	FreeScenarioText   string   `json:"free_scenario_text"`
+	ExpectedGherkin    string   `json:"expected_gherkin"`
+	AcceptanceCriteria []string `json:"acceptance_criteria"`
 }
 
 // GoldenDatasetSummary is returned after upload
@@ -61,13 +62,14 @@ type GoldenDatasetListResponse struct {
 // GoldenDatasetItemResponse contains the full
 // reference scenario stored in PostgreSQL.
 type GoldenDatasetItemResponse struct {
-	ID               string    `json:"id"`
-	ItemTitle        string    `json:"item_title"`
-	UserStoryText    string    `json:"user_story_text"`
-	GUIElements      []string  `json:"gui_elements"`
-	FreeScenarioText string    `json:"free_scenario_text"`
-	ExpectedGherkin  string    `json:"expected_gherkin"`
-	CreatedAt        time.Time `json:"created_at"`
+	ID                 string    `json:"id"`
+	ItemTitle          string    `json:"item_title"`
+	UserStoryText      string    `json:"user_story_text"`
+	GUIElements        []string  `json:"gui_elements"`
+	FreeScenarioText   string    `json:"free_scenario_text"`
+	ExpectedGherkin    string    `json:"expected_gherkin"`
+	AcceptanceCriteria []string  `json:"acceptance_criteria"`
+	CreatedAt          time.Time `json:"created_at"`
 }
 
 // GoldenDatasetDetailResponse includes dataset
