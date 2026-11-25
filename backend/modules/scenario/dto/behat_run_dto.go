@@ -2,17 +2,11 @@ package dto
 
 import "time"
 
-// BehatStepInput maps one Gherkin step to a browser action.
-type BehatStepInput struct {
-	Text     string `json:"text"`
-	Action   string `json:"action" binding:"required,oneof=open fill click assert_text assert_visible assert_url"`
-	Selector string `json:"selector"`
-	Value    string `json:"value"`
-}
-
+// BehatRunRequest selects one scenario and supplies placeholder values.
 type BehatRunRequest struct {
-	BaseURL string           `json:"base_url" binding:"required,url"`
-	Steps   []BehatStepInput `json:"steps" binding:"required,min=1,max=50,dive"`
+	BaseURL  string            `json:"base_url" binding:"required,url"`
+	Scenario string            `json:"scenario"`
+	Values   map[string]string `json:"values"`
 }
 
 type BehatStepResult struct {

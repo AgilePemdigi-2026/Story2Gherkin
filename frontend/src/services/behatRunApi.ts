@@ -1,14 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8888/api/v1'
 
-export type BehatAction = 'open' | 'fill' | 'click' | 'assert_text' | 'assert_visible' | 'assert_url'
 export type BehatStepStatus = 'PASS' | 'FAIL' | 'ERROR' | 'SKIPPED'
-
-export interface BehatStepInput {
-  text: string
-  action: BehatAction
-  selector?: string
-  value?: string
-}
 
 export interface BehatStepResult {
   index: number
@@ -45,7 +37,7 @@ async function send(path: string, init: RequestInit): Promise<unknown> {
   if (response.status === 401) throw new Error('Your session has expired. Please log in again.')
   if (response.status === 403) throw new Error('Only System Analysts may run end-to-end tests.')
   if (response.status === 404) throw new Error('Scenario not found.')
-  if (response.status === 400) throw new Error('Provide a base URL and map every step.')
+  if (response.status === 400) throw new Error('Provide a base URL and every placeholder value.')
   if (!response.ok) throw new Error('The end-to-end test failed to start. Please try again.')
 
   const envelope: unknown = await response.json().catch(() => null)
@@ -58,12 +50,13 @@ async function send(path: string, init: RequestInit): Promise<unknown> {
 export async function runBehat(
   scenarioId: string,
   baseUrl: string,
-  steps: BehatStepInput[],
+  scenario: string,
+  values: Record<string, string>,
 ): Promise<BehatRun> {
   return (await send(`/${encodeURIComponent(scenarioId)}/behat-runs`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ base_url: baseUrl, steps }),
+    body: JSON.stringify({ base_url: baseUrl, scenario, values }),
   })) as BehatRun
 }
 

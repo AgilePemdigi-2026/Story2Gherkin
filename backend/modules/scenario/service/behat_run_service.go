@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -102,6 +103,29 @@ func (s *behatRunService) Run(
 		return dto.BehatRunResponse{}, ErrBehatInvalid
 	}
 
+	parsed := parseFeature(scenario.GherkinText)
+	if len(parsed) == 0 {
+		return dto.BehatRunResponse{}, ErrBehatInvalid
+	}
+	target := parsed[0]
+	if req.Scenario != "" {
+		found := false
+		for _, item := range parsed {
+			if item.Name == req.Scenario {
+				target, found = item, true
+				break
+			}
+		}
+		if !found {
+			return dto.BehatRunResponse{}, ErrBehatInvalid
+		}
+	}
+
+	steps, err := parseSteps(target.Steps, req.Values)
+	if err != nil {
+		return dto.BehatRunResponse{}, ErrBehatInvalid
+	}
+
 	run := &entities.BehatRun{
 		ID:         uuid.New(),
 		ScenarioID: scenario.ID,
@@ -115,7 +139,7 @@ func (s *behatRunService) Run(
 	}
 
 	started := time.Now()
-	results, message := executeSteps(ctx, base, req.Steps)
+	results, message := executeSteps(ctx, base, steps)
 	run.Steps = results
 	run.Message = message
 	run.DurationMS = time.Since(started).Milliseconds()
@@ -172,6 +196,103 @@ func normalizeBaseURL(raw string) (string, error) {
 	return strings.TrimRight(u.String(), "/"), nil
 }
 
+type behatScenario struct {
+	Name  string
+	Steps []string
+}
+
+// parseFeature extracts scenarios and their step text from saved Gherkin.
+func parseFeature(gherkin string) []behatScenario {
+	scenarios := []behatScenario{}
+	current := -1
+	for _, line := range strings.Split(gherkin, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(strings.ToLower(trimmed), "scenario:") {
+			scenarios = append(scenarios, behatScenario{
+				Name: strings.TrimSpace(trimmed[len("scenario:"):]),
+			})
+			current = len(scenarios) - 1
+			continue
+		}
+		if current < 0 {
+			continue
+		}
+		for _, keyword := range []string{"Given ", "When ", "Then ", "And ", "But "} {
+			if strings.HasPrefix(trimmed, keyword) {
+				scenarios[current].Steps = append(
+					scenarios[current].Steps,
+					strings.TrimSpace(trimmed[len(keyword):]),
+				)
+				break
+			}
+		}
+	}
+	return scenarios
+}
+
+type behatStep struct {
+	Text   string
+	Action string
+	Target string
+	Value  string
+}
+
+var behatStepPatterns = []struct {
+	action  string
+	pattern *regexp.Regexp
+}{
+	{"open", regexp.MustCompile(`^I open "([^"]+)"$`)},
+	{"fill", regexp.MustCompile(`^I fill "([^"]+)" with "([^"]*)"$`)},
+	{"click", regexp.MustCompile(`^I click "([^"]+)"$`)},
+	{"assert_text", regexp.MustCompile(`^I see "([^"]+)"$`)},
+	{"assert_url", regexp.MustCompile(`^the URL contains "([^"]+)"$`)},
+}
+
+var placeholderPattern = regexp.MustCompile(`<([A-Za-z0-9_]+)>`)
+
+func substitute(text string, values map[string]string) (string, error) {
+	missing := ""
+	result := placeholderPattern.ReplaceAllStringFunc(text, func(match string) string {
+		key := match[1 : len(match)-1]
+		value, ok := values[key]
+		if !ok {
+			missing = key
+			return match
+		}
+		return value
+	})
+	if missing != "" {
+		return "", fmt.Errorf("missing value for <%s>", missing)
+	}
+	return result, nil
+}
+
+func parseSteps(texts []string, values map[string]string) ([]behatStep, error) {
+	steps := make([]behatStep, 0, len(texts))
+	for _, original := range texts {
+		resolved, err := substitute(original, values)
+		if err != nil {
+			return nil, err
+		}
+		matched := false
+		for _, candidate := range behatStepPatterns {
+			if match := candidate.pattern.FindStringSubmatch(resolved); match != nil {
+				step := behatStep{Text: original, Action: candidate.action, Target: match[1]}
+				if len(match) > 2 {
+					step.Value = match[2]
+				}
+				steps = append(steps, step)
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return nil, fmt.Errorf("unsupported step: %s", original)
+		}
+	}
+	return steps, nil
+}
+
 func overallStatus(results []entities.BehatStepResult) entities.BehatRunStatus {
 	status := entities.BehatRunPass
 	for _, result := range results {
@@ -206,7 +327,7 @@ func (e assertionError) Error() string { return e.message }
 func executeSteps(
 	parent context.Context,
 	base string,
-	steps []dto.BehatStepInput,
+	steps []behatStep,
 ) ([]entities.BehatStepResult, string) {
 	ctx, cancel := context.WithTimeout(parent, behatTotalTimeout)
 	defer cancel()
@@ -251,41 +372,24 @@ func executeSteps(
 	return results, ""
 }
 
-func runStep(
-	ctx context.Context,
-	base string,
-	step dto.BehatStepInput,
-) error {
+func runStep(ctx context.Context, base string, step behatStep) error {
 	switch step.Action {
 	case "open":
-		return chromedp.Run(ctx, chromedp.Navigate(base+step.Value))
+		return chromedp.Run(ctx, chromedp.Navigate(base+step.Target))
 
 	case "fill":
-		if step.Selector == "" {
-			return assertionError{"selector is required for fill"}
-		}
+		selector := inputXPath(step.Target)
 		return chromedp.Run(ctx,
-			chromedp.WaitVisible(step.Selector, chromedp.ByQuery),
-			chromedp.SendKeys(step.Selector, step.Value, chromedp.ByQuery),
+			chromedp.WaitVisible(selector, chromedp.BySearch),
+			chromedp.SendKeys(selector, step.Value, chromedp.BySearch),
 		)
 
 	case "click":
-		if step.Selector == "" {
-			return assertionError{"selector is required for click"}
-		}
+		selector := clickXPath(step.Target)
 		return chromedp.Run(ctx,
-			chromedp.WaitVisible(step.Selector, chromedp.ByQuery),
-			chromedp.Click(step.Selector, chromedp.ByQuery),
+			chromedp.WaitVisible(selector, chromedp.BySearch),
+			chromedp.Click(selector, chromedp.BySearch),
 		)
-
-	case "assert_visible":
-		if step.Selector == "" {
-			return assertionError{"selector is required for assert_visible"}
-		}
-		if err := chromedp.Run(ctx, chromedp.WaitVisible(step.Selector, chromedp.ByQuery)); err != nil {
-			return assertionError{fmt.Sprintf("element %q is not visible", step.Selector)}
-		}
-		return nil
 
 	case "assert_text":
 		var body string
@@ -295,8 +399,8 @@ func runStep(
 		); err != nil {
 			return err
 		}
-		if !strings.Contains(body, step.Value) {
-			return assertionError{fmt.Sprintf("text %q not found on the page", step.Value)}
+		if !strings.Contains(body, step.Target) {
+			return assertionError{fmt.Sprintf("text %q not found on the page", step.Target)}
 		}
 		return nil
 
@@ -305,11 +409,50 @@ func runStep(
 		if err := chromedp.Run(ctx, chromedp.Location(&location)); err != nil {
 			return err
 		}
-		if !strings.Contains(location, step.Value) {
-			return assertionError{fmt.Sprintf("url %q does not contain %q", location, step.Value)}
+		if !strings.Contains(location, step.Target) {
+			return assertionError{fmt.Sprintf("url %q does not contain %q", location, step.Target)}
 		}
 		return nil
 	}
 
 	return assertionError{"unsupported action: " + step.Action}
+}
+
+const asciiUpper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const asciiLower = "abcdefghijklmnopqrstuvwxyz"
+
+var labelPrefixes = []string{
+	"tombol ", "kolom ", "field ", "button ", "input ", "link ", "tautan ", "menu ",
+}
+
+// cleanLabel drops common UI prefixes so "Tombol Masuk" matches the text "Masuk".
+func cleanLabel(label string) string {
+	lower := strings.ToLower(label)
+	for _, prefix := range labelPrefixes {
+		if strings.HasPrefix(lower, prefix) {
+			return strings.TrimSpace(label[len(prefix):])
+		}
+	}
+	return label
+}
+
+func lowerContains(expr, value string) string {
+	return fmt.Sprintf("contains(translate(%s,%q,%q),%q)", expr, asciiUpper, asciiLower, strings.ToLower(value))
+}
+
+func inputXPath(label string) string {
+	value := cleanLabel(label)
+	return "//input[" + strings.Join([]string{
+		lowerContains("@placeholder", value),
+		lowerContains("@name", value),
+		lowerContains("@id", value),
+		lowerContains("@aria-label", value),
+	}, " or ") + "]"
+}
+
+func clickXPath(label string) string {
+	value := cleanLabel(label)
+	text := lowerContains(".", value)
+	return "//button[" + text + "] | //a[" + text + "] | //input[" +
+		lowerContains("@value", value) + "] | //*[@role='button' and " + text + "]"
 }
