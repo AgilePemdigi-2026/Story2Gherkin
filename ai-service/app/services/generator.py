@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from app.clients.base import InvalidModelOutput, ModelClient
 from app.schemas.generate import GeneratedFeature, GenerateRequest, GenerateResponse, Scenario
 from app.services.prompts import PROMPT_VERSION
+from app.services.vocabulary import ALLOWED_BY_PHASE, parse_step
 MAX_ATTEMPTS = 2
 
 KINDS = ("positive", "negative", "edge")
@@ -123,19 +124,28 @@ class ScenarioGenerator:
             raise InvalidModelOutput(f"Scenario has no GUI element reference: {name}")
         given, when, then = [], [], []
         current: list | None = None
+        phase = ""
         for step in node.get("steps", []):
             text = (step.get("text") or "").strip()
             if not text:
                 raise InvalidModelOutput(f"Empty step in scenario: {name}")
             ktype = step.get("keywordType", "")
             if ktype == "Context":
-                current = given
+                current, phase = given, "given"
             elif ktype == "Action":
-                current = when
+                current, phase = when, "when"
             elif ktype == "Outcome":
-                current = then
+                current, phase = then, "then"
             elif current is None:
                 raise InvalidModelOutput(f"First step must be Given in scenario: {name}")
+
+            parsed = parse_step(text)
+            if parsed is None:
+                raise InvalidModelOutput(f"Step is not in the supported vocabulary: {text}")
+            action, _ = parsed
+            if action not in ALLOWED_BY_PHASE[phase]:
+                raise InvalidModelOutput(f'Step "{text}" is not allowed in {phase}')
+
             current.append(text)
         if not given or not when or not then:
             raise InvalidModelOutput(f"Scenario missing Given/When/Then: {name}")
