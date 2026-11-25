@@ -4,9 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import {
   ArrowLeft,
   ArrowRight,
-  FileText,
   Layers,
-  Code2,
   Clock3,
   AlertCircle,
   LoaderCircle,

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 
 import './AnimatedSANav.css'
@@ -23,9 +23,9 @@ export default function AnimatedSANav() {
 
   const markerRef = useRef<HTMLSpanElement>(null)
 
-  const startingIndex = useRef(
-    previousActiveIndex ?? Math.max(activeIndex, 0),
-  )
+const [startingIndex] = useState(
+  () => previousActiveIndex ?? Math.max(activeIndex, 0)
+)
 
   useLayoutEffect(() => {
     const marker = markerRef.current
@@ -68,7 +68,7 @@ export default function AnimatedSANav() {
           aria-hidden="true"
           style={{
             transform:
-              `translate3d(0, ${startingIndex.current * 54}px, 0)`,
+              `translate3d(0, ${startingIndex * 54}px, 0)`,
             opacity: activeIndex < 0 ? 0 : 1,
           }}
         />

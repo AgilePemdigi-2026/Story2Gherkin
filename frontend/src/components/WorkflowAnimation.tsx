@@ -183,7 +183,7 @@ export default function WorkflowAnimation() {
   const elapsedRef = useRef(0)
 
   const [elapsed, setElapsed] = useState(0)
-  const [paused, setPaused] = useState(false)
+  const [paused] = useState(false)
 
   const reducedMotion = useSyncExternalStore(
     subscribeReducedMotion,
