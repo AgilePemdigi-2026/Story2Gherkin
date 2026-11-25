@@ -36,6 +36,7 @@ var (
 const (
 	maxGoldenDatasetFileBytes = 5 << 20
 	maxGoldenDatasetItems     = 100
+	maxAcceptanceCriteria     = 20
 )
 
 // GoldenDatasetService handles Golden Dataset uploads.
@@ -301,6 +302,29 @@ func (s *goldenDatasetService) buildItems(
 			input.GUIElements[j] = element
 		}
 
+		seenCriteria := make(map[string]struct{}, len(input.AcceptanceCriteria))
+		for j, criterion := range input.AcceptanceCriteria {
+			criterion = strings.TrimSpace(criterion)
+			criterionLen := utf8.RuneCountInString(criterion)
+			if criterionLen < 3 || criterionLen > 500 || j >= maxAcceptanceCriteria {
+				return nil, fmt.Errorf(
+					"%w: invalid acceptance criterion at item %d, position %d",
+					ErrGoldenDatasetInvalid, n, j+1,
+				)
+			}
+
+			key := strings.ToLower(strings.Join(strings.Fields(criterion), " "))
+			if _, exists := seenCriteria[key]; exists {
+				return nil, fmt.Errorf(
+					"%w: duplicate acceptance criterion at item %d",
+					ErrGoldenDatasetInvalid, n,
+				)
+			}
+
+			seenCriteria[key] = struct{}{}
+			input.AcceptanceCriteria[j] = criterion
+		}
+
 		validation, err := s.validator.Validate(
 			ctx,
 			input.ExpectedGherkin,
@@ -322,11 +346,12 @@ func (s *goldenDatasetService) buildItems(
 		}
 
 		items = append(items, entities.GoldenDatasetItem{
-			ItemTitle:        input.ItemTitle,
-			UserStoryText:    input.UserStoryText,
-			GUIElements:      input.GUIElements,
-			FreeScenarioText: input.FreeScenarioText,
-			ExpectedGherkin:  input.ExpectedGherkin,
+			ItemTitle:          input.ItemTitle,
+			UserStoryText:      input.UserStoryText,
+			GUIElements:        input.GUIElements,
+			FreeScenarioText:   input.FreeScenarioText,
+			ExpectedGherkin:    input.ExpectedGherkin,
+			AcceptanceCriteria: input.AcceptanceCriteria,
 		})
 	}
 
@@ -546,13 +571,14 @@ func (s *goldenDatasetService) GetDetail(
 
 	for _, item := range dataset.Items {
 		items = append(items, dto.GoldenDatasetItemResponse{
-			ID:               item.ID.String(),
-			ItemTitle:        item.ItemTitle,
-			UserStoryText:    item.UserStoryText,
-			GUIElements:      item.GUIElements,
-			FreeScenarioText: item.FreeScenarioText,
-			ExpectedGherkin:  item.ExpectedGherkin,
-			CreatedAt:        item.CreatedAt,
+			ID:                 item.ID.String(),
+			ItemTitle:          item.ItemTitle,
+			UserStoryText:      item.UserStoryText,
+			GUIElements:        item.GUIElements,
+			FreeScenarioText:   item.FreeScenarioText,
+			ExpectedGherkin:    item.ExpectedGherkin,
+			AcceptanceCriteria: item.AcceptanceCriteria,
+			CreatedAt:          item.CreatedAt,
 		})
 	}
 

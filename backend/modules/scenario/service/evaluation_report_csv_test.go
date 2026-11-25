@@ -26,8 +26,11 @@ func TestEvaluationReportCSVRoundTrip(t *testing.T) {
 			Title:           "Login, \"admin\" — café",
 			ExpectedGherkin: golden,
 			LLM: &dto.EvaluationMethodResult{
-				Status:             "FAIL",
-				GUICoveragePercent: evaluationCSVTestPercent(0),
+				Status:                             "FAIL",
+				GUICoveragePercent:                 evaluationCSVTestPercent(0),
+				AcceptanceCriteriaPrecisionPercent: evaluationCSVTestPercent(33.33),
+				AcceptanceCriteriaRecallPercent:    evaluationCSVTestPercent(50),
+				AcceptanceCriteriaF1Percent:        evaluationCSVTestPercent(40),
 			},
 			RuleBased: &dto.EvaluationMethodResult{
 				Status:             "WARN",
@@ -62,8 +65,14 @@ func TestEvaluationReportCSVRoundTrip(t *testing.T) {
 			"expected_gherkin",
 			"llm_status",
 			"llm_gui_coverage_percent",
+			"llm_acceptance_criteria_precision_percent",
+			"llm_acceptance_criteria_recall_percent",
+			"llm_acceptance_criteria_f1_percent",
 			"rule_based_status",
 			"rule_based_gui_coverage_percent",
+			"rule_based_acceptance_criteria_precision_percent",
+			"rule_based_acceptance_criteria_recall_percent",
+			"rule_based_acceptance_criteria_f1_percent",
 		},
 		{
 			"GC-001",
@@ -71,8 +80,14 @@ func TestEvaluationReportCSVRoundTrip(t *testing.T) {
 			golden,
 			"FAIL",
 			"0",
+			"33.33",
+			"50",
+			"40",
 			"WARN",
 			"74.25",
+			"",
+			"",
+			"",
 		},
 		{
 			"GC-002",
@@ -80,7 +95,13 @@ func TestEvaluationReportCSVRoundTrip(t *testing.T) {
 			golden,
 			"",
 			"",
+			"",
+			"",
+			"",
 			"PASS",
+			"",
+			"",
+			"",
 			"",
 		},
 	}
@@ -288,10 +309,10 @@ func TestEvaluationReportCSVEmptyCases(t *testing.T) {
 	records := readEvaluationCSVTest(t, data)
 
 	if len(records) != 1 ||
-		len(records[0]) != 7 ||
+		len(records[0]) != 13 ||
 		records[0][0] != "case_id" {
 		t.Fatalf(
-			"expected only the seven-column header, got %#v",
+			"expected only the thirteen-column header, got %#v",
 			records,
 		)
 	}
@@ -317,7 +338,7 @@ func readEvaluationCSVTest(t *testing.T, data []byte) [][]string {
 	t.Helper()
 
 	reader := csv.NewReader(bytes.NewReader(data))
-	reader.FieldsPerRecord = 7
+	reader.FieldsPerRecord = 13
 
 	records, err := reader.ReadAll()
 	if err != nil {

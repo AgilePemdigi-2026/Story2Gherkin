@@ -157,14 +157,17 @@ export default function EvaluationPage() {
               <div className="eval-panel">
                 <h3>Evaluation Metrics</h3>
                 <ul className="eval-metrics">
-                  <li><CheckCircle2 size={16} /> Validation Metric</li>
-                  <li><CheckCircle2 size={16} /> GUI Coverage</li>
+                  <li><CheckCircle2 size={16} /> Gherkin Validity Rate</li>
+                  <li><CheckCircle2 size={16} /> GUI Element Recall</li>
+                  <li><CheckCircle2 size={16} /> Acceptance-Criteria Precision</li>
+                  <li><CheckCircle2 size={16} /> Acceptance-Criteria Recall</li>
+                  <li><CheckCircle2 size={16} /> Acceptance-Criteria F1 Score</li>
                 </ul>
                 <p className="eval-note">Proses akan:</p>
                 <ul className="eval-steps">
                   <li>Generate via LLM</li>
                   <li>Generate via Rule-Based</li>
-                  <li>Compare with Golden</li>
+                  <li>Compare with Golden acceptance criteria</li>
                   <li>Save evaluation result</li>
                 </ul>
               </div>

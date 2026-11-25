@@ -13,8 +13,15 @@ const (
 // EvaluationCaseMethodResult stores the result calculated by one method.
 // Nil coverage means unavailable; a pointer to zero means calculated zero.
 type EvaluationCaseMethodResult struct {
-	Status             EvaluationCaseStatus `json:"status"`
-	GUICoveragePercent *float64             `json:"gui_coverage_percent"`
+	Status                             EvaluationCaseStatus `json:"status"`
+	GUICoveragePercent                 *float64             `json:"gui_coverage_percent"`
+	AcceptanceCriteriaPrecisionPercent *float64             `json:"acceptance_criteria_precision_percent"`
+	AcceptanceCriteriaRecallPercent    *float64             `json:"acceptance_criteria_recall_percent"`
+	AcceptanceCriteriaF1Percent        *float64             `json:"acceptance_criteria_f1_percent"`
+	AcceptanceCriteriaMatched          int                  `json:"-"`
+	AcceptanceCriteriaTotal            int                  `json:"-"`
+	GeneratedBehaviorMatched           int                  `json:"-"`
+	GeneratedBehaviorTotal             int                  `json:"-"`
 }
 
 // EvaluationRunCase stores one reference snapshot and its evaluation results.
@@ -31,8 +38,9 @@ type EvaluationRunCase struct {
 	Position int `gorm:"not null;check:position >= 1;index:idx_evaluation_run_cases_run_position,unique,priority:2"`
 
 	// Snapshots captured when Run Evaluation creates the case.
-	Title           string `gorm:"type:varchar(200);not null"`
-	ExpectedGherkin string `gorm:"type:text;not null;check:expected_gherkin <> ''"`
+	Title              string   `gorm:"type:varchar(200);not null"`
+	ExpectedGherkin    string   `gorm:"type:text;not null;check:expected_gherkin <> ''"`
+	AcceptanceCriteria []string `gorm:"column:acceptance_criteria;type:jsonb;serializer:json"`
 
 	// Processed flips once both generators finished, even when both failed.
 	Processed bool `gorm:"not null;default:false"`

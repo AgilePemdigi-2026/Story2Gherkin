@@ -1,4 +1,3 @@
-
 package entities
 
 import "github.com/google/uuid"
@@ -20,6 +19,10 @@ type GoldenDatasetItem struct {
 	FreeScenarioText string `gorm:"type:text;not null"`
 
 	ExpectedGherkin string `gorm:"type:text;not null"`
+
+	// AcceptanceCriteria is optional for backward compatibility with existing datasets.
+	// New datasets use it as the QA-approved ground truth for quality metrics.
+	AcceptanceCriteria []string `gorm:"column:acceptance_criteria;type:jsonb;serializer:json"`
 
 	Timestamp
 }

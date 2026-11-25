@@ -24,8 +24,11 @@ type EvaluationRunListResponse struct {
 // EvaluationMethodSummary contains the stored summary metrics for one method.
 // Nil percentages represent unavailable metrics; zero remains a valid result.
 type EvaluationMethodSummary struct {
-	ValidationPercent  *float64 `json:"validation_percent"`
-	GUICoveragePercent *float64 `json:"gui_coverage_percent"`
+	ValidationPercent                  *float64 `json:"validation_percent"`
+	GUICoveragePercent                 *float64 `json:"gui_coverage_percent"`
+	AcceptanceCriteriaPrecisionPercent *float64 `json:"acceptance_criteria_precision_percent"`
+	AcceptanceCriteriaRecallPercent    *float64 `json:"acceptance_criteria_recall_percent"`
+	AcceptanceCriteriaF1Percent        *float64 `json:"acceptance_criteria_f1_percent"`
 }
 
 // EvaluationReportMetrics compares the stored summaries of both methods.
@@ -37,18 +40,22 @@ type EvaluationReportMetrics struct {
 // EvaluationMethodResult contains the stored outcome for one evaluated case.
 // Status is PASS, WARN, or FAIL when the method result is available.
 type EvaluationMethodResult struct {
-	Status             string   `json:"status"`
-	GUICoveragePercent *float64 `json:"gui_coverage_percent"`
+	Status                             string   `json:"status"`
+	GUICoveragePercent                 *float64 `json:"gui_coverage_percent"`
+	AcceptanceCriteriaPrecisionPercent *float64 `json:"acceptance_criteria_precision_percent"`
+	AcceptanceCriteriaRecallPercent    *float64 `json:"acceptance_criteria_recall_percent"`
+	AcceptanceCriteriaF1Percent        *float64 `json:"acceptance_criteria_f1_percent"`
 }
 
 // EvaluationReportCase contains the reference snapshot and method results.
 // A nil method result means that method has not produced a result yet.
 type EvaluationReportCase struct {
-	CaseID          string                  `json:"case_id"`
-	Title           string                  `json:"title"`
-	ExpectedGherkin string                  `json:"expected_gherkin"`
-	LLM             *EvaluationMethodResult `json:"llm"`
-	RuleBased       *EvaluationMethodResult `json:"rule_based"`
+	CaseID             string                  `json:"case_id"`
+	Title              string                  `json:"title"`
+	ExpectedGherkin    string                  `json:"expected_gherkin"`
+	AcceptanceCriteria []string                `json:"acceptance_criteria"`
+	LLM                *EvaluationMethodResult `json:"llm"`
+	RuleBased          *EvaluationMethodResult `json:"rule_based"`
 }
 
 // EvaluationReportDetailResponse contains the stored report for one run.

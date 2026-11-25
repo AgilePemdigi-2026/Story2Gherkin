@@ -31,8 +31,14 @@ func BuildEvaluationReportCSV(
 		"expected_gherkin",
 		"llm_status",
 		"llm_gui_coverage_percent",
+		"llm_acceptance_criteria_precision_percent",
+		"llm_acceptance_criteria_recall_percent",
+		"llm_acceptance_criteria_f1_percent",
 		"rule_based_status",
 		"rule_based_gui_coverage_percent",
+		"rule_based_acceptance_criteria_precision_percent",
+		"rule_based_acceptance_criteria_recall_percent",
+		"rule_based_acceptance_criteria_f1_percent",
 	}
 
 	if err := writer.Write(header); err != nil {
@@ -40,7 +46,7 @@ func BuildEvaluationReportCSV(
 	}
 
 	for index, item := range report.Cases {
-		llmStatus, llmCoverage, err := evaluationCSVMethod(item.LLM)
+		llmStatus, llmCoverage, llmPrecision, llmRecall, llmF1, err := evaluationCSVMethod(item.LLM)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"export LLM result for case %d: %w",
@@ -49,7 +55,7 @@ func BuildEvaluationReportCSV(
 			)
 		}
 
-		ruleStatus, ruleCoverage, err := evaluationCSVMethod(item.RuleBased)
+		ruleStatus, ruleCoverage, rulePrecision, ruleRecall, ruleF1, err := evaluationCSVMethod(item.RuleBased)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"export rule-based result for case %d: %w",
@@ -64,8 +70,14 @@ func BuildEvaluationReportCSV(
 			item.ExpectedGherkin,
 			llmStatus,
 			llmCoverage,
+			llmPrecision,
+			llmRecall,
+			llmF1,
 			ruleStatus,
 			ruleCoverage,
+			rulePrecision,
+			ruleRecall,
+			ruleF1,
 		}
 
 		for column, value := range record {
@@ -101,23 +113,35 @@ func BuildEvaluationReportCSV(
 // evaluationCSVMethod preserves unavailable results as empty cells.
 func evaluationCSVMethod(
 	result *dto.EvaluationMethodResult,
-) (string, string, error) {
+) (string, string, string, string, string, error) {
 	if result == nil {
-		return "", "", nil
+		return "", "", "", "", "", nil
 	}
 
 	switch result.Status {
 	case "PASS", "WARN", "FAIL":
 	default:
-		return "", "", fmt.Errorf("invalid evaluation case status")
+		return "", "", "", "", "", fmt.Errorf("invalid evaluation case status")
 	}
 
 	coverage, err := evaluationCSVPercent(result.GUICoveragePercent)
 	if err != nil {
-		return "", "", err
+		return "", "", "", "", "", err
+	}
+	precision, err := evaluationCSVPercent(result.AcceptanceCriteriaPrecisionPercent)
+	if err != nil {
+		return "", "", "", "", "", err
+	}
+	recall, err := evaluationCSVPercent(result.AcceptanceCriteriaRecallPercent)
+	if err != nil {
+		return "", "", "", "", "", err
+	}
+	f1, err := evaluationCSVPercent(result.AcceptanceCriteriaF1Percent)
+	if err != nil {
+		return "", "", "", "", "", err
 	}
 
-	return result.Status, coverage, nil
+	return result.Status, coverage, precision, recall, f1, nil
 }
 
 // evaluationCSVPercent keeps zero distinct from an unavailable percentage.

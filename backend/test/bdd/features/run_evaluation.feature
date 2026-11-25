@@ -13,6 +13,7 @@ Fitur: Menjalankan Evaluasi
     Dan respons evaluasi berisi 2 kasus
     Dan evaluasi berstatus "COMPLETED" dengan 2 kasus diproses
     Dan metrik evaluasi menyimpan dua metode
+    Dan metrik acceptance criteria F1 bernilai 100 persen
 
   Skenario: System Analyst tidak dapat menjalankan evaluasi
     Dengan pengguna evaluasi login sebagai "SA"
