@@ -1,52 +1,33 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReviewScenario } from '../../services/reviewApi'
-import {
-  listBehatRuns,
-  runBehat,
-  type BehatAction,
-  type BehatRun,
-  type BehatStepInput,
-} from '../../services/behatRunApi'
+import { listBehatRuns, runBehat, type BehatRun } from '../../services/behatRunApi'
 
-const ACTIONS: { value: BehatAction; label: string }[] = [
-  { value: 'open', label: 'Open page' },
-  { value: 'fill', label: 'Fill field' },
-  { value: 'click', label: 'Click' },
-  { value: 'assert_text', label: 'Check text' },
-  { value: 'assert_visible', label: 'Check visible' },
-  { value: 'assert_url', label: 'Check URL' },
-]
+type ParsedScenario = { name: string; steps: string[] }
 
-type Mapping = { action: BehatAction | ''; selector: string; value: string }
-
-function parseSteps(gherkin: string): string[] {
-  const steps: string[] = []
+function parseScenarios(gherkin: string): ParsedScenario[] {
+  const scenarios: ParsedScenario[] = []
+  let current: ParsedScenario | null = null
   for (const line of gherkin.split('\n')) {
     const trimmed = line.trim()
-    if (/^(Given|When|Then|And|But)\s+/i.test(trimmed)) steps.push(trimmed)
-  }
-  return steps
-}
-
-function loadMapping(scenarioId: string, count: number): Mapping[] {
-  try {
-    const raw = localStorage.getItem(`behat-mapping-${scenarioId}`)
-    if (raw) {
-      const parsed = JSON.parse(raw) as Mapping[]
-      if (Array.isArray(parsed) && parsed.length === count) return parsed
+    const heading = trimmed.match(/^Scenario(?: Outline)?:\s*(.+)$/i)
+    if (heading) {
+      current = { name: heading[1].trim(), steps: [] }
+      scenarios.push(current)
+      continue
     }
-  } catch {
-    // ignore malformed storage
+    if (current && /^(Given|When|Then|And|But)\s+/i.test(trimmed)) {
+      current.steps.push(trimmed)
+    }
   }
-  return Array.from({ length: count }, () => ({ action: '', selector: '', value: '' }))
+  return scenarios
 }
 
-function needsSelector(action: BehatAction | '') {
-  return action === 'fill' || action === 'click' || action === 'assert_visible'
-}
-
-function needsValue(action: BehatAction | '') {
-  return action === 'open' || action === 'fill' || action === 'assert_text' || action === 'assert_url'
+function placeholders(steps: string[]): string[] {
+  const found = new Set<string>()
+  for (const step of steps) {
+    for (const match of step.matchAll(/<([A-Za-z0-9_]+)>/g)) found.add(match[1])
+  }
+  return [...found]
 }
 
 export default function BehatRunPanel({ saved }: { saved: ReviewScenario }) {
@@ -67,17 +48,23 @@ export default function BehatRunPanel({ saved }: { saved: ReviewScenario }) {
 }
 
 function Workspace({ saved }: { saved: ReviewScenario }) {
-  const steps = useMemo(() => parseSteps(saved.gherkin), [saved.gherkin])
+  const scenarios = useMemo(() => parseScenarios(saved.gherkin), [saved.gherkin])
+  const [scenarioIndex, setScenarioIndex] = useState(0)
+  const scenario = scenarios[scenarioIndex]
+  const steps = scenario?.steps ?? []
+  const keys = useMemo(() => placeholders(steps), [steps])
+
   const [baseUrl, setBaseUrl] = useState('')
-  const [mapping, setMapping] = useState<Mapping[]>(() => loadMapping(saved.id, steps.length))
+  const [values, setValues] = useState<Record<string, string>>({})
   const [running, setRunning] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<BehatRun | null>(null)
   const [history, setHistory] = useState<BehatRun[]>([])
 
   useEffect(() => {
-    localStorage.setItem(`behat-mapping-${saved.id}`, JSON.stringify(mapping))
-  }, [mapping, saved.id])
+    setResult(null)
+    setError('')
+  }, [scenarioIndex])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -91,33 +78,15 @@ function Workspace({ saved }: { saved: ReviewScenario }) {
     return () => controller.abort()
   }, [saved.id])
 
-  function update(index: number, patch: Partial<Mapping>) {
-    setMapping((current) =>
-      current.map((item, position) => (position === index ? { ...item, ...patch } : item)),
-    )
-  }
-
-  const incomplete = steps.some((_, index) => {
-    const item = mapping[index]
-    if (!item?.action) return true
-    if (needsSelector(item.action) && !item.selector.trim()) return true
-    if (needsValue(item.action) && !item.value.trim()) return true
-    return false
-  })
+  const missing = keys.some((key) => !values[key]?.trim())
 
   async function start() {
-    if (incomplete || !baseUrl.trim()) return
+    if (!scenario || !baseUrl.trim() || missing) return
     setRunning(true)
     setError('')
     setResult(null)
     try {
-      const payload: BehatStepInput[] = steps.map((text, index) => ({
-        text,
-        action: mapping[index].action as BehatAction,
-        selector: mapping[index].selector.trim(),
-        value: mapping[index].value.trim(),
-      }))
-      const run = await runBehat(saved.id, baseUrl.trim(), payload)
+      const run = await runBehat(saved.id, baseUrl.trim(), scenario.name, values)
       setResult(run)
       setHistory((current) => [run, ...current].slice(0, 10))
     } catch (cause) {
@@ -130,6 +99,22 @@ function Workspace({ saved }: { saved: ReviewScenario }) {
   return (
     <section className="behat-workspace" aria-label="End-to-end test">
       <h3>End-to-end test</h3>
+      <p className="behat-help">
+        Isi Base URL dan nilai placeholder. Langkah Gherkin dijalankan otomatis.
+      </p>
+
+      <label>
+        Scenario
+        <select
+          value={scenarioIndex}
+          onChange={(event) => setScenarioIndex(Number(event.target.value))}
+          disabled={running}
+        >
+          {scenarios.map((item, index) => (
+            <option key={`${index}-${item.name}`} value={index}>{item.name}</option>
+          ))}
+        </select>
+      </label>
 
       <label>
         Base URL
@@ -142,37 +127,25 @@ function Workspace({ saved }: { saved: ReviewScenario }) {
         />
       </label>
 
+      {keys.length > 0 && (
+        <fieldset className="behat-values">
+          <legend>Values</legend>
+          {keys.map((key) => (
+            <label key={key}>
+              {key}
+              <input
+                value={values[key] ?? ''}
+                onChange={(event) => setValues((current) => ({ ...current, [key]: event.target.value }))}
+                disabled={running}
+              />
+            </label>
+          ))}
+        </fieldset>
+      )}
+
       <ol className="behat-steps">
         {steps.map((text, index) => (
-          <li key={`${index}-${text}`}>
-            <p>{text}</p>
-            <select
-              value={mapping[index]?.action ?? ''}
-              onChange={(event) => update(index, { action: event.target.value as BehatAction | '' })}
-              disabled={running}
-            >
-              <option value="">Choose action…</option>
-              {ACTIONS.map((action) => (
-                <option key={action.value} value={action.value}>{action.label}</option>
-              ))}
-            </select>
-            {needsSelector(mapping[index]?.action ?? '') && (
-              <input
-                value={mapping[index]?.selector ?? ''}
-                onChange={(event) => update(index, { selector: event.target.value })}
-                placeholder="CSS selector, e.g. #email"
-                disabled={running}
-              />
-            )}
-            {needsValue(mapping[index]?.action ?? '') && (
-              <input
-                value={mapping[index]?.value ?? ''}
-                onChange={(event) => update(index, { value: event.target.value })}
-                placeholder={mapping[index]?.action === 'open' ? 'Path, e.g. /login' : 'Expected value'}
-                disabled={running}
-              />
-            )}
-          </li>
+          <li key={`${index}-${text}`}>{text}</li>
         ))}
       </ol>
 
@@ -182,7 +155,7 @@ function Workspace({ saved }: { saved: ReviewScenario }) {
         type="button"
         className="review-button primary"
         onClick={start}
-        disabled={running || incomplete || !baseUrl.trim()}
+        disabled={running || missing || !baseUrl.trim()}
       >
         {running ? 'Running…' : 'Run test'}
       </button>
