@@ -162,7 +162,9 @@ func TestWarnWhenCoverageBelowFull(t *testing.T) {
 	}
 	svc := &evaluationRunService{runs: repo, client: client}
 
-	svc.runCases(context.Background(), testCases()[:1], testItems()[:1])
+	if _, err := svc.runCases(context.Background(), testCases()[:1], testItems()[:1]); err != nil {
+		t.Fatal(err)
+	}
 
 	if repo.saved[0].llm.Status != entities.EvaluationCaseWarn {
 		t.Fatalf("status = %s", repo.saved[0].llm.Status)
@@ -201,11 +203,14 @@ func TestRunCasesSummarizesAcceptanceCriteria(t *testing.T) {
 		},
 	}}
 
-	metrics := (&evaluationRunService{runs: repo, client: client}).runCases(
+	metrics, err := (&evaluationRunService{runs: repo, client: client}).runCases(
 		context.Background(),
 		[]entities.EvaluationRunCase{{ID: uuid.New()}},
 		items,
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	for _, method := range []entities.EvaluationMethodMetrics{
 		metrics.LLM,

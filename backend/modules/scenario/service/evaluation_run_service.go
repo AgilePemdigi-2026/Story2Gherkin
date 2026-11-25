@@ -239,7 +239,7 @@ func (s *evaluationRunService) runCases(
 	return entities.EvaluationRunMetrics{
 		LLM:       summarize(llmResults, len(items), acceptanceCriteriaTotal(items)),
 		RuleBased: summarize(ruleBasedResults, len(items), acceptanceCriteriaTotal(items)),
-	}
+	}, nil
 }
 
 func (s *evaluationRunService) evaluate(
