@@ -1,0 +1,210 @@
+/* Scope the redesign to Login and Sign Up; password-reset pages keep their own layout. */
+.register-page.auth-redesign {
+  min-height: 100dvh;
+  overflow: visible;
+  background: #f1f6fd;
+  color: #17191d;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.auth-redesign *,
+.auth-redesign *::before,
+.auth-redesign *::after { box-sizing: border-box; }
+.auth-redesign .register-header {
+  position: sticky;
+  top: 0;
+  height: 80px;
+  min-height: 80px;
+  padding-inline: 40px;
+  border-bottom: 1px solid #e9edf2;
+  background: #fff;
+  box-shadow: none;
+}
+.auth-redesign .register-logo { display: block; width: auto; height: 40px; max-width: 180px; }
+.auth-redesign .register-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.92fr);
+  align-items: center;
+  gap: 64px;
+  width: min(1360px, calc(100% - 80px));
+  height: auto;
+  min-height: calc(100dvh - 80px);
+  margin: 0 auto;
+  padding: 40px 0;
+  overflow: visible;
+}
+.auth-redesign .register-left {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+}
+.auth-signup-page .register-left { position: sticky; top: 112px; align-self: start; margin-top: 60px; }
+.auth-redesign .register-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+}
+.auth-redesign .register-form-container {
+  width: 100%;
+  max-width: 480px;
+  padding: 34px;
+  border: 1px solid #e5ebf4;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 3px 8px rgb(15 23 42 / 3%);
+}
+.auth-redesign .register-form-container h1 {
+  margin: 0 0 14px;
+  color: #17191d;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+.auth-redesign .register-description { margin: 0; color: #748092; font-size: 14px; line-height: 1.85; }
+.auth-redesign .register-form { gap: 20px; margin-top: 28px; }
+.auth-redesign .login-form { gap: 24px; }
+.auth-redesign .form-group { gap: 9px; }
+.auth-redesign .form-group > label { color: #43516a; font-size: 13px; font-weight: 600; line-height: 1.6; }
+.auth-redesign .form-group .input-wrapper {
+  height: 52px;
+  min-height: 52px;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid #dfe5ef;
+  border-radius: 9px;
+  background: #fff;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.auth-redesign .form-group .input-wrapper:focus-within { border-color: #2563eb; box-shadow: 0 0 0 3px rgb(37 99 235 / 8%); }
+.auth-redesign .input-wrapper input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  color: #43516a;
+  font: inherit;
+  font-size: 14px;
+  box-shadow: none;
+}
+.auth-redesign .input-wrapper input::placeholder { color: #98a3b3; }
+.auth-redesign .input-wrapper > .input-icon { width: 19px; height: 19px; color: #94a3b8; }
+.auth-redesign .toggle-password { width: 36px; height: 36px; border-radius: 7px; color: #94a3b8; }
+.auth-redesign .toggle-password:hover { background: #f5f8fc; color: #2563eb; }
+.auth-redesign .toggle-password > svg { width: 19px; height: 19px; }
+.auth-redesign .password-field.has-error { padding-bottom: 9px; border-radius: 10px; background: #ff7580; animation: auth-error-shake 260ms ease-out; }
+.auth-redesign .password-field.has-error .input-wrapper { border: 1px solid #ff5264; border-radius: 9px; background: #fff; box-shadow: none; }
+.auth-redesign .password-error-message { margin: 8px 11px 0; color: #fff; font-size: 12px; font-weight: 500; line-height: 1.7; }
+.auth-redesign .register-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  height: auto;
+  min-height: 52px;
+  margin: 6px 0 0;
+  padding: 13px 20px;
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  box-shadow: none;
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.auth-redesign .register-submit:hover:not(:disabled) { border-color: #1d4ed8; background: #1d4ed8; }
+.auth-redesign .register-submit:active:not(:disabled) { transform: scale(0.98); }
+.auth-redesign .register-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.auth-redesign .login-options { gap: 12px; margin: 0; }
+.auth-redesign .login-remember { gap: 8px; padding: 0; color: #748092; font-size: 12px; font-weight: 450; }
+.auth-redesign .login-remember input { width: 16px; height: 16px; }
+.auth-redesign .login-forgot { color: #2563eb; font-size: 12px; font-weight: 550; text-underline-offset: 3px; }
+.auth-redesign .register-divider { gap: 14px; margin: 26px 0 22px; color: #98a3b3; font-size: 12px; font-weight: 400; }
+.auth-redesign .register-divider::before,
+.auth-redesign .register-divider::after { background: #e4eaf2; }
+.auth-redesign .register-login { margin: 0; color: #748092; font-size: 13px; line-height: 1.8; }
+.auth-redesign .register-login a { color: #2563eb; font-size: inherit; font-weight: 600; text-underline-offset: 4px; }
+.auth-redesign .register-terms { gap: 4px 5px; margin: 0; padding: 0; color: #748092; font-size: 12px; line-height: 1.8; }
+.auth-redesign .register-terms input[type='checkbox'] { width: 16px; height: 16px; margin-right: 4px; }
+.auth-redesign .terms-button { color: #2563eb; font-size: inherit; font-weight: 550; text-underline-offset: 3px; }
+.auth-redesign .register-message.error { padding: 12px 14px; border: 1px solid #ff5264; border-radius: 9px; background: #ff7580; color: #fff; font-size: 12px; font-weight: 500; line-height: 1.8; text-align: left; }
+.auth-redesign .register-message.success { padding: 12px 14px; border: 1px solid #88ee88; border-radius: 9px; background: #88ee88; color: #174a26; font-size: 12px; font-weight: 550; line-height: 1.8; }
+.auth-redesign .role-trigger { min-height: 52px; height: 52px; padding: 0 12px; border-color: #dfe5ef; border-radius: 9px; font-family: inherit; }
+.auth-redesign .role-trigger > .input-icon { width: 19px; height: 19px; }
+.auth-redesign .role-value { color: #43516a; font-size: 14px; }
+.auth-redesign .role-placeholder { color: #98a3b3; font-size: 14px; }
+.auth-redesign .role-chevron { width: 17px; height: 17px; }
+.auth-redesign .role-dropdown { padding: 6px; border-color: #e3e8ef; border-radius: 10px; box-shadow: 0 10px 26px rgb(15 23 42 / 9%); animation: auth-role-enter 170ms ease-out both; }
+.auth-redesign .role-option { min-height: 44px; gap: 10px; padding: 10px 12px; }
+.auth-redesign .role-option-icon { display: none; }
+.auth-redesign .role-code { display: grid; place-items: center; min-width: 28px; height: 26px; border-radius: 5px; background: #f0f4fa; color: #7b8da7; font-size: 10px; font-weight: 600; }
+.auth-redesign .role-name { color: #526075; font-size: 13px; }
+.auth-redesign .role-option:hover,
+.auth-redesign .role-option:focus-visible,
+.auth-redesign .role-option.selected { background: #edf4ff; }
+.auth-redesign .role-dropdown:has(.role-option:hover) .role-option.selected:not(:hover) { background: transparent; }
+.auth-redesign .role-check { width: 16px; height: 16px; }
+.auth-redesign .terms-modal-overlay { padding: 20px; background: rgb(20 32 52 / 32%); }
+.auth-redesign .terms-modal { padding: 28px; border: 1px solid #e3e8ef; border-radius: 18px; box-shadow: 0 20px 70px rgb(15 23 42 / 16%); animation: auth-role-enter 200ms ease-out both; }
+.auth-redesign .terms-modal-header h2 { font-size: 22px; font-weight: 650; letter-spacing: -0.025em; }
+.auth-redesign .terms-modal-close { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border: 1px solid #e3e8ef; border-radius: 8px; background: #f8fafc; }
+.auth-redesign .terms-modal-confirm { min-height: 46px; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 600; }
+.auth-redesign button:focus-visible,
+.auth-redesign a:focus-visible,
+.auth-redesign input[type='checkbox']:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
+@keyframes auth-error-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 50% { transform: translateX(2px); } 75% { transform: translateX(-1px); } }
+@keyframes auth-role-enter { from { opacity: 0; transform: translateY(-5px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 1150px) {
+  .auth-redesign .register-layout { grid-template-columns: minmax(0, 1fr) minmax(340px, 1fr); gap: 30px; width: calc(100% - 48px); padding-block: 36px; }
+  .auth-redesign .register-form-container { padding: 28px; }
+  .auth-redesign .register-form-container h1 { font-size: 32px; }
+  .auth-signup-page .register-left { margin-top: 50px; }
+}
+@media (max-width: 960px) {
+  .auth-redesign .register-layout { grid-template-columns: minmax(0, 1fr); width: min(520px, calc(100% - 40px)); min-height: calc(100dvh - 80px); padding-block: 32px; }
+  .auth-redesign .register-left { display: none; }
+  .auth-redesign .register-content { width: 100%; }
+  .auth-redesign .register-form-container { max-width: none; }
+}
+@media (max-width: 480px) {
+  .auth-redesign .register-header { padding-inline: 20px; }
+  .auth-redesign .register-logo { height: 36px; max-width: 160px; }
+  .auth-redesign .register-layout { width: calc(100% - 28px); padding-block: 24px; }
+  .auth-redesign .register-form-container { padding: 25px 22px; border-radius: 18px; }
+  .auth-redesign .register-form-container h1 { font-size: 30px; }
+  .auth-redesign .register-description { font-size: 13px; }
+  .auth-redesign .input-wrapper input { font-size: 16px; }
+  .auth-redesign .register-submit { min-height: 50px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-redesign .password-field.has-error,
+  .auth-redesign .role-dropdown,
+  .auth-redesign .terms-modal { animation: none; }
+  .auth-redesign .input-wrapper,
+  .auth-redesign .register-submit,
+  .auth-redesign .role-chevron,
+  .auth-redesign .role-option { transition: none; }
+  .auth-redesign .register-submit:active:not(:disabled) { transform: none; }
+}

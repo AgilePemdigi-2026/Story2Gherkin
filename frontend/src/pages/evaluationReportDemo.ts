@@ -27,21 +27,21 @@ export const demoReport: EvaluationReport = {
   cases: [
     {
       case_id: 'GC-001',
-      title: 'Login berhasil',
+      title: 'Successful login',
       expected_gherkin: 'Feature: Login\n  Scenario: Valid login\n    Given the user opens the login page\n    When the user submits valid credentials\n    Then the dashboard is displayed',
       llm: { status: 'PASS', gui_coverage_percent: 100, acceptance_criteria_precision_percent: 100, acceptance_criteria_recall_percent: 100, acceptance_criteria_f1_percent: 100 },
       rule_based: { status: 'PASS', gui_coverage_percent: 98, acceptance_criteria_precision_percent: 90, acceptance_criteria_recall_percent: 100, acceptance_criteria_f1_percent: 94.74 },
     },
     {
       case_id: 'GC-002',
-      title: 'Registrasi user',
+      title: 'User registration',
       expected_gherkin: 'Feature: Register\n  Scenario: Valid registration\n    Given the visitor opens the registration form\n    When the visitor submits valid account details\n    Then the account is created',
       llm: { status: 'PASS', gui_coverage_percent: 90, acceptance_criteria_precision_percent: 100, acceptance_criteria_recall_percent: 80, acceptance_criteria_f1_percent: 88.89 },
       rule_based: { status: 'FAIL', gui_coverage_percent: 60, acceptance_criteria_precision_percent: 50, acceptance_criteria_recall_percent: 40, acceptance_criteria_f1_percent: 44.44 },
     },
     {
       case_id: 'GC-003',
-      title: 'Checkout produk',
+      title: 'Product checkout',
       expected_gherkin: 'Feature: Checkout\n  Scenario: Place an order\n    Given the cart contains a product\n    When the buyer confirms the order\n    Then the order confirmation is displayed',
       llm: { status: 'WARN', gui_coverage_percent: 74, acceptance_criteria_precision_percent: 75, acceptance_criteria_recall_percent: 75, acceptance_criteria_f1_percent: 75 },
       rule_based: { status: 'FAIL', gui_coverage_percent: 30, acceptance_criteria_precision_percent: 33.33, acceptance_criteria_recall_percent: 25, acceptance_criteria_f1_percent: 28.57 },

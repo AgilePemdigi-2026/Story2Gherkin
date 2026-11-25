@@ -18,7 +18,7 @@ import {
   type GenerateScenarioResult,
 } from '../services/scenarioApi'
 import './GenerateScenarioPage.css'
-
+import { useAutoGrowTextarea } from '../hooks/useAutoGrowTextarea'
 
 interface GuiElement {
   id: number
@@ -111,6 +111,25 @@ function renderGherkin(source: string) {
   })
 }
 
+function animateGenerateElement(
+  element: HTMLElement | null,
+  keyframes: Keyframe[],
+  duration: number,
+) {
+  if (
+    !element ||
+    typeof element.animate !== 'function' ||
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  ) {
+    return null
+  }
+
+  return element.animate(keyframes, {
+    duration,
+    easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+  })
+}
+
 function GenerateScenarioPage() {
   const navigate = useNavigate()
   const session = useAuthSession()
@@ -124,10 +143,12 @@ function GenerateScenarioPage() {
   const [userStory, setUserStory] = useState(
     initialDraft?.userStory ?? ''
   )
-
+  
   const [freeScenario, setFreeScenario] = useState(
     initialDraft?.freeScenario ?? ''
   )
+  const userStoryRef = useAutoGrowTextarea(userStory)
+  const freeScenarioRef = useAutoGrowTextarea(freeScenario)
 
   const [guiElements, setGuiElements] = useState<GuiElement[]>(
     () =>
@@ -154,6 +175,94 @@ function GenerateScenarioPage() {
     useState<GenerateScenarioResult | null>(null)
 
   const [generateError, setGenerateError] = useState('')
+  const generateFormRef = useRef<HTMLFormElement>(null)
+const generateButtonRef = useRef<HTMLButtonElement>(null)
+
+const guiMotionRowsRef = useRef(
+  new Map<number, HTMLDivElement>(),
+)
+
+const enteringGuiIdsRef = useRef(new Set<number>())
+const removingGuiIdsRef = useRef(new Set<number>())
+
+const motionAnimationsRef = useRef(new Set<Animation>())
+const motionMountedRef = useRef(true)
+
+const [removingGuiIds, setRemovingGuiIds] = useState<Set<number>>(
+  () => new Set(),
+)
+
+useEffect(() => {
+  motionMountedRef.current = true
+
+  const animations = motionAnimationsRef.current
+
+  return () => {
+    motionMountedRef.current = false
+
+    animations.forEach(animation => animation.cancel())
+    animations.clear()
+  }
+}, [])
+
+const playMotion = (
+  element: HTMLElement | null,
+  keyframes: Keyframe[],
+  duration: number,
+) => {
+  const animation = animateGenerateElement(
+    element,
+    keyframes,
+    duration,
+  )
+
+  if (animation) {
+    motionAnimationsRef.current.add(animation)
+
+    void animation.finished.then(
+      () => motionAnimationsRef.current.delete(animation),
+      () => motionAnimationsRef.current.delete(animation),
+    )
+  }
+
+  return animation
+}
+
+const playGenerateFeedback = () => {
+  const button = generateButtonRef.current
+
+  button?.getAnimations().forEach(animation => animation.cancel())
+
+  playMotion(
+    button,
+    [
+      { transform: 'scale(1)', offset: 0 },
+      { transform: 'scale(0.97)', offset: 0.22 },
+      { transform: 'scale(1.018)', offset: 0.6 },
+      { transform: 'scale(1)', offset: 1 },
+    ],
+    280,
+  )
+}
+
+const playErrorFeedback = () => {
+  const form = generateFormRef.current
+
+  form?.getAnimations().forEach(animation => animation.cancel())
+
+  playMotion(
+    form,
+    [
+      { transform: 'translateX(0)' },
+      { transform: 'translateX(-3px)' },
+      { transform: 'translateX(3px)' },
+      { transform: 'translateX(-2px)' },
+      { transform: 'translateX(2px)' },
+      { transform: 'translateX(0)' },
+    ],
+    260,
+  )
+}
 
   // AUTOSAVE DRAFT
 useEffect(() => {
@@ -180,6 +289,7 @@ useEffect(() => {
       localStorage.removeItem(getDraftKey(session.userId))
     }
   } catch {
+    
     // Storage may be unavailable or full.
     // The form remains usable even if autosave fails.
   }
@@ -187,17 +297,26 @@ useEffect(() => {
 
   // ADD GUI ELEMENT
   const addGuiElement = () => {
-    if (isGenerating || guiElements.length >= 30) return
-    setGeneratedResult(null)
-    setGenerateError('')
+  if (isGenerating || guiElements.length >= 30) return
 
-    const id = nextGuiId.current
-    nextGuiId.current += 1
+  const id = nextGuiId.current
+  nextGuiId.current += 1
 
-    setGuiElements((prev) => [...prev, { id, value: '' }])
-    setErrors((prev) => ({ ...prev, guiElements: undefined }))
-    setFormMessage('')
-  }
+  enteringGuiIdsRef.current.add(id)
+
+  setGuiElements(previous => [
+    ...previous,
+    { id, value: '' },
+  ])
+
+  setGeneratedResult(null)
+  setGenerateError('')
+  setErrors(previous => ({
+    ...previous,
+    guiElements: undefined,
+  }))
+  setFormMessage('')
+}
 
   // UPDATE GUI ELEMENT
   const updateGuiElement = (id: number, value: string) => {
@@ -215,23 +334,80 @@ useEffect(() => {
   }
 
   // REMOVE GUI ELEMENT
-  const removeGuiElement = (id: number) => {
-    if (isGenerating) return
-    setGeneratedResult(null)
-    setGenerateError('')
-    if (guiElements.length === 1) {
-      setGuiElements((prev) =>
-        prev.map((element) => ({ ...element, value: '' }))
-      )
-    } else {
-      setGuiElements((prev) =>
-        prev.filter((element) => element.id !== id)
+  const removeGuiElement = async (id: number) => {
+  if (
+    isGenerating ||
+    removingGuiIdsRef.current.has(id)
+  ) {
+    return
+  }
+
+  removingGuiIdsRef.current.add(id)
+
+  setRemovingGuiIds(
+    new Set(removingGuiIdsRef.current),
+  )
+
+  setGeneratedResult(null)
+  setGenerateError('')
+  setErrors(previous => ({
+    ...previous,
+    guiElements: undefined,
+  }))
+  setFormMessage('')
+
+  const row = guiMotionRowsRef.current.get(id)
+
+  // Stop an entrance animation if the row is deleted immediately.
+  row?.getAnimations().forEach(animation => animation.cancel())
+
+  const animation = playMotion(
+    row ?? null,
+    [
+      {
+        height: `${row?.getBoundingClientRect().height ?? 0}px`,
+        paddingBottom: '9px',
+        opacity: 1,
+        transform: 'translateY(0) scale(1)',
+      },
+      {
+        height: '0px',
+        paddingBottom: '0px',
+        opacity: 0,
+        transform: 'translateY(4px) scale(0.96)',
+      },
+    ],
+    180,
+  )
+
+  if (animation) {
+    try {
+      await animation.finished
+    } catch {
+      // Cancellation can occur when navigating away.
+    }
+  }
+
+  if (!motionMountedRef.current) return
+
+  setGuiElements(previous => {
+    if (previous.length <= 1) {
+      return previous.map(element =>
+        element.id === id
+          ? { ...element, value: '' }
+          : element,
       )
     }
 
-    setErrors((prev) => ({ ...prev, guiElements: undefined }))
-    setFormMessage('')
-  }
+    return previous.filter(element => element.id !== id)
+  })
+
+  removingGuiIdsRef.current.delete(id)
+
+  setRemovingGuiIds(
+    new Set(removingGuiIdsRef.current),
+  )
+}
 
   
   // VALIDATE FORM & GENERATE SCENARIO
@@ -239,6 +415,14 @@ useEffect(() => {
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault()
+    if (
+  isGenerating ||
+    removingGuiIdsRef.current.size > 0
+  ) {
+    return
+  }
+
+  playGenerateFeedback()
 
     // Prevent duplicate requests
     if (isGenerating) return
@@ -277,6 +461,7 @@ useEffect(() => {
 
     // Stop if validation fails
     if (Object.keys(newErrors).length > 0) {
+      playErrorFeedback()
       return
     }
 
@@ -295,12 +480,14 @@ useEffect(() => {
       // Save generated result
       setGeneratedResult(result)
     } catch (error: unknown) {
+      
       const message =
         error instanceof Error
           ? error.message
           : 'Failed to generate Gherkin scenarios.'
 
       setGenerateError(message)
+      playErrorFeedback()
     } finally {
       setIsGenerating(false)
     }
@@ -347,6 +534,7 @@ useEffect(() => {
                 className="generate-form"
                 onSubmit={handleGenerate}
                 noValidate
+                ref={generateFormRef}
               >
 
                 {/* ERROR BANNER */}
@@ -359,48 +547,53 @@ useEffect(() => {
                   </div>
                 )}
 
-                {/* USER STORY */}
                 <div className="generate-form-group">
-                  <label htmlFor="user-story">
-                    USER STORY <span>*</span>
-                  </label>
+  <label htmlFor="user-story">
+    USER STORY <span>*</span>
+  </label>
 
-                  <textarea
-                    id="user-story"
-                    className={`generate-textarea ${
-                      errors.userStory ? 'has-error' : ''
-                    }`}
-                    placeholder="Example: As an admin, I want to delete user data..."
-                    value={userStory}
-                    maxLength={8000}
-                    disabled={isProcessing}
-                    onChange={(event) => {
-                      setUserStory(event.target.value)
-                      setGeneratedResult(null)
-                      setGenerateError('')
-                      setErrors((prev) => ({
-                        ...prev,
-                        userStory: undefined,
-                      }))
-                      setFormMessage('')
-                    }}
-                    aria-invalid={Boolean(errors.userStory)}
-                    aria-describedby={
-                      errors.userStory ? 'user-story-error' : undefined
-                    }
-                  />
+  <div
+    className={`sa-field-shell${
+      errors.userStory ? ' has-error' : ''
+    }`}
+  >
+    <textarea
+      ref={userStoryRef}
+      id="user-story"
+      className={`generate-textarea${
+        errors.userStory ? ' has-error' : ''
+      }`}
+      placeholder="Example: As an admin, I want to delete user data..."
+      value={userStory}
+      maxLength={8000}
+      disabled={isProcessing}
+      onChange={event => {
+        setUserStory(event.target.value)
+        setGeneratedResult(null)
+        setGenerateError('')
+        setErrors(previous => ({
+          ...previous,
+          userStory: undefined,
+        }))
+        setFormMessage('')
+      }}
+      aria-invalid={Boolean(errors.userStory)}
+      aria-describedby={
+        errors.userStory ? 'user-story-error' : undefined
+      }
+    />
 
-                  {errors.userStory && (
-                    <p
-                      id="user-story-error"
-                      className="generate-field-error"
-                      role="alert"
-                    >
-                      <AlertCircle size={15} />
-                      {errors.userStory}
-                    </p>
-                  )}
-                </div>
+    {errors.userStory && (
+      <p
+        id="user-story-error"
+        className="sa-field-message"
+        role="alert"
+      >
+        {errors.userStory}
+      </p>
+    )}
+  </div>
+</div>
 
                 {/* GUI ELEMENTS */}
                 <div className="generate-form-group">
@@ -409,39 +602,82 @@ useEffect(() => {
                   </label>
 
                   <div className="generate-gui-list">
-                    {guiElements.map((element, index) => (
-                      <div
-                        className="generate-gui-row"
-                        key={element.id}
-                      >
-                        <input
-                          type="text"
-                          aria-label={`GUI Element ${index + 1}`}
-                          aria-invalid={Boolean(errors.guiElements)}
-                          placeholder={`GUI Element ${index + 1}`}
-                          value={element.value}
-                          maxLength={200}
-                          disabled={isProcessing}
-                          onChange={(event) =>
-                            updateGuiElement(
-                              element.id,
-                              event.target.value
-                            )
-                          }
-                        />
+  {guiElements.map((element, index) => {
+    const isRemoving = removingGuiIds.has(element.id)
 
-                        <button
-                          type="button"
-                          className="generate-remove-button"
-                          aria-label={`Remove GUI element ${index + 1}`}
-                          disabled={isProcessing}
-                          onClick={() => removeGuiElement(element.id)}
-                        >
-                          <X size={19} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+    return (
+      <div
+        key={element.id}
+        className="generate-gui-motion"
+        ref={node => {
+          if (!node) {
+            guiMotionRowsRef.current.delete(element.id)
+            return
+          }
+
+          guiMotionRowsRef.current.set(element.id, node)
+
+          if (!enteringGuiIdsRef.current.has(element.id)) {
+            return
+          }
+
+          enteringGuiIdsRef.current.delete(element.id)
+
+          const height = node.getBoundingClientRect().height
+
+          playMotion(
+            node,
+            [
+              {
+                height: '0px',
+                paddingBottom: '0px',
+                opacity: 0,
+                transform: 'translateY(-6px) scale(0.98)',
+              },
+              {
+                height: `${height}px`,
+                paddingBottom: '9px',
+                opacity: 1,
+                transform: 'translateY(0) scale(1)',
+              },
+            ],
+            240,
+          )
+        }}
+      >
+        <div className="generate-gui-row">
+          <input
+            type="text"
+            aria-label={`GUI Element ${index + 1}`}
+            aria-invalid={Boolean(errors.guiElements)}
+            placeholder={`GUI Element ${index + 1}`}
+            value={element.value}
+            maxLength={200}
+            disabled={isProcessing || isRemoving}
+            onChange={event =>
+              updateGuiElement(
+                element.id,
+                event.target.value,
+              )
+            }
+          />
+
+          <button
+            type="button"
+            className="generate-remove-button"
+            aria-label={`Remove GUI element ${index + 1}`}
+            disabled={isProcessing || isRemoving}
+            onClick={() => {
+              void removeGuiElement(element.id)
+            }}
+          >
+            <X size={19} />
+          </button>
+        </div>
+      </div>
+    )
+  })}
+</div>
 
                   <button
                     type="button"
@@ -461,50 +697,55 @@ useEffect(() => {
                   )}
                 </div>
 
-                {/* FREE SCENARIO */}
                 <div className="generate-form-group">
-                  <label htmlFor="free-scenario">
-                    FREE SCENARIO <span>*</span>
-                  </label>
+  <label htmlFor="free-scenario">
+    FREE SCENARIO <span>*</span>
+  </label>
 
-                  <textarea
-                    id="free-scenario"
-                    className={`generate-textarea generate-free-textarea ${
-                      errors.freeScenario ? 'has-error' : ''
-                    }`}
-                    placeholder="The admin logs in, opens the user list, and clicks Delete..."
-                    value={freeScenario}
-                    maxLength={4000}
-                    disabled={isProcessing}
-                    onChange={(event) => {
-                      setFreeScenario(event.target.value)
-                      setGeneratedResult(null)
-                      setGenerateError('')
-                      setErrors((prev) => ({
-                        ...prev,
-                        freeScenario: undefined,
-                      }))
-                      setFormMessage('')
-                    }}
-                    aria-invalid={Boolean(errors.freeScenario)}
-                    aria-describedby={
-                      errors.freeScenario
-                        ? 'free-scenario-error'
-                        : undefined
-                    }
-                  />
+  <div
+    className={`sa-field-shell${
+      errors.freeScenario ? ' has-error' : ''
+    }`}
+  >
+    <textarea
+      ref={freeScenarioRef}
+      id="free-scenario"
+      className={`generate-textarea generate-free-textarea${
+        errors.freeScenario ? ' has-error' : ''
+      }`}
+      placeholder="The admin logs in, opens the user list, and clicks Delete..."
+      value={freeScenario}
+      maxLength={4000}
+      disabled={isProcessing}
+      onChange={event => {
+        setFreeScenario(event.target.value)
+        setGeneratedResult(null)
+        setGenerateError('')
+        setErrors(previous => ({
+          ...previous,
+          freeScenario: undefined,
+        }))
+        setFormMessage('')
+      }}
+      aria-invalid={Boolean(errors.freeScenario)}
+      aria-describedby={
+        errors.freeScenario
+          ? 'free-scenario-error'
+          : undefined
+      }
+    />
 
-                  {errors.freeScenario && (
-                    <p
-                      id="free-scenario-error"
-                      className="generate-field-error"
-                      role="alert"
-                    >
-                      <AlertCircle size={15} />
-                      {errors.freeScenario}
-                    </p>
-                  )}
-                </div>
+    {errors.freeScenario && (
+      <p
+        id="free-scenario-error"
+        className="sa-field-message"
+        role="alert"
+      >
+        {errors.freeScenario}
+      </p>
+    )}
+  </div>
+</div>
 
                 {/* SUBMIT / GENERATE AGAIN */}
                 {isSuccess ? (
@@ -530,22 +771,23 @@ useEffect(() => {
                   )
                 ) : (
                   <button
-                    type="submit"
-                    className="generate-submit-button"
-                    disabled={isProcessing}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <LoaderCircle
-                          size={19}
-                          className="generate-loading-spinner"
-                        />
-                        Generating scenario...
-                      </>
-                    ) : (
-                      'Generate Scenarios'
-                    )}
-                  </button>
+  ref={generateButtonRef}
+  type="submit"
+  className="generate-submit-button"
+  disabled={isProcessing || removingGuiIds.size > 0}
+>
+  {isProcessing ? (
+    <>
+      <LoaderCircle
+        size={19}
+        className="generate-loading-spinner"
+      />
+      Generating scenario...
+    </>
+  ) : (
+    'Generate Scenarios'
+  )}
+</button>
                 )}
 
                 {formMessage && (

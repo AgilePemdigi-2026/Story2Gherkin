@@ -1,0 +1,20 @@
+@import '../styles/EvaluationStatusColors.css';
+/* Additive styles over the latest merged evaluation pages. */
+.eval-progress.eval-progress-circular { display: flex; align-items: center; gap: 20px; padding: 18px 20px; }
+.eval-progress-circular-copy { min-width: 0; }
+.eval-progress .eval-progress-circular-copy p { margin: 0; line-height: 1.7; }
+.eval-progress-circular-copy .eval-report-link { display: inline-flex; margin-top: 8px; }
+.evaluation-report-table .evaluation-report-metric-value { text-align: center; vertical-align: middle; padding: 12px 16px; }
+.evaluation-report-table .evaluation-report-metric-method { text-align: center; min-width: 106px; }
+.evaluation-report-case-detail .evaluation-report-coverage { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; }
+.evaluation-report-case-detail .evaluation-report-coverage > span { font-size: 13px; font-weight: 600; color: #526075; }
+@media (max-width: 480px) {
+  .eval-progress.eval-progress-circular { gap: 14px; padding: 16px 12px; }
+  .eval-progress-circular .circular-percentage--large { --ring-size: 84px; }
+  .eval-progress-circular .circular-percentage--large .circular-percentage-value { font-size: 15px; }
+}
+
+/* Existing coverage styles target all child divs/spans; isolate the shared gauge. */
+.evaluation-report-case-detail .evaluation-report-coverage > .circular-percentage { display: inline-grid; justify-content: normal; gap: 0; }
+.evaluation-report-case-detail .evaluation-report-coverage .circular-percentage-value { color: #172a46; font-weight: 700; }
+.evaluation-report-case-detail .evaluation-report-coverage .is-unavailable .circular-percentage-value { color: #94a3b8; }

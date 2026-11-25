@@ -23,7 +23,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 async function send(path: string, init: RequestInit, signal?: AbortSignal) {
   const token = sessionStorage.getItem('access_token') || localStorage.getItem('access_token')
-  if (!token) throw new Error('Sesi berakhir. Silakan login kembali.')
+  if (!token) throw new Error('Your session has expired. Please log in again.')
 
   let response: Response
   try {
@@ -36,19 +36,19 @@ async function send(path: string, init: RequestInit, signal?: AbortSignal) {
     })
   } catch (error) {
     if (signal?.aborted) throw error
-    throw new Error('Server tidak dapat dihubungi. Silakan coba lagi.', { cause: error })
+    throw new Error('Unable to reach the server. Please try again.', { cause: error })
   }
 
-  if (response.status === 401) throw new Error('Sesi berakhir. Silakan login kembali.')
-  if (response.status === 403) throw new Error('Hanya Quality Assurance yang dapat menjalankan evaluasi.')
-  if (response.status === 409) throw new Error('Masih ada evaluasi yang berjalan. Tunggu hingga selesai.')
-  if (response.status === 400) throw new Error('Dataset tidak valid atau tidak memiliki kasus.')
-  if (response.status === 404) throw new Error('Dataset atau evaluasi tidak ditemukan.')
-  if (!response.ok) throw new Error('Permintaan evaluasi gagal. Silakan coba lagi.')
+  if (response.status === 401) throw new Error('Your session has expired. Please log in again.')
+  if (response.status === 403) throw new Error('Only Quality Assurance users can run evaluations.')
+  if (response.status === 409) throw new Error('An evaluation is already running. Wait until it finishes.')
+  if (response.status === 400) throw new Error('The dataset is invalid or contains no test cases.')
+  if (response.status === 404) throw new Error('The dataset or evaluation was not found.')
+  if (!response.ok) throw new Error('The evaluation request failed. Please try again.')
 
   const envelope: unknown = await response.json().catch(() => null)
   if (!isRecord(envelope) || envelope.status !== true || !isRecord(envelope.data)) {
-    throw new Error('Respons evaluasi tidak valid.')
+    throw new Error('The evaluation response is invalid.')
   }
   return envelope.data
 }
@@ -68,7 +68,7 @@ export async function createEvaluationRun(
     typeof data.report_code !== 'string' ||
     typeof data.total_cases !== 'number'
   ) {
-    throw new Error('Respons evaluasi tidak valid.')
+    throw new Error('The evaluation response is invalid.')
   }
 
   return data as unknown as EvaluationRunCreated
@@ -86,7 +86,7 @@ export async function getEvaluationRunProgress(
     typeof data.total_cases !== 'number' ||
     typeof data.processed_cases !== 'number'
   ) {
-    throw new Error('Respons evaluasi tidak valid.')
+    throw new Error('The evaluation response is invalid.')
   }
 
   return data as unknown as EvaluationRunProgress
