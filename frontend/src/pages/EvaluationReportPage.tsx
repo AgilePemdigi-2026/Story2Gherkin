@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowLeft, ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import PublicHeader from '../components/PublicHeader'
+import CircularPercentage from '../components/CircularPercentage'
 import ScenarioSidebar from '../components/ScenarioSidebar'
 import { HighlightedGherkin } from '../components/review/GherkinEditor'
 import {
@@ -18,6 +19,7 @@ import {
 import { demoReport } from './evaluationReportDemo'
 import './GenerateScenarioPage.css'
 import './EvaluationReportPage.css'
+import './EvaluationCircularMetrics.css'
 
 const REPORTS_PATH = '/evaluation/reports'
 const runStatusLabel: Record<EvaluationRunStatus, string> = {
@@ -35,10 +37,6 @@ function formatDate(value: string) {
   return Number.isNaN(timestamp) ? '—' : dateFormatter.format(timestamp)
 }
 
-function formatPercent(value: number | null | undefined) {
-  return value == null ? '—' : `${percentFormatter.format(value)}%`
-}
-
 function MetricRow({ label, llm, rule }: {
   label: string
   llm?: number | null
@@ -48,8 +46,8 @@ function MetricRow({ label, llm, rule }: {
   return (
     <tr>
       <th scope="row">{label}</th>
-      <td><strong>{formatPercent(llm)}</strong></td>
-      <td><strong>{formatPercent(rule)}</strong></td>
+      <td className="evaluation-report-metric-value"><CircularPercentage value={llm} label={`${label} — LLM`} variant="llm" size="small" locale="id-ID" /></td>
+      <td className="evaluation-report-metric-value"><CircularPercentage value={rule} label={`${label} — Rule-Based`} variant="rule" size="small" locale="id-ID" /></td>
       <td className={difference != null && difference > 0 ? 'evaluation-report-positive' : undefined}>
         {difference == null ? '—' : `${difference > 0 ? '+' : ''}${percentFormatter.format(difference)} pp`}
       </td>
@@ -70,8 +68,8 @@ function Coverage({ method, result, variant }: { method: string; result: MethodR
   const coverage = result?.gui_coverage_percent
   return (
     <div className={`evaluation-report-coverage ${variant}`}>
-      <div><span>{method}</span><strong>{formatPercent(coverage)}</strong></div>
-      {coverage != null && <progress aria-label={`GUI Coverage ${method}`} max={100} value={coverage} />}
+      <span>{method}</span>
+      <CircularPercentage value={coverage} label={`GUI Coverage — ${method}`} variant={variant} locale="id-ID" />
     </div>
   )
 }
@@ -209,16 +207,19 @@ function ReportDetail({ report, demo, reload }: { report: EvaluationReport; demo
           <h2 id="evaluation-report-metrics-title">Evaluation Metrics</h2>
           <div className="evaluation-report-table-wrap" tabIndex={0} aria-label="Perbandingan metrik">
             <table className="evaluation-report-table">
-              <thead><tr><th scope="col">Metric</th><th scope="col">LLM</th><th scope="col">Rule-Based</th><th scope="col">Selisih</th></tr></thead>
+              <thead><tr><th scope="col">Metric</th><th scope="col" className="evaluation-report-metric-method">LLM</th><th scope="col" className="evaluation-report-metric-method">Rule-Based</th><th scope="col">Selisih</th></tr></thead>
               <tbody>
-                <MetricRow label="Validation Metric" llm={llm?.validation_percent} rule={rule?.validation_percent} />
-                <MetricRow label="GUI Coverage" llm={llm?.gui_coverage_percent} rule={rule?.gui_coverage_percent} />
+                <MetricRow label="Gherkin Validity Rate" llm={llm?.validation_percent} rule={rule?.validation_percent} />
+                <MetricRow label="GUI Element Recall" llm={llm?.gui_coverage_percent} rule={rule?.gui_coverage_percent} />
+                <MetricRow label="Acceptance-Criteria Precision" llm={llm?.acceptance_criteria_precision_percent} rule={rule?.acceptance_criteria_precision_percent} />
+                <MetricRow label="Acceptance-Criteria Recall" llm={llm?.acceptance_criteria_recall_percent} rule={rule?.acceptance_criteria_recall_percent} />
+                <MetricRow label="Acceptance-Criteria F1 Score" llm={llm?.acceptance_criteria_f1_percent} rule={rule?.acceptance_criteria_f1_percent} />
               </tbody>
             </table>
           </div>
           {report.metrics === null
             ? <p className="evaluation-report-caption">Metrik belum tersedia.</p>
-            : <p className="evaluation-report-caption">Selisih LLM dan Rule-Based dalam poin persentase (pp).</p>}
+            : <p className="evaluation-report-caption">Selisih LLM dan Rule-Based dalam poin persentase (pp). Metrik acceptance criteria tersedia untuk dataset yang menyediakannya.</p>}
         </section>
         <section className="evaluation-report-card" aria-labelledby="evaluation-report-cases-title">
           <h2 id="evaluation-report-cases-title">Hasil Perbandingan Skenario</h2>

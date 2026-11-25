@@ -3,20 +3,21 @@ import { useState, type FormEvent } from 'react'
 import {
   UserRound,
   Mail,
-  LockKeyhole,
   Eye,
   EyeOff,
   ChevronDown,
   UsersRound,
-  X, 
   Workflow,
   ShieldCheck,
   Check
 } from 'lucide-react'
 import { registerUser } from '../services/authApi'
 import AuthHeader from '../components/AuthHeader'
-import registerIllustration from '../assets/register-illustration.png'
+import AuthIllustration from '../components/AuthIllustration'
+import LegalDocumentDialog from '../components/LegalDocumentDialog'
 import './RegisterPage.css'
+import './AuthPages.css'
+import './AuthValidation.css'
 import { useNavigate } from 'react-router-dom'
 
 function RegisterPage() {
@@ -38,7 +39,8 @@ function RegisterPage() {
   const [messageType, setMessageType] = useState<'success' | 'error' | ''>('')
 
   // Terms & Privacy modal
-  const [showTermsModal, setShowTermsModal] = useState(false)
+  const [showLegalDocument, setShowLegalDocument] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   // Password validation
   const validatePassword = (value: string): string => {
@@ -111,38 +113,28 @@ function RegisterPage() {
       const email = String(formData.get('email') ?? '').trim()
       const agreeTerms = formData.get('agreeTerms') === 'on'
 
-      // Ambil role dari dropdown
       const role = formData.get('role')
-
-      // Validasi role sebelum dikirim ke backend
-      if (role !== 'system_analyst' && role !== 'qa') {
-        setMessageType('error')
-        setFormMessage('Please select your role.')
+      const emailInput = event.currentTarget.elements.namedItem('email') as HTMLInputElement
+      const errors: Record<string, string> = {}
+      if (!name) errors.name = 'Full name is required.'
+      if (!email) errors.email = 'Email address is required.'
+      else if (emailInput.validity.typeMismatch) errors.email = 'Enter a valid email address.'
+      if (role !== 'system_analyst' && role !== 'qa') errors.role = 'Please select your role.'
+      const passwordIssue = !password ? 'Password is required.' : validatePassword(password)
+      const confirmIssue = !confirmPassword ? 'Please confirm your password.' : password !== confirmPassword ? 'Passwords do not match.' : ''
+      if (passwordIssue) errors.password = passwordIssue
+      if (confirmIssue) errors.confirmPassword = confirmIssue
+      if (!agreeTerms) errors.agreeTerms = 'Please agree to the Terms of Use and acknowledge the Privacy Policy.'
+      setFieldErrors(errors)
+      setPasswordError(passwordIssue)
+      setConfirmPasswordError(confirmIssue)
+      if (Object.keys(errors).length > 0) {
+        const selectors: Record<string, string> = { name: '#fullName', email: '#email', role: '#role-trigger', password: '#password', confirmPassword: '#confirmPassword', agreeTerms: '#agreeTerms' }
+        event.currentTarget.querySelector<HTMLElement>(selectors[Object.keys(errors)[0]])?.focus()
         return
       }
-
-      // Validasi password
-      const error = validatePassword(password)
-      setPasswordError(error)
-
-      if (error) {
-          return
-      }
-
-      // Validasi konfirmasi password
-      if (password !== confirmPassword) {
-          setConfirmPasswordError('Passwords do not match.')
-          return
-      }
-
-      setConfirmPasswordError('')
-
-      // Validasi persetujuan terms
-      if (!agreeTerms) {
-          setFormMessage('Please agree to the Terms & Privacy Policies.')
-          setMessageType('error')
-          return
-      }
+      // Keep role narrowed for the registration API.
+      if (role !== 'system_analyst' && role !== 'qa') return
 
       setIsSubmitting(true)
 
@@ -173,7 +165,7 @@ function RegisterPage() {
 
 
   return (
-    <div className="register-page">
+    <div className="register-page auth-redesign auth-signup-page">
 
       {/* HEADER */}
       <AuthHeader />
@@ -183,11 +175,7 @@ function RegisterPage() {
 
         {/* LEFT PANEL: ILLUSTRATION */}
         <aside className="register-left">
-          <img
-            src={registerIllustration}
-            alt="Story2Gherkin illustration"
-            className="register-illustration"
-          />
+          <AuthIllustration />
         </aside>
 
         {/* RIGHT PANEL: REGISTER FORM */}
@@ -203,13 +191,21 @@ function RegisterPage() {
 
             <form
               className="register-form"
+              noValidate
               onSubmit={handleRegister}
+              onChange={event => {
+                const target = event.target
+                if (target instanceof HTMLInputElement) {
+                  setFieldErrors(current => ({ ...current, [target.name]: '' }))
+                }
+              }}
             >
 
               {/* FULL NAME */}
               <div className="form-group">
                 <label htmlFor="fullName">Full Name</label>
 
+                <div className={`auth-error-shell ${fieldErrors.name ? 'has-error' : ''}`}>
                 <div className="input-wrapper">
                   <UserRound
                     size={22}
@@ -223,7 +219,11 @@ function RegisterPage() {
                     placeholder="enter your name"
                     autoComplete="name"
                     required
+                    aria-invalid={Boolean(fieldErrors.name)}
+                    aria-describedby={fieldErrors.name ? 'name-error' : undefined}
                   />
+                </div>
+                  {fieldErrors.name && <p id="name-error" className="password-error-message" role="alert">{fieldErrors.name}</p>}
                 </div>
               </div>
 
@@ -231,6 +231,7 @@ function RegisterPage() {
               <div className="form-group">
                 <label htmlFor="email">Email Address</label>
 
+                <div className={`auth-error-shell ${fieldErrors.email ? 'has-error' : ''}`}>
                 <div className="input-wrapper">
                   <Mail
                     size={22}
@@ -244,7 +245,11 @@ function RegisterPage() {
                     placeholder="example@gmail.com"
                     autoComplete="email"
                     required
+                    aria-invalid={Boolean(fieldErrors.email)}
+                    aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                   />
+                </div>
+                  {fieldErrors.email && <p id="email-error" className="password-error-message" role="alert">{fieldErrors.email}</p>}
                 </div>
               </div>
 
@@ -254,6 +259,7 @@ function RegisterPage() {
 <div className="form-group">
   <label htmlFor="role-trigger">Role</label>
 
+  <div className={`auth-error-shell ${fieldErrors.role ? 'has-error' : ''}`}>
   <div
     className="role-picker"
     onBlur={(event) => {
@@ -279,6 +285,8 @@ function RegisterPage() {
       type="button"
       id="role-trigger"
       className="role-trigger"
+      aria-invalid={Boolean(fieldErrors.role)}
+      aria-describedby={fieldErrors.role ? 'role-error' : undefined}
       aria-expanded={roleOpen}
       aria-haspopup="true"
       onClick={() => setRoleOpen(!roleOpen)}
@@ -309,6 +317,7 @@ function RegisterPage() {
                   selectedRole === 'system_analyst' ? 'selected' : ''
                 }`}
                 onClick={() => {
+                  setFieldErrors(current => ({ ...current, role: '' }))
                   setSelectedRole('system_analyst')
                   setRoleOpen(false)
                 }}
@@ -327,6 +336,7 @@ function RegisterPage() {
                   selectedRole === 'qa' ? 'selected' : ''
                 }`}
                 onClick={() => {
+                  setFieldErrors(current => ({ ...current, role: '' }))
                   setSelectedRole('qa')
                   setRoleOpen(false)
                 }}
@@ -342,6 +352,8 @@ function RegisterPage() {
             </div>
           )}
         </div>
+        {fieldErrors.role && <p id="role-error" className="password-error-message" role="alert">{fieldErrors.role}</p>}
+  </div>
       </div>
 
 
@@ -356,10 +368,6 @@ function RegisterPage() {
                   }`}
                 >
                   <div className="input-wrapper">
-                    <LockKeyhole
-                      size={24}
-                      className="input-icon"
-                    />
 
                     <input
                       type={showPassword ? 'text' : 'password'}
@@ -425,10 +433,6 @@ function RegisterPage() {
                   }`}
                 >
                   <div className="input-wrapper">
-                    <LockKeyhole
-                      size={24}
-                      className="input-icon"
-                    />
 
                     <input
                       type={
@@ -495,25 +499,18 @@ function RegisterPage() {
               </div>
 
               {/* TERMS & PRIVACY */}
-              <div className="register-terms">
-                <input
-                  type="checkbox"
-                  id="agreeTerms"
-                  name="agreeTerms"
-                  required
-                />
-
-                <label htmlFor="agreeTerms">
-                  I agree to the
-                </label>
-
-                <button
-                  type="button"
-                  className="terms-button"
-                  onClick={() => setShowTermsModal(true)}
-                >
-                  Terms &amp; Privacy Policies
-                </button>
+              <div className={`register-legal-agreement-wrap ${fieldErrors.agreeTerms ? 'has-error' : ''}`}>
+                <div className="register-terms register-legal-agreement">
+                  <input type="checkbox" id="agreeTerms" name="agreeTerms" required
+                    aria-labelledby="agree-terms-copy"
+                    aria-invalid={Boolean(fieldErrors.agreeTerms)}
+                    aria-describedby={fieldErrors.agreeTerms ? 'agreement-error' : undefined} />
+                  <p className="register-legal-copy" id="agree-terms-copy">
+                    <label htmlFor="agreeTerms">I agree to the </label>
+                    <button type="button" className="terms-button" aria-haspopup="dialog" onClick={() => setShowLegalDocument(true)}>Terms &amp; Privacy Policy</button>.
+                  </p>
+                </div>
+                {fieldErrors.agreeTerms && <p id="agreement-error" className="password-error-message" role="alert">{fieldErrors.agreeTerms}</p>}
               </div>
 
               {/* SIGN UP BUTTON */}
@@ -552,86 +549,10 @@ function RegisterPage() {
         </section>
       </main>
 
-      {/* TERMS & PRIVACY MODAL */}
-      {showTermsModal && (
-        <div
-          className="terms-modal-overlay"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setShowTermsModal(false)
-            }
-          }}
-        >
-          <div
-            className="terms-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="terms-modal-title"
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') {
-                setShowTermsModal(false)
-              }
-            }}
-          >
-            <div className="terms-modal-header">
-              <h2 id="terms-modal-title">
-                Terms &amp; Privacy Policies
-              </h2>
-
-              <button
-                type="button"
-                className="terms-modal-close"
-                onClick={() => setShowTermsModal(false)}
-                aria-label="Close terms and privacy policies"
-                autoFocus
-              >
-                <X size={22} />
-              </button>
-            </div>
-
-            <div className="terms-modal-body">
-
-              <p>
-                <strong>
-                  Draft for project review — not the final policy.
-                </strong>
-              </p>
-
-              <h3>1. Terms of Use</h3>
-              <p>
-                Story2Gherkin is designed to support the
-                generation and evaluation of Gherkin
-                scenarios. Users are expected to use the
-                platform responsibly.
-              </p>
-
-              <h3>2. Account Information</h3>
-              <p>
-                Users are responsible for providing accurate
-                account information and maintaining the
-                confidentiality of their login credentials.
-              </p>
-
-              <h3>3. Privacy Policy</h3>
-              <p>
-                This section will explain how account
-                information is collected, processed, stored,
-                and protected. The final privacy policy
-                will be provided by the project team.
-              </p>
-
-            </div>
-
-            <button
-              type="button"
-              className="terms-modal-confirm"
-              onClick={() => setShowTermsModal(false)}
-            >
-              Close
-            </button>
-
-          </div>
-        </div>
+      {showLegalDocument && (
+        <LegalDocumentDialog
+          onClose={() => setShowLegalDocument(false)}
+        />
       )}
 
     </div>

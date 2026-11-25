@@ -4,10 +4,12 @@ import { Mail, LockKeyhole, Eye, EyeOff } from 'lucide-react'
 import { loginUser } from '../services/authApi'
 import { loginDestination, saveAuthSession } from '../services/authSession'
 import AuthHeader from '../components/AuthHeader'
-import authIllustration from '../assets/register-illustration.png'
+import AuthIllustration from '../components/AuthIllustration'
 import { useLocation, useNavigate } from 'react-router-dom'
 import './RegisterPage.css'
 import './LoginPage.css'
+import './AuthPages.css'
+import './AuthValidation.css'
 
 function LoginPage() {
     const [password, setPassword] = useState('')
@@ -16,6 +18,7 @@ function LoginPage() {
     
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [loginError, setLoginError] = useState('')
+    const [emailError, setEmailError] = useState('')
 
     const navigate = useNavigate()
     const location = useLocation()
@@ -31,7 +34,15 @@ function LoginPage() {
     const formData = new FormData(event.currentTarget)
     const email = String(formData.get('email') ?? '').trim()
 
-    setLoginError('')
+    const emailInput = event.currentTarget.elements.namedItem('email') as HTMLInputElement
+    const emailIssue = !email ? 'Email address is required.' : emailInput.validity.typeMismatch ? 'Enter a valid email address.' : ''
+    const passwordIssue = !password ? 'Password is required.' : ''
+    setEmailError(emailIssue)
+    setLoginError(passwordIssue)
+    if (emailIssue || passwordIssue) {
+      event.currentTarget.querySelector<HTMLElement>(emailIssue ? '#loginEmail' : '#loginPassword')?.focus()
+      return
+    }
     setIsSubmitting(true)
 
     try {
@@ -61,7 +72,7 @@ function LoginPage() {
 
 
   return (
-    <div className="register-page">
+    <div className="register-page auth-redesign auth-login-page">
 
       {/* HEADER */}
       <AuthHeader />
@@ -71,11 +82,7 @@ function LoginPage() {
 
         {/* LEFT PANEL */}
         <aside className="register-left">
-          <img
-            src={authIllustration}
-            alt="Story2Gherkin illustration"
-            className="register-illustration"
-          />
+          <AuthIllustration />
         </aside>
 
         {/* RIGHT PANEL */}
@@ -92,6 +99,7 @@ function LoginPage() {
             {/* LOGIN FORM */}
             <form
             className="register-form login-form"
+            noValidate
             onSubmit={handleLogin}
             >
 
@@ -101,6 +109,7 @@ function LoginPage() {
                   Email Address
                 </label>
 
+                <div className={`auth-error-shell ${emailError ? 'has-error' : ''}`}>
                 <div className="input-wrapper">
                   <Mail
                     size={22}
@@ -114,7 +123,12 @@ function LoginPage() {
                     placeholder="example@gmail.com"
                     autoComplete="email"
                     required
+                    onChange={() => { setEmailError(''); setLoginError('') }}
+                    aria-invalid={Boolean(emailError)}
+                    aria-describedby={emailError ? 'login-email-error' : undefined}
                   />
+                </div>
+                  {emailError && <p id="login-email-error" className="password-error-message" role="alert">{emailError}</p>}
                 </div>
               </div>
 

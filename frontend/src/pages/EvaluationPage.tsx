@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, CheckCircle2, Loader2 } from 'lucide-react'
+import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import PublicHeader from '../components/PublicHeader'
+import CircularPercentage from '../components/CircularPercentage'
 import ScenarioSidebar from '../components/ScenarioSidebar'
 import { listGoldenDatasets, type GoldenDatasetSummary } from '../services/goldenDatasetApi'
 import {
@@ -13,6 +14,7 @@ import {
 import './GenerateScenarioPage.css'
 import './DocumentationPage.css'
 import './EvaluationRunPage.css'
+import './EvaluationCircularMetrics.css'
 
 const POLL_INTERVAL_MS = 1500
 
@@ -74,6 +76,7 @@ export default function EvaluationPage() {
   const active = starting || (progress !== null && !finished)
   const total = progress?.total_cases ?? selected?.item_count ?? 0
   const processed = progress?.processed_cases ?? 0
+  const completionPercent = progress?.status === 'COMPLETED' ? 100 : total > 0 ? processed / total * 100 : null
 
   async function start() {
     if (!selected || active) return
@@ -157,14 +160,17 @@ export default function EvaluationPage() {
               <div className="eval-panel">
                 <h3>Evaluation Metrics</h3>
                 <ul className="eval-metrics">
-                  <li><CheckCircle2 size={16} /> Validation Metric</li>
-                  <li><CheckCircle2 size={16} /> GUI Coverage</li>
+                  <li><CheckCircle2 size={16} /> Gherkin Validity Rate</li>
+                  <li><CheckCircle2 size={16} /> GUI Element Recall</li>
+                  <li><CheckCircle2 size={16} /> Acceptance-Criteria Precision</li>
+                  <li><CheckCircle2 size={16} /> Acceptance-Criteria Recall</li>
+                  <li><CheckCircle2 size={16} /> Acceptance-Criteria F1 Score</li>
                 </ul>
                 <p className="eval-note">Proses akan:</p>
                 <ul className="eval-steps">
                   <li>Generate via LLM</li>
                   <li>Generate via Rule-Based</li>
-                  <li>Compare with Golden</li>
+                  <li>Compare with Golden acceptance criteria</li>
                   <li>Save evaluation result</li>
                 </ul>
               </div>
@@ -192,24 +198,28 @@ export default function EvaluationPage() {
             {error && <p className="eval-error" role="alert">{error}</p>}
 
             {progress && (
-              <div className="eval-progress" role="status">
-                {progress.status === 'COMPLETED' ? (
-                  <>
-                    <p>Evaluation completed successfully.</p>
-                    <Link className="eval-report-link" to={`/evaluation/reports/${progress.run_id}`}>
-                      Lihat Evaluation Report <ArrowRight size={16} />
-                    </Link>
-                  </>
-                ) : progress.status === 'FAILED' ? (
-                  <p>{progress.error_message || 'Evaluasi gagal diproses.'}</p>
-                ) : (
-                  <>
-                    <p>
-                      <Loader2 className="eval-spinner" size={16} /> Memproses {processed} dari {total} kasus…
-                    </p>
-                    <progress max={total || 1} value={processed} />
-                  </>
-                )}
+              <div className="eval-progress eval-progress-circular">
+                <CircularPercentage
+                  value={completionPercent}
+                  label="Evaluation progress"
+                  size="large"
+                  kind="progressbar"
+                  locale="id-ID"
+                />
+                <div className="eval-progress-circular-copy" role="status">
+                  {progress.status === 'COMPLETED' ? (
+                    <>
+                      <p>Evaluation completed successfully.</p>
+                      <Link className="eval-report-link" to={`/evaluation/reports/${progress.run_id}`}>
+                        Lihat Evaluation Report <ArrowRight size={16} />
+                      </Link>
+                    </>
+                  ) : progress.status === 'FAILED' ? (
+                    <p>{progress.error_message || 'Evaluasi gagal diproses.'}</p>
+                  ) : (
+                    <p>Memproses {processed} dari {total} kasus…</p>
+                  )}
+                </div>
               </div>
             )}
 

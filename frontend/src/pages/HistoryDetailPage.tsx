@@ -260,15 +260,11 @@ export default function HistoryDetailPage() {
               {/* ORIGINAL INPUTS */}
               <section className="history-panel">
                 <div className="history-detail-section-title">
-                  <FileText size={22} color="#2563eb" />
-
-                  <div>
-                    <h2>Original Input</h2>
-                    <p>
-                      Information submitted during generation.
-                    </p>
-                  </div>
-                </div>
+  <div>
+    <h2>Original Input</h2>
+    <p>Information submitted during generation.</p>
+  </div>
+</div>
 
                 {/* USER STORY */}
                 <div className="history-detail-field">
@@ -282,10 +278,9 @@ export default function HistoryDetailPage() {
                 {/* GUI ELEMENTS */}
                 <div className="history-detail-field">
                   <div className="history-detail-field-heading">
-                    <Layers size={18} />
-                    <h3>GUI Elements</h3>
-                  </div>
-
+  <Layers size={18} aria-hidden="true" />
+  <h3>GUI Elements</h3>
+</div>
                   <div className="history-detail-content">
                     {history.gui_elements.length > 0 ? (
                       <div className="history-detail-elements">
@@ -319,15 +314,11 @@ export default function HistoryDetailPage() {
               {/* GENERATED GHERKIN */}
               <section className="history-panel">
                 <div className="history-detail-section-title">
-                  <Code2 size={22} color="#2563eb" />
-
-                  <div>
-                    <h2>Generated Gherkin</h2>
-                    <p>
-                      Gherkin scenario saved for this request.
-                    </p>
-                  </div>
-                </div>
+  <div>
+    <h2>Generated Gherkin</h2>
+    <p>Gherkin scenario saved for this request.</p>
+  </div>
+</div>
 
                 {history.scenario ? (
                   <>
@@ -416,12 +407,12 @@ export default function HistoryDetailPage() {
                 </span>
 
                 <Link
-                  to="/history"
-                  className="history-button outline"
-                >
-                  <ArrowLeft size={17} />
-                  Back to History
-                </Link>
+  to="/history"
+  className="history-button history-back-button"
+>
+  <ArrowLeft size={19} aria-hidden="true" />
+  Back to History
+</Link>
               </div>
             </>
           )}

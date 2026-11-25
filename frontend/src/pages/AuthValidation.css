@@ -1,0 +1,12 @@
+@import '../styles/GlobalScrollbars.css';
+.auth-redesign .auth-error-shell.has-error { padding-bottom: 9px; border-radius: 10px; background: #ff7580; animation: auth-error-shake 260ms ease-out; }
+.auth-redesign .auth-error-shell.has-error .input-wrapper,
+.auth-redesign .auth-error-shell.has-error .role-trigger { border: 1px solid #ff5264; border-radius: 9px; background: #fff; box-shadow: none; }
+.auth-redesign .auth-error-shell .password-error-message { margin: 8px 11px 0; color: #fff; font-size: 12px; line-height: 1.7; }
+.auth-redesign .register-legal-agreement-wrap.has-error { border: 1px solid #ff5264; border-radius: 10px; background: #ff7580; padding-bottom: 9px; animation: auth-error-shake 260ms ease-out; }
+.auth-redesign .register-legal-agreement-wrap.has-error .register-legal-agreement { padding: 10px 12px; border-radius: 9px; background: #fff; }
+.auth-redesign .register-legal-agreement-wrap .password-error-message { margin: 8px 11px 0; color: #fff; font-size: 12px; line-height: 1.7; }
+@media (prefers-reduced-motion: reduce) {
+  .auth-redesign .auth-error-shell.has-error,
+  .auth-redesign .register-legal-agreement-wrap.has-error { animation: none; }
+}

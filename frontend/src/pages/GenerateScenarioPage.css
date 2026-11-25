@@ -1474,3 +1474,250 @@ a.generate-sidebar-link:hover:not(.active) {
   color: #a16207;
   font-size: 11px;
 }
+
+/* Workspace visual style */
+
+.generate-page {
+  background: #fff;
+  color: #17191d;
+}
+
+.generate-page .generate-page-heading h1 {
+  color: #17191d;
+  font-size: clamp(27px, 2.3vw, 34px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+
+.generate-page .generate-page-heading p {
+  max-width: 850px;
+  margin-top: 12px;
+  color: #596273;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.generate-page .generate-panel {
+  border: 1px solid #e5e8ed;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.generate-page .generate-result-heading h2 {
+  color: #202631;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.generate-page .generate-form-group label {
+  color: #394354;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.generate-page .generate-textarea,
+.generate-page .generate-gui-row input {
+  box-sizing: border-box;
+  border: 1px solid #dfe4eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* Automatic height */
+
+.generate-page .generate-textarea {
+  display: block;
+  width: 100%;
+  min-height: 132px;
+  max-height: none;
+  padding: 16px;
+  overflow: hidden;
+  resize: none;
+  scrollbar-gutter: auto;
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.generate-page .generate-free-textarea {
+  min-height: 112px;
+}
+
+.generate-page .generate-textarea::placeholder,
+.generate-page .generate-gui-row input::placeholder {
+  color: #939dab;
+}
+
+.generate-page .generate-textarea:focus,
+.generate-page .generate-gui-row input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 8%);
+}
+
+.generate-page .generate-textarea.has-error,
+.generate-page .generate-gui-row input[aria-invalid='true'] {
+  border-color: #ef4444;
+}
+
+.generate-page .generate-textarea.has-error:focus {
+  box-shadow: 0 0 0 3px rgb(239 68 68 / 8%);
+}
+
+/* Buttons */
+
+.generate-page .generate-submit-button {
+  min-height: 52px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  box-shadow: none;
+
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.generate-page .generate-submit-button:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.generate-page .generate-add-button,
+.generate-page .generate-review-button {
+  border-width: 1px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 550;
+}
+
+.generate-page .generate-remove-button {
+  border-radius: 8px;
+}
+
+.generate-page .generate-empty-state {
+  border: 1px dashed #e0e5ec;
+  border-radius: 10px;
+  background: #fafbfd;
+}
+
+.generate-page .generate-empty-state h3 {
+  color: #263244;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.generate-page .generate-empty-state p {
+  color: #6b7585;
+}
+
+@media (max-width: 700px) {
+  .generate-page .generate-panel {
+    padding: 20px;
+    border-radius: 12px;
+  }
+
+  .generate-page .generate-page-heading p {
+    font-size: 14px;
+  }
+
+  .generate-page .generate-textarea {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .generate-page .generate-textarea,
+  .generate-page .generate-gui-row input,
+  .generate-page .generate-submit-button {
+    transition: none;
+  }
+
+  .generate-page .generate-submit-button:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* Animated GUI rows */
+
+.generate-page .generate-gui-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.generate-page .generate-gui-motion {
+  box-sizing: border-box;
+  min-height: 0;
+  padding-bottom: 9px;
+  overflow: hidden;
+  transform-origin: center top;
+}
+
+.generate-page .generate-gui-motion:last-child {
+  padding-bottom: 9px;
+}
+
+.generate-page .generate-gui-row {
+  min-width: 0;
+}
+
+/* Keep disabled rows visually stable during their exit */
+
+.generate-page .generate-gui-motion input:disabled {
+  opacity: 1;
+  -webkit-text-fill-color: currentColor;
+}
+
+.generate-page .generate-remove-button {
+  transition:
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.generate-page .generate-remove-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.generate-page .generate-remove-button:disabled {
+  cursor: not-allowed;
+}
+
+/* Add button press feedback */
+
+.generate-page .generate-add-button {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.generate-page .generate-add-button:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+/* Generate bounce is controlled by the submit handler */
+
+.generate-page .generate-submit-button {
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .generate-page .generate-remove-button,
+  .generate-page .generate-add-button {
+    transition: none;
+  }
+
+  .generate-page .generate-remove-button:active:not(:disabled),
+  .generate-page .generate-add-button:active:not(:disabled) {
+    transform: none;
+  }
+}
