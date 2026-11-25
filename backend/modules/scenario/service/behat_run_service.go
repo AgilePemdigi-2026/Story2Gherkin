@@ -447,6 +447,7 @@ func inputXPath(label string) string {
 		lowerContains("@name", value),
 		lowerContains("@id", value),
 		lowerContains("@aria-label", value),
+		fmt.Sprintf("@id = //label[%s]/@for", lowerContains(".", value)),
 	}, " or ") + "]"
 }
 
