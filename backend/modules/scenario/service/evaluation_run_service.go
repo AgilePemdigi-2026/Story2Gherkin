@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strings"
+	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/story2gherkin/database/entities"
@@ -127,11 +129,12 @@ func (s *evaluationRunService) Start(
 	cases := make([]entities.EvaluationRunCase, len(dataset.Items))
 	for index, item := range dataset.Items {
 		cases[index] = entities.EvaluationRunCase{
-			ID:              uuid.New(),
-			CaseID:          item.ID.String(),
-			Position:        index + 1,
-			Title:           item.ItemTitle,
-			ExpectedGherkin: item.ExpectedGherkin,
+			ID:                 uuid.New(),
+			CaseID:             item.ID.String(),
+			Position:           index + 1,
+			Title:              item.ItemTitle,
+			ExpectedGherkin:    item.ExpectedGherkin,
+			AcceptanceCriteria: append([]string(nil), item.AcceptanceCriteria...),
 		}
 	}
 
@@ -210,10 +213,10 @@ func (s *evaluationRunService) runCases(
 			FreeScenario: item.FreeScenarioText,
 		}
 
-		llm := s.evaluate(ctx, item.GUIElements, func() (dto.GenerateResponse, error) {
+		llm := s.evaluate(ctx, item.GUIElements, item.AcceptanceCriteria, func() (dto.GenerateResponse, error) {
 			return s.client.Generate(ctx, request)
 		})
-		ruleBased := s.evaluate(ctx, item.GUIElements, func() (dto.GenerateResponse, error) {
+		ruleBased := s.evaluate(ctx, item.GUIElements, item.AcceptanceCriteria, func() (dto.GenerateResponse, error) {
 			return s.client.GenerateRuleBased(ctx, request)
 		})
 
@@ -224,14 +227,15 @@ func (s *evaluationRunService) runCases(
 	}
 
 	return entities.EvaluationRunMetrics{
-		LLM:       summarize(llmResults, len(items)),
-		RuleBased: summarize(ruleBasedResults, len(items)),
+		LLM:       summarize(llmResults, len(items), acceptanceCriteriaTotal(items)),
+		RuleBased: summarize(ruleBasedResults, len(items), acceptanceCriteriaTotal(items)),
 	}
 }
 
 func (s *evaluationRunService) evaluate(
 	ctx context.Context,
 	elements []string,
+	criteria []string,
 	generate func() (dto.GenerateResponse, error),
 ) *entities.EvaluationCaseMethodResult {
 	generated, err := generate()
@@ -244,14 +248,32 @@ func (s *evaluationRunService) evaluate(
 		return nil
 	}
 
-	return caseResult(validation)
+	return caseResult(validation, generated.Gherkin, criteria)
 }
 
-func caseResult(validation dto.ScenarioValidation) *entities.EvaluationCaseMethodResult {
+func caseResult(
+	validation dto.ScenarioValidation,
+	gherkin string,
+	criteria []string,
+) *entities.EvaluationCaseMethodResult {
 	coverage := round2(validation.CoveragePercent)
 	result := &entities.EvaluationCaseMethodResult{
 		Status:             entities.EvaluationCaseFail,
 		GUICoveragePercent: &coverage,
+	}
+
+	if len(criteria) > 0 {
+		score := scoreAcceptanceCriteria(gherkin, criteria)
+		if !validation.Valid {
+			score = acceptanceCriteriaScore{total: len(criteria)}
+		}
+		result.AcceptanceCriteriaMatched = score.matched
+		result.AcceptanceCriteriaTotal = score.total
+		result.GeneratedBehaviorMatched = score.generatedMatched
+		result.GeneratedBehaviorTotal = score.generatedTotal
+		result.AcceptanceCriteriaPrecisionPercent = float64Pointer(score.precision())
+		result.AcceptanceCriteriaRecallPercent = float64Pointer(score.recall())
+		result.AcceptanceCriteriaF1Percent = float64Pointer(score.f1())
 	}
 
 	if validation.Valid {
@@ -267,12 +289,14 @@ func caseResult(validation dto.ScenarioValidation) *entities.EvaluationCaseMetho
 func summarize(
 	results []*entities.EvaluationCaseMethodResult,
 	total int,
+	criteriaTotal int,
 ) entities.EvaluationMethodMetrics {
 	if total == 0 {
 		return entities.EvaluationMethodMetrics{}
 	}
 
 	valid, coverageSum, coverageCount := 0, 0.0, 0
+	matchedCriteria, matchedBehaviors, generatedBehaviors := 0, 0, 0
 
 	for _, result := range results {
 		if result == nil {
@@ -285,6 +309,9 @@ func summarize(
 			coverageSum += *result.GUICoveragePercent
 			coverageCount++
 		}
+		matchedCriteria += result.AcceptanceCriteriaMatched
+		matchedBehaviors += result.GeneratedBehaviorMatched
+		generatedBehaviors += result.GeneratedBehaviorTotal
 	}
 
 	validation := round2(float64(valid) / float64(total) * 100)
@@ -294,8 +321,153 @@ func summarize(
 		coverage := round2(coverageSum / float64(coverageCount))
 		metrics.GUICoveragePercent = &coverage
 	}
+	if criteriaTotal > 0 {
+		precision, recall := 0.0, round2(float64(matchedCriteria)/float64(criteriaTotal)*100)
+		if generatedBehaviors > 0 {
+			precision = round2(float64(matchedBehaviors) / float64(generatedBehaviors) * 100)
+		}
+		f1 := 0.0
+		if precision+recall > 0 {
+			f1 = round2(2 * precision * recall / (precision + recall))
+		}
+		metrics.AcceptanceCriteriaPrecisionPercent = &precision
+		metrics.AcceptanceCriteriaRecallPercent = &recall
+		metrics.AcceptanceCriteriaF1Percent = &f1
+	}
 
 	return metrics
+}
+
+func acceptanceCriteriaTotal(items []entities.GoldenDatasetItem) int {
+	total := 0
+	for _, item := range items {
+		total += len(item.AcceptanceCriteria)
+	}
+	return total
+}
+
+type acceptanceCriteriaScore struct {
+	matched          int
+	total            int
+	generatedMatched int
+	generatedTotal   int
+}
+
+func (s acceptanceCriteriaScore) precision() float64 {
+	if s.generatedTotal == 0 {
+		return 0
+	}
+	return round2(float64(s.generatedMatched) / float64(s.generatedTotal) * 100)
+}
+
+func (s acceptanceCriteriaScore) recall() float64 {
+	if s.total == 0 {
+		return 0
+	}
+	return round2(float64(s.matched) / float64(s.total) * 100)
+}
+
+func (s acceptanceCriteriaScore) f1() float64 {
+	precision, recall := s.precision(), s.recall()
+	if precision+recall == 0 {
+		return 0
+	}
+	return round2(2 * precision * recall / (precision + recall))
+}
+
+func float64Pointer(value float64) *float64 {
+	value = round2(value)
+	return &value
+}
+
+func scoreAcceptanceCriteria(gherkin string, criteria []string) acceptanceCriteriaScore {
+	steps := gherkinBehaviorSteps(gherkin)
+	score := acceptanceCriteriaScore{total: len(criteria), generatedTotal: len(steps)}
+
+	for _, step := range steps {
+		matchesCriterion := false
+		for _, criterion := range criteria {
+			if acceptanceCriterionMatches(criterion, step) {
+				matchesCriterion = true
+			}
+		}
+		if matchesCriterion {
+			score.generatedMatched++
+		}
+	}
+
+	for _, criterion := range criteria {
+		for _, step := range steps {
+			if acceptanceCriterionMatches(criterion, step) {
+				score.matched++
+				break
+			}
+		}
+	}
+
+	return score
+}
+
+func gherkinBehaviorSteps(gherkin string) []string {
+	steps := []string{}
+	phase := ""
+	for _, line := range strings.Split(gherkin, "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+
+		keyword := strings.ToLower(strings.TrimSuffix(fields[0], ":"))
+		text := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), fields[0]))
+		switch keyword {
+		case "given":
+			phase = "given"
+		case "when", "then":
+			phase = keyword
+			steps = append(steps, text)
+		case "and", "but":
+			if phase == "when" || phase == "then" {
+				steps = append(steps, text)
+			}
+		}
+	}
+	return steps
+}
+
+var acceptanceStopWords = map[string]struct{}{
+	"a": {}, "an": {}, "and": {}, "are": {}, "as": {}, "at": {}, "be": {}, "by": {},
+	"dengan": {}, "di": {}, "dapat": {}, "for": {}, "from": {}, "in": {}, "is": {},
+	"ke": {}, "of": {}, "on": {}, "pada": {}, "sistem": {}, "system": {}, "the": {},
+	"to": {}, "user": {}, "pengguna": {}, "yang": {},
+}
+
+func acceptanceCriterionMatches(criterion, step string) bool {
+	target, candidate := meaningfulTerms(criterion), meaningfulTerms(step)
+	if len(target) == 0 || len(candidate) == 0 {
+		return false
+	}
+
+	matches := 0
+	for term := range target {
+		if _, exists := candidate[term]; exists {
+			matches++
+		}
+	}
+
+	// shortcut: lexical matching does not identify synonyms, upgrade to QA-reviewed criterion aliases when the dataset grows.
+	return float64(matches)/float64(len(target)) >= 0.6
+}
+
+func meaningfulTerms(text string) map[string]struct{} {
+	terms := make(map[string]struct{})
+	for _, token := range strings.FieldsFunc(strings.ToLower(text), func(char rune) bool {
+		return !unicode.IsLetter(char) && !unicode.IsNumber(char)
+	}) {
+		if _, ignored := acceptanceStopWords[token]; !ignored {
+			terms[token] = struct{}{}
+		}
+	}
+	return terms
 }
 
 func round2(value float64) float64 {

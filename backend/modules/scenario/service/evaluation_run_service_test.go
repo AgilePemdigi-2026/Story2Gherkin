@@ -168,6 +168,75 @@ func TestWarnWhenCoverageBelowFull(t *testing.T) {
 	}
 }
 
+func TestRunCasesSummarizesAcceptanceCriteria(t *testing.T) {
+	repo := &fakeRunRepo{}
+	gherkin := "Feature: Login\n" +
+		"  Scenario: Successful login\n" +
+		"    Given the login page is open\n" +
+		"    When valid credentials are entered\n" +
+		"    Then the dashboard is displayed\n"
+	client := &fakeEvalClient{
+		generate: func(dto.GenerateRequest) (dto.GenerateResponse, error) {
+			return dto.GenerateResponse{Gherkin: gherkin}, nil
+		},
+		rule: func(dto.GenerateRequest) (dto.GenerateResponse, error) {
+			return dto.GenerateResponse{Gherkin: gherkin}, nil
+		},
+		validate: func(string) dto.ScenarioValidation {
+			return dto.ScenarioValidation{Valid: true, CoveragePercent: 100}
+		},
+	}
+	items := []entities.GoldenDatasetItem{{
+		ItemTitle:        "Login",
+		UserStoryText:    "login-story",
+		GUIElements:      []string{"Login button"},
+		FreeScenarioText: "valid login behavior",
+		AcceptanceCriteria: []string{
+			"valid credentials are entered",
+			"dashboard is displayed",
+		},
+	}}
+
+	metrics := (&evaluationRunService{runs: repo, client: client}).runCases(
+		context.Background(),
+		[]entities.EvaluationRunCase{{ID: uuid.New()}},
+		items,
+	)
+
+	for _, method := range []entities.EvaluationMethodMetrics{
+		metrics.LLM,
+		metrics.RuleBased,
+	} {
+		if method.AcceptanceCriteriaPrecisionPercent == nil ||
+			method.AcceptanceCriteriaRecallPercent == nil ||
+			method.AcceptanceCriteriaF1Percent == nil ||
+			*method.AcceptanceCriteriaPrecisionPercent != 100 ||
+			*method.AcceptanceCriteriaRecallPercent != 100 ||
+			*method.AcceptanceCriteriaF1Percent != 100 {
+			t.Fatalf("unexpected acceptance criteria metrics: %+v", method)
+		}
+	}
+}
+
+func TestScoreAcceptanceCriteriaPenalizesUnmatchedBehavior(t *testing.T) {
+	score := scoreAcceptanceCriteria(
+		"Feature: Login\n"+
+			"  Scenario: Successful login\n"+
+			"    Given the login page is open\n"+
+			"    When valid credentials are entered\n"+
+			"    Then the dashboard is displayed\n"+
+			"    And a promotional banner is shown\n",
+		[]string{
+			"valid credentials are entered",
+			"dashboard is displayed",
+		},
+	)
+
+	if score.precision() != 66.67 || score.recall() != 100 || score.f1() != 80 {
+		t.Fatalf("score = precision %v, recall %v, F1 %v", score.precision(), score.recall(), score.f1())
+	}
+}
+
 func TestCaseFailureDoesNotStopRun(t *testing.T) {
 	repo := &fakeRunRepo{}
 	client := &fakeEvalClient{

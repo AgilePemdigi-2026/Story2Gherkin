@@ -134,6 +134,10 @@ func cloneGoldenDataset(
 			[]string(nil),
 			row.Items[i].GUIElements...,
 		)
+		row.Items[i].AcceptanceCriteria = append(
+			[]string(nil),
+			row.Items[i].AcceptanceCriteria...,
+		)
 	}
 
 	return row
@@ -187,6 +191,10 @@ func (s *goldenBDDStore) CreateWithItems(
 		item.GUIElements = append(
 			[]string(nil),
 			item.GUIElements...,
+		)
+		item.AcceptanceCriteria = append(
+			[]string(nil),
+			item.AcceptanceCriteria...,
 		)
 
 		stored.Items[i] = item
@@ -249,6 +257,10 @@ func (s *goldenBDDStore) UpdateWithItems(
 			item.GUIElements = append(
 				[]string(nil),
 				item.GUIElements...,
+			)
+			item.AcceptanceCriteria = append(
+				[]string(nil),
+				item.AcceptanceCriteria...,
 			)
 
 			stored[i] = item

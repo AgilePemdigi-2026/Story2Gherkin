@@ -281,7 +281,7 @@ func TestEvaluationReportHTTPDownload(t *testing.T) {
 	}
 
 	reader := csv.NewReader(rec.Body)
-	reader.FieldsPerRecord = 7
+	reader.FieldsPerRecord = 13
 
 	records, err := reader.ReadAll()
 	if err != nil {
@@ -297,8 +297,14 @@ func TestEvaluationReportHTTPDownload(t *testing.T) {
 			"expected_gherkin",
 			"llm_status",
 			"llm_gui_coverage_percent",
+			"llm_acceptance_criteria_precision_percent",
+			"llm_acceptance_criteria_recall_percent",
+			"llm_acceptance_criteria_f1_percent",
 			"rule_based_status",
 			"rule_based_gui_coverage_percent",
+			"rule_based_acceptance_criteria_precision_percent",
+			"rule_based_acceptance_criteria_recall_percent",
+			"rule_based_acceptance_criteria_f1_percent",
 		},
 		{
 			item.CaseID,
@@ -306,6 +312,12 @@ func TestEvaluationReportHTTPDownload(t *testing.T) {
 			item.ExpectedGherkin,
 			"FAIL",
 			"0",
+			"",
+			"",
+			"",
+			"",
+			"",
+			"",
 			"",
 			"",
 		},
