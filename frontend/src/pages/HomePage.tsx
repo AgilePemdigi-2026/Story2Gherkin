@@ -408,7 +408,17 @@ export default function HomePage() {
           </div>
 
           <div className="s2g-hero-visual">
-            <MediaPlaceholder variant="hero" />
+            <video
+  className="s2g-hook-video"
+  src="/videos/story2gherkin-hook.mp4"
+  poster="/videos/story2gherkin-hook-poster.png"
+  autoPlay
+  muted
+  loop
+  playsInline
+  preload="metadata"
+  aria-label="Story2Gherkin: System Analyst and QA workflow"
+/>
           </div>
         </section>
 
@@ -486,7 +496,17 @@ export default function HomePage() {
             </div>
 
             <div className="s2g-role-visual">
-              <ProductWindow mode="review" />
+              <video
+  className="s2g-sa-demo-video"
+  src="/videos/system-analyst-actual-ui-no-mouse.mp4"
+  poster="/videos/system-analyst-actual-ui-poster.png"
+  autoPlay
+  muted
+  loop
+  playsInline
+  preload="metadata"
+  aria-label="System Analyst demo"
+/>
             </div>
           </div>
 
@@ -507,7 +527,17 @@ export default function HomePage() {
             </div>
 
             <div className="s2g-role-visual">
-              <ProductWindow mode="report" />
+              <video
+  className="s2g-qa-demo-video"
+  src="/videos/qa-actual-ui-no-mouse.mp4"
+  poster="/videos/qa-actual-ui-poster.png"
+  autoPlay
+  muted
+  loop
+  playsInline
+  preload="metadata"
+  aria-label="QA workflow demo"
+/>
             </div>
           </div>
 
