@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Search,
-  History,
+  X,
   ArrowRight,
   LoaderCircle,
   AlertCircle,
@@ -68,7 +68,7 @@ export default function HistoryPage() {
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('ALL')
   const [filterOpen, setFilterOpen] = useState(false)
-
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
 
   // ------------------------------------
@@ -220,24 +220,35 @@ export default function HistoryPage() {
                 </p>
               </div>
 
-              <History size={26} color="#2563eb" />
             </div>
 
             {/* SEARCH AND FILTER */}
             <div className="history-toolbar">
               <div className="history-search">
-                <Search size={19} />
+  <Search size={19} aria-hidden="true" />
 
-                <input
-                  type="search"
-                  placeholder="Search scenarios..."
-                  aria-label="Search scenarios"
-                  value={search}
-                  onChange={(event) =>
-                    setSearch(event.target.value)
-                  }
-                />
-              </div>
+  <input
+    ref={searchInputRef}
+    type="search"
+    placeholder="Search scenarios..."
+    aria-label="Search scenarios"
+    value={search}
+    onChange={event => setSearch(event.target.value)}
+  />
+
+  <button
+    type="button"
+    className="history-search-clear"
+    aria-label="Clear search"
+    disabled={search.length === 0}
+    onClick={() => {
+      setSearch('')
+      searchInputRef.current?.focus()
+    }}
+  >
+    <X size={17} aria-hidden="true" />
+  </button>
+</div>
 
               {/* CUSTOM STATUS DROPDOWN */}
               <div

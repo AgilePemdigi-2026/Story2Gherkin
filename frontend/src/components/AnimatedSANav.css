@@ -1,0 +1,121 @@
+/* SA sidebar surface */
+
+.generate-sidebar.sa-workspace-sidebar {
+  padding: 24px 14px;
+  border: 1px solid #e5e8ed;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: none;
+  font-family: inherit;
+}
+
+.sa-sidebar-section {
+  min-width: 0;
+}
+
+.sa-sidebar-heading {
+  margin: 0 0 18px;
+  padding-inline: 18px;
+  color: #8791a0;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.6;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Fixed row dimensions keep the marker aligned */
+
+.sa-sidebar-track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sa-sidebar-marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  width: 3px;
+  height: 48px;
+  border-radius: 4px;
+  background: #2563eb;
+  pointer-events: none;
+
+  transition:
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 160ms ease;
+}
+
+.sa-sidebar-link {
+  display: flex;
+  align-items: center;
+  flex: 0 0 48px;
+  height: 48px;
+  min-width: 0;
+  padding: 0 18px;
+  border-radius: 7px;
+
+  color: #667080;
+  background: transparent;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 450;
+  line-height: 1.4;
+  text-decoration: none;
+
+  transition:
+    color 180ms ease,
+    background-color 180ms ease;
+}
+
+.sa-sidebar-link > span {
+  display: block;
+  transform: translateX(0);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sa-sidebar-link:hover {
+  background: #f8f9fb;
+  color: #263244;
+}
+
+.sa-sidebar-link.is-active {
+  background: #f3f6fb;
+  color: #1d283a;
+  font-weight: 650;
+}
+
+.sa-sidebar-link.is-active > span {
+  transform: translateX(3px);
+}
+
+.sa-sidebar-link:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .generate-sidebar.sa-workspace-sidebar {
+    padding: 18px 12px;
+  }
+
+  .sa-sidebar-heading {
+    margin-bottom: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sa-sidebar-marker,
+  .sa-sidebar-link,
+  .sa-sidebar-link > span {
+    transition: none;
+  }
+
+  .sa-sidebar-link.is-active > span {
+    transform: none;
+  }
+}

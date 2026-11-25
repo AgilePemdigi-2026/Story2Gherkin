@@ -1,352 +1,263 @@
+.generate-page.evaluation-report-page {
+  min-height: 100dvh;
+  background: #f1f6fd;
+  color: #17191d;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
 .evaluation-report {
-  --report-muted: #64748b;
-  --report-border: #e7edf5;
+  --report-muted: #748092;
+  --report-border: #e5eaf1;
   --report-blue: #2563eb;
 }
-
+.evaluation-report *,
+.evaluation-report *::before,
+.evaluation-report *::after { box-sizing: border-box; }
+.evaluation-report-page .generate-page-heading { margin-bottom: 28px; }
+.evaluation-report-page .generate-page-heading h1 {
+  margin: 0 0 12px;
+  color: #17191d;
+  font-size: clamp(27px, 2.3vw, 34px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+.evaluation-report-page .generate-page-heading p {
+  max-width: 850px;
+  margin: 0;
+  color: #596273;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.evaluation-report .generate-page-heading > a {
+  display: inline-block;
+  margin-top: 12px;
+  color: #2563eb;
+  font-size: 12px;
+  text-underline-offset: 4px;
+}
 .evaluation-report-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(275px, 0.48fr);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 0.48fr);
   align-items: start;
   gap: 24px;
 }
-
-.evaluation-report-main {
-  display: grid;
-  min-width: 0;
-  gap: 22px;
-}
-
-.evaluation-report-back,
-.evaluation-report-pagination a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  justify-self: start;
-}
-
-.evaluation-report-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.evaluation-report-heading .generate-page-heading {
-  margin: 0;
-}
-
-.evaluation-report-download {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 10px 16px;
-  border: 0;
-  border-radius: 12px;
-  color: white;
-  background: var(--report-blue);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.evaluation-report-download:hover:enabled {
-  background: #1d4ed8;
-}
-
-.evaluation-report-download:disabled {
-  color: #475569;
-  background: #e2e8f0;
-  cursor: default;
-}
-
-.evaluation-report-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin: 0;
-}
-
+.evaluation-report-main { display: grid; min-width: 0; gap: 24px; }
+.evaluation-report-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.evaluation-report-heading .generate-page-heading { margin: 0; }
 .evaluation-report-card {
   min-width: 0;
-  padding: clamp(14px, 1.6vw, 24px);
-  border: 1px solid var(--report-border);
-  border-radius: 20px;
+  padding: 26px;
+  border: 1px solid #e9eef5;
+  border-radius: 22px;
   background: #fff;
-  box-shadow: 0 2px 4px rgb(15 23 42 / 4%);
+  box-shadow: 0 2px 5px rgb(15 23 42 / 3%);
 }
-
 .evaluation-report-card h2 {
-  margin: 0 0 16px;
-  font-size: 18px;
-  line-height: 1.4;
-  letter-spacing: -0.02em;
-}
-
-.evaluation-report-card h3 {
-  margin: 20px 0 10px;
-  font-size: 14px;
-}
-
-.evaluation-report-card p,
-.evaluation-report-summary dt,
-.evaluation-report-caption {
-  color: var(--report-muted);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.evaluation-report-summary dt {
-  margin-bottom: 10px;
+  margin: 0 0 20px;
+  color: #202631;
+  font-size: 21px;
   font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: -0.025em;
 }
+.evaluation-report-card h3 { margin: 24px 0 12px; color: #43516a; font-size: 13px; font-weight: 650; line-height: 1.6; }
+.evaluation-report-card p,
+.evaluation-report-caption { color: var(--report-muted); font-size: 13px; line-height: 1.8; }
+.evaluation-report-card-heading { margin-bottom: 24px; }
+.evaluation-report-card-heading h2 { margin-bottom: 7px; }
+.evaluation-report-card-heading p { margin: 0; color: #8792a1; font-size: 13px; }
 
-.evaluation-report-summary dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-  font-size: 17px;
-  font-weight: 800;
-}
-
-.evaluation-report-summary .evaluation-report-number {
-  font-size: 26px;
-  line-height: 1.05;
-}
-
-.evaluation-report-summary .evaluation-report-caption {
-  margin-top: 5px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.evaluation-report-table-wrap {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-.evaluation-report-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-  font-size: 13px;
-}
-
-.evaluation-report-table :is(th, td) {
-  padding: 10px 8px;
-  border-bottom: 1px solid var(--report-border);
-}
-
-.evaluation-report-table thead th {
-  color: var(--report-muted);
-  font-weight: 700;
-}
-
-.evaluation-report-table tbody th {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.evaluation-report-table tbody tr:last-child > * {
-  border-bottom: 0;
-}
-
-.evaluation-report-cases {
-  min-width: 435px;
-}
-
-.evaluation-report-table .selected {
-  background: #f4f8ff;
-}
-
-.evaluation-report :is(a, button:not(.evaluation-report-download)) {
-  color: #1d4ed8;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.evaluation-report button:not(.evaluation-report-download) {
-  min-height: 32px;
-  padding: 3px 6px;
-  border: 0;
-  background: transparent;
-  font-family: inherit;
-  cursor: pointer;
-}
-
-.evaluation-report :is(a, button:not(.evaluation-report-download)):hover {
-  text-decoration: underline;
-}
-
-.evaluation-report :focus-visible {
-  outline: 2px solid var(--report-blue);
-  outline-offset: 2px;
-}
-
-.evaluation-report-pagination {
-  display: flex;
+/* Buttons are scoped to reports so the header and sidebar stay unchanged. */
+.evaluation-report button,
+.evaluation-report-button,
+.evaluation-report-download,
+.evaluation-report-back {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 16px;
-  color: var(--report-muted);
-  font-size: 13px;
-}
-
-.evaluation-report-case-detail {
-  scroll-margin-top: 96px;
-}
-
-.evaluation-report-card .evaluation-report-case-name {
-  margin: 0;
-  padding: 8px 12px;
-  border-radius: 10px;
-  color: #1d4ed8;
-  background: #eff6ff;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.evaluation-report-case-detail pre {
-  max-height: 19rem;
-  margin: 0;
-  padding: 14px;
-  overflow: auto;
-  border: 1px solid #e4ecf9;
-  border-radius: 14px;
-  background: #f6f9fd;
-  color: #334155;
-  font-size: 12px;
-  line-height: 1.8;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.evaluation-report-case-detail :is(.review-code-feature, .review-code-scenario) {
-  color: #1d4ed8;
-}
-
-.evaluation-report-case-detail .review-code-step {
-  color: #047857;
-}
-
-.evaluation-report-badges {
-  display: flex;
-  flex-wrap: wrap;
   gap: 8px;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid #dfe5ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #526075;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
 }
+.evaluation-report button:hover:not(:disabled),
+.evaluation-report-button:hover { border-color: #cad7ed; background: #f3f7fd; color: #2563eb; }
+.evaluation-report .evaluation-report-button.primary,
+.evaluation-report .evaluation-report-download,
+.evaluation-report .evaluation-report-back {
+  min-height: 48px;
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+.evaluation-report .evaluation-report-download { flex-shrink: 0; min-height: 52px; padding: 13px 20px; font-size: 14px; }
+.evaluation-report .evaluation-report-back { justify-self: start; }
+.evaluation-report .evaluation-report-button.primary:hover,
+.evaluation-report .evaluation-report-download:hover:enabled,
+.evaluation-report .evaluation-report-back:hover { border-color: #1d4ed8; background: #1d4ed8; color: #fff; }
+.evaluation-report .evaluation-report-button.danger { border-color: #e11d48; background: #e11d48; color: #fff; }
+.evaluation-report .evaluation-report-button.danger:hover:not(:disabled) { border-color: #be123c; background: #be123c; color: #fff; }
+.evaluation-report .evaluation-report-button.danger-outline { border-color: #f2dce2; background: #fff5f6; color: #c44e65; }
+.evaluation-report .evaluation-report-button.danger-outline:hover { background: #ffebef; color: #b53b54; }
+.evaluation-report .evaluation-report-button.compact { min-height: 38px; padding: 8px 12px; font-size: 12px; white-space: nowrap; }
+.evaluation-report button:disabled { opacity: 0.45; cursor: not-allowed; }
+.evaluation-report button:active:not(:disabled),
+.evaluation-report-button:active,
+.evaluation-report-back:active { transform: scale(0.98); }
+.evaluation-report :focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
+.evaluation-report-row-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
+/* Dataset / case count / run status */
+.evaluation-report-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 0; }
+.evaluation-report-summary .evaluation-report-card { padding: 22px; border-radius: 14px; }
+.evaluation-report-summary dt { margin-bottom: 12px; color: #8792a1; font-size: 12px; font-weight: 550; }
+.evaluation-report-summary dd { margin: 0; color: #43516a; font-size: 16px; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+.evaluation-report-summary .evaluation-report-number { color: #263244; font-size: 30px; font-weight: 700; letter-spacing: -0.04em; }
+.evaluation-report-summary .evaluation-report-caption { margin-top: 7px; color: #8792a1; font-size: 11px; font-weight: 400; line-height: 1.8; }
+.evaluation-run-status,
 .evaluation-report-status {
-  color: var(--report-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: #f0f3f8;
+  color: #748092;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
+  line-height: 1.4;
   white-space: nowrap;
 }
+.evaluation-run-status.completed,
+.evaluation-report-status.pass { border-color: #88ee88; background: #88ee88; color: #174a26; }
+.evaluation-run-status.running { background: #e8f0ff; color: #2563eb; }
+.evaluation-report-status.warn { background: #fff2d9; color: #916721; }
+.evaluation-run-status.failed,
+.evaluation-report-status.fail { background: #ffe9ed; color: #b84b62; }
+.evaluation-report .evaluation-report-positive { color: #16806a; }
 
-.evaluation-report .evaluation-report-positive,
-.evaluation-report-status.pass {
-  color: #047857;
-}
+/* Tables */
+.evaluation-report-table-wrap { width: 100%; max-width: 100%; overflow-x: auto; }
+.evaluation-report-table { width: 100%; min-width: 450px; border-collapse: collapse; text-align: left; font-size: 13px; }
+.evaluation-report-list-table { min-width: 800px; }
+.evaluation-report-cases { min-width: 650px; }
+.evaluation-report-table :is(th, td) { padding: 16px 12px; border-bottom: 1px solid var(--report-border); color: #526075; line-height: 1.75; vertical-align: middle; }
+.evaluation-report-table thead th { background: #fafbfd; color: #8792a1; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.evaluation-report-table tbody th { color: #43516a; font-weight: 600; overflow-wrap: anywhere; }
+.evaluation-report-table tbody tr:last-child > * { border-bottom: 0; }
+.evaluation-report-table tbody tr { transition: background-color 150ms ease; }
+.evaluation-report-table tbody tr:hover { background: #fcfdff; }
+.evaluation-report-table tbody tr.selected { background: #f3f7ff; }
+.evaluation-report-table td strong { font-weight: 650; }
+.evaluation-report-pagination { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 16px; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--report-border); color: #8792a1; font-size: 12px; }
+.evaluation-report-pagination a { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 38px; padding: 8px 12px; border: 1px solid #e3e8ef; border-radius: 7px; background: #fff; color: #526075; font-size: 12px; text-decoration: none; }
+.evaluation-report-pagination a:hover { background: #edf4ff; color: #2563eb; }
 
-.evaluation-report-status.warn {
-  color: #92400e;
-}
+/* Selected case */
+.evaluation-report-case-detail { position: sticky; top: 104px; scroll-margin-top: 104px; }
+.evaluation-report-card .evaluation-report-case-name { margin: 0; padding: 12px 14px; border: 1px solid #dfe8f7; border-radius: 9px; background: #f3f7ff; color: #42669f; font-weight: 550; overflow-wrap: anywhere; }
+.evaluation-report-case-detail pre { max-height: 400px; margin: 0; padding: 18px; overflow: auto; border: 1px solid #e1e7f0; border-radius: 8px; background: #fafbfd; color: #43516a; font-family: Consolas, 'Courier New', monospace; font-size: 12px; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; }
+.evaluation-report-case-detail code { font: inherit; }
+.evaluation-report-case-detail .review-code-feature { color: #2563eb; }
+.evaluation-report-case-detail .review-code-scenario { color: #6544c4; }
+.evaluation-report-case-detail .review-code-step { color: #16806a; }
+.evaluation-report-badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.evaluation-report-coverage { margin-top: 14px; color: #2563eb; font-size: 13px; }
+.evaluation-report-coverage.rule { color: #16806a; }
+.evaluation-report-coverage > div { display: flex; justify-content: space-between; gap: 10px; }
+.evaluation-report-coverage span { color: #748092; font-size: 12px; }
+.evaluation-report-coverage strong { font-size: 12px; font-weight: 650; }
+.evaluation-report-coverage progress { display: block; width: 100%; height: 8px; margin-top: 9px; appearance: none; overflow: hidden; border: 0; border-radius: 999px; background: #e9eef5; color: inherit; }
+.evaluation-report-coverage progress::-webkit-progress-bar { background: #e9eef5; }
+.evaluation-report-coverage progress::-webkit-progress-value { border-radius: 999px; background: currentColor; }
+.evaluation-report-coverage progress::-moz-progress-bar { border-radius: 999px; background: currentColor; }
 
-.evaluation-report-status.fail {
-  color: #be123c;
-}
+/* Messages and states */
+.evaluation-report .evaluation-report-note,
+.evaluation-report .evaluation-report-error { margin: 0; padding: 13px 15px; border: 1px solid #dce6f7; border-radius: 10px; background: #edf4ff; color: #526f9a; font-size: 13px; font-weight: 400; line-height: 1.8; overflow-wrap: anywhere; }
+.evaluation-report .evaluation-report-error { border-color: #ff5264; background: #ff7580; color: #fff; }
+.evaluation-report .evaluation-report-note button { min-height: 34px; margin: 6px 0 0 4px; padding: 5px 9px; font-size: 12px; }
+.evaluation-report .evaluation-report-error button { min-height: 34px; margin: 6px 0 0 4px; padding: 5px 9px; border-color: #ffffff80; background: transparent; color: #fff; font-size: 12px; }
+.evaluation-report .evaluation-report-error button:hover { background: #ffffff20; color: #fff; }
+.evaluation-report-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; min-height: 300px; padding: 48px 20px; text-align: center; }
+.evaluation-report-state > svg:not(.evaluation-report-spinner) { color: #94a3b8; }
+.evaluation-report-state h2,
+.evaluation-report-state h3 { margin: 0; color: #263244; font-size: 20px; font-weight: 650; letter-spacing: -0.025em; }
+.evaluation-report-state p { max-width: 560px; margin: 0; font-size: 14px; line-height: 1.8; }
+.evaluation-report-state > .evaluation-report-error { width: 100%; font-size: 13px; }
+.evaluation-report-spinner { flex-shrink: 0; animation: report-spinner 1s linear infinite; }
+@keyframes report-spinner { to { transform: rotate(360deg); } }
 
-.evaluation-report-badges .evaluation-report-status {
-  flex: 1 0 auto;
-  padding: 8px;
-  border-radius: 10px;
-  background: #f1f5f9;
-  text-align: center;
-}
-
-.evaluation-report-badges .pass { background: #ecfdf5; }
-.evaluation-report-badges .warn { background: #fffbeb; }
-.evaluation-report-badges .fail { background: #fff1f2; }
-
-.evaluation-report-coverage {
-  margin-top: 10px;
-  color: #1d4ed8;
-  font-size: 13px;
-}
-
-.evaluation-report-coverage.rule {
-  color: #047857;
-}
-
-.evaluation-report-coverage > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.evaluation-report-coverage span {
-  color: var(--report-muted);
-  font-weight: 600;
-}
-
-.evaluation-report-coverage progress {
-  display: block;
-  width: 100%;
-  height: 8px;
-  margin-top: 6px;
-  appearance: none;
-  overflow: hidden;
-  border: 0;
-  border-radius: 999px;
-  background: #e9eff6;
-  color: inherit;
-}
-
-.evaluation-report-coverage progress::-webkit-progress-bar {
-  background: #e9eff6;
-}
-
-.evaluation-report-coverage progress::-webkit-progress-value {
-  border-radius: 999px;
-  background: currentColor;
-}
-
-.evaluation-report-coverage progress::-moz-progress-bar {
-  border-radius: 999px;
-  background: currentColor;
-}
-
-.evaluation-report-note,
-.evaluation-report-error {
-  margin: 0;
-  padding: 12px 14px;
-  border: 1px solid #dbeafe;
-  border-radius: 12px;
-  background: #eff6ff;
-  color: #1e3a8a;
-  font-size: 13px;
-}
-
-.evaluation-report-error {
-  border-color: #fecdd3;
-  background: #fff1f2;
-  color: #9f1239;
-}
-
-@media (max-width: 1150px) {
+/* Delete confirmation */
+.evaluation-report-delete-dialog { box-sizing: border-box; width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow-y: auto; padding: 28px; border: 1px solid #e3e8ef; border-radius: 18px; background: #fff; color: #43516a; font-family: 'Plus Jakarta Sans', sans-serif; box-shadow: 0 20px 70px rgb(15 23 42 / 16%); }
+.evaluation-report-delete-dialog[open] { animation: report-dialog-open 230ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.evaluation-report-delete-dialog[data-closing='true'] { animation: none; pointer-events: none; }
+.evaluation-report-delete-dialog::backdrop { background: rgb(20 32 52 / 32%); }
+.evaluation-report-dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 20px; }
+.evaluation-report-dialog-heading h2 { margin: 0; color: #263244; font-size: 22px; font-weight: 650; line-height: 1.4; letter-spacing: -0.03em; }
+.evaluation-report-delete-dialog > p { margin: 0 0 18px; color: #748092; font-size: 14px; line-height: 1.8; }
+.evaluation-report .evaluation-report-icon-button { flex-shrink: 0; width: 40px; height: 40px; min-height: 0; padding: 0; border-radius: 8px; background: #f8fafc; color: #748092; }
+.evaluation-report-dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #edf1f6; }
+@keyframes report-dialog-open { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (max-width: 1400px) {
   .evaluation-report-grid { grid-template-columns: minmax(0, 1fr); }
+  .evaluation-report-case-detail { position: static; }
 }
-
-@media (max-width: 640px) {
+@media (max-width: 700px) {
+  .evaluation-report-card { padding: 20px; border-radius: 16px; }
   .evaluation-report-main,
-  .evaluation-report-grid { gap: 16px; }
-
-  .evaluation-report-heading { flex-wrap: wrap; }
+  .evaluation-report-grid { gap: 20px; }
+  .evaluation-report-heading { flex-direction: column; }
+  .evaluation-report .evaluation-report-download { width: 100%; }
   .evaluation-report-summary { grid-template-columns: minmax(0, 1fr); }
-  .evaluation-report-summary dt { margin-bottom: 4px; }
-  .evaluation-report-table th,
-  .evaluation-report-table td { padding-inline: 6px; }
+  .evaluation-report-summary .evaluation-report-card { padding: 20px; }
+  .evaluation-report-card h2 { font-size: 20px; }
+  .evaluation-report-delete-dialog { padding: 20px; }
+  .evaluation-report-dialog-actions { flex-wrap: wrap; }
+  .evaluation-report-dialog-actions > button { flex: 1; }
 }
+@media (prefers-reduced-motion: reduce) {
+  .evaluation-report-spinner,
+  .evaluation-report-delete-dialog[open] { animation: none; }
+  .evaluation-report button,
+  .evaluation-report-button,
+  .evaluation-report-back,
+  .evaluation-report-download,
+  .evaluation-report-table tbody tr { transition: none; }
+  .evaluation-report button:active:not(:disabled),
+  .evaluation-report-button:active,
+  .evaluation-report-back:active { transform: none; }
+}
+
+.evaluation-report-cases button[aria-pressed='true'] {
+  border-color: #bfd2f2;
+  background: #edf4ff;
+  color: #2563eb;
+}
+
+/* Keep case score rings readable inside the sidebar. */
+.evaluation-report .evaluation-report-case-detail .circular-percentage-value { font-size: 15px; }
+.evaluation-report .evaluation-run-status.failed { border-color: #E24747; background: #E24747; color: #230909; }
+
+/* Keep Actions heading, links and buttons aligned across report rows. */
+.evaluation-report-list-table th:last-child,
+.evaluation-report-list-table td:last-child { min-width: 222px; text-align: center; vertical-align: middle; }
+.evaluation-report-list-table .evaluation-report-row-actions { display: grid; grid-template-columns: 110px 76px; align-items: center; justify-content: center; gap: 8px; width: max-content; margin-inline: auto; }
+.evaluation-report .evaluation-report-row-actions > .evaluation-report-button { box-sizing: border-box; width: 100%; height: 40px; min-height: 40px; margin: 0; padding: 8px 10px; line-height: 1.4; }
+.evaluation-report .evaluation-report-button.danger-outline,
+.evaluation-report .evaluation-report-button.danger { border-color: #E24747; background: #E24747; color: #230909; }
+.evaluation-report .evaluation-report-button.danger-outline:hover:not(:disabled),
+.evaluation-report .evaluation-report-button.danger:hover:not(:disabled) { border-color: #d73b3b; background: #d73b3b; color: #230909; }
