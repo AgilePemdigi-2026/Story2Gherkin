@@ -51,7 +51,7 @@ function Workspace({ saved }: { saved: ReviewScenario }) {
   const scenarios = useMemo(() => parseScenarios(saved.gherkin), [saved.gherkin])
   const [scenarioIndex, setScenarioIndex] = useState(0)
   const scenario = scenarios[scenarioIndex]
-  const steps = scenario?.steps ?? []
+  const steps = useMemo(() => scenario?.steps ?? [], [scenario])
   const keys = useMemo(() => placeholders(steps), [steps])
 
   const [baseUrl, setBaseUrl] = useState('')
@@ -60,11 +60,6 @@ function Workspace({ saved }: { saved: ReviewScenario }) {
   const [error, setError] = useState('')
   const [result, setResult] = useState<BehatRun | null>(null)
   const [history, setHistory] = useState<BehatRun[]>([])
-
-  useEffect(() => {
-    setResult(null)
-    setError('')
-  }, [scenarioIndex])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -107,7 +102,11 @@ function Workspace({ saved }: { saved: ReviewScenario }) {
         Scenario
         <select
           value={scenarioIndex}
-          onChange={(event) => setScenarioIndex(Number(event.target.value))}
+          onChange={(event) => {
+            setScenarioIndex(Number(event.target.value))
+            setResult(null)
+            setError('')
+          }}
           disabled={running}
         >
           {scenarios.map((item, index) => (
