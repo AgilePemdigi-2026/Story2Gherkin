@@ -402,36 +402,36 @@ func runStep(ctx context.Context, base string, step behatStep) error {
 			chromedp.Click(selector),
 		)
 
-	case "assert_text":
+	case "assert_text", "assert_url":
+		read := chromedp.Text("body")
+		if step.Action == "assert_url" {
+			read = chromedp.Location()
+		}
+		var last string
 		ticker := time.NewTicker(100 * time.Millisecond)
 		defer ticker.Stop()
 		for {
-			body, err := chromedp.Run(ctx, chromedp.Text("body"))
-			if err == nil && strings.Contains(body, step.Target) {
-				return nil
-			}
-			if err != nil && !errors.Is(err, context.DeadlineExceeded) {
+			value, err := chromedp.Run(ctx, read)
+			if err == nil {
+				last = value
+				if strings.Contains(value, step.Target) {
+					return nil
+				}
+			} else if !errors.Is(err, context.DeadlineExceeded) {
 				return err
 			}
 			select {
 			case <-ctx.Done():
-				if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-					return assertionError{fmt.Sprintf("text %q not found on the page before timeout", step.Target)}
+				if !errors.Is(ctx.Err(), context.DeadlineExceeded) {
+					return ctx.Err()
 				}
-				return ctx.Err()
+				if step.Action == "assert_url" {
+					return assertionError{fmt.Sprintf("url %q does not contain %q before timeout", last, step.Target)}
+				}
+				return assertionError{fmt.Sprintf("text %q not found on the page before timeout", step.Target)}
 			case <-ticker.C:
 			}
 		}
-
-	case "assert_url":
-		location, err := chromedp.Run(ctx, chromedp.Location())
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(location, step.Target) {
-			return assertionError{fmt.Sprintf("url %q does not contain %q", location, step.Target)}
-		}
-		return nil
 	}
 
 	return assertionError{"unsupported action: " + step.Action}
