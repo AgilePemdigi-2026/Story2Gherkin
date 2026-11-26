@@ -12,7 +12,6 @@ import {
   Menu,
   Search,
   X,
-  BookOpen,
 } from 'lucide-react'
 
 import PublicHeader from '../components/PublicHeader'
@@ -32,12 +31,24 @@ function TableOfContents({
   article: DocumentationArticle
   hash: string
 }) {
+  const location = useLocation()
+
   return (
     <ul>
       {article.sections.map((section) => (
         <li key={section.id}>
           <Link
             to={`/documentation?topic=${article.slug}#${section.id}`}
+            onClick={(event) => {
+              if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+              if (location.hash === `#${section.id}`) {
+                event.preventDefault()
+                document.getElementById(section.id)?.scrollIntoView({
+                  behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                  block: 'start',
+                })
+              }
+            }}
             aria-current={
               hash === `#${section.id}`
                 ? 'location'
@@ -64,6 +75,8 @@ function DocumentationWorkspace({
   const [visibleSection, setVisibleSection] = useState('')
   const navRef = useRef<HTMLElement>(null)
   const indicatorRef = useRef<HTMLSpanElement>(null)
+  const mainRef = useRef<HTMLElement>(null)
+  const previousArticleRef = useRef<string | null>(null)
 
   const term = query.trim().toLocaleLowerCase()
 
@@ -125,17 +138,68 @@ function DocumentationWorkspace({
   }, [article])
 
   useEffect(() => {
-    const id = location.hash.slice(1)
-    const target = id
-      ? document.getElementById(id)
-      : null
-
+    const sameArticle = previousArticleRef.current === article.slug
+    previousArticleRef.current = article.slug
+    const target = document.getElementById(location.hash.slice(1))
     if (target) {
-      target.scrollIntoView()
+      target.scrollIntoView({
+        behavior: sameArticle && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'smooth' : 'auto',
+        block: 'start',
+      })
     } else {
-      window.scrollTo(0, 0)
+      window.scrollTo({ top: 0, behavior: 'instant' })
     }
   }, [article.slug, location.hash])
+
+  useEffect(() => {
+    const cleanups: (() => void)[] = []
+    mainRef.current?.querySelectorAll<HTMLDetailsElement>('.docs-faq details').forEach((details) => {
+      const summary = details.querySelector('summary')
+      if (!summary) return
+      let animation: Animation | null = null
+      let expanded = details.open
+      const reset = () => {
+        details.style.removeProperty('height')
+        details.style.removeProperty('overflow')
+        details.style.removeProperty('box-sizing')
+      }
+      const toggle = (event: MouseEvent) => {
+        event.preventDefault()
+        expanded = !expanded
+        const startHeight = details.getBoundingClientRect().height
+        animation?.cancel()
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          details.open = expanded
+          reset()
+          return
+        }
+        reset()
+        details.open = true
+        const endHeight = expanded
+          ? details.getBoundingClientRect().height
+          : summary.getBoundingClientRect().height + 2
+        details.style.boxSizing = 'border-box'
+        details.style.overflow = 'hidden'
+        details.style.height = `${endHeight}px`
+        animation = details.animate(
+          [{ height: `${startHeight}px` }, { height: `${endHeight}px` }],
+          { duration: expanded ? 300 : 190, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+        )
+        animation.onfinish = () => {
+          details.open = expanded
+          reset()
+          animation = null
+        }
+      }
+      summary.addEventListener('click', toggle)
+      cleanups.push(() => {
+        animation?.cancel()
+        summary.removeEventListener('click', toggle)
+        reset()
+      })
+    })
+    return () => cleanups.forEach((cleanup) => cleanup())
+  }, [article.slug])
 
   return (
     <>
@@ -168,7 +232,6 @@ function DocumentationWorkspace({
             to="/documentation"
             className="docs-sidebar-title"
           >
-            <span className="docs-brand-icon"><BookOpen size={22} aria-hidden="true" /></span>
             <span>
               Documentation
               <small>STORY2GHERKIN</small>
@@ -251,12 +314,7 @@ function DocumentationWorkspace({
           </nav>
         </aside>
 
-        <main className="docs-main" id="docs-main">
-          <div className="docs-breadcrumb" aria-label="Article path">
-            <Link to="/documentation">Documentation</Link>
-            <ChevronRight size={14} aria-hidden="true" />
-            <span>{documentationGroups.find((group) => group.id === article.group)?.label}</span>
-          </div>
+        <main ref={mainRef} className="docs-main" id="docs-main">
           <article
             key={article.slug}
             className="docs-article"
@@ -299,7 +357,7 @@ function DocumentationWorkspace({
                 aria-labelledby={`heading-${section.id}`}
               >
                 <h2 id={`heading-${section.id}`}>
-                  <span className="docs-section-number" aria-hidden="true">{String(sectionIndex + 1).padStart(2, '0')}</span>
+                  <span className="docs-section-number" aria-hidden="true">{String(sectionIndex + 1).padStart(2, '0')}. </span>
                   {section.title}
                 </h2>
 
