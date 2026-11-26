@@ -13,7 +13,7 @@ func TestExecuteStepsKeepsBrowserAcrossLoginSteps(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /login", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		io.WriteString(w, `<form onsubmit="event.preventDefault(); if (this.email.value === 'qa@example.com' && this.password.value === 'test') this.replaceWith('Dashboard')">
+		io.WriteString(w, `<form onsubmit="event.preventDefault(); if (this.email.value === 'qa@example.com' && this.password.value === 'test') setTimeout(() => this.replaceWith('Dashboard'), 350)">
 			<input name="email"><input name="password" type="password"><button>Login</button>
 		</form>`)
 	})
