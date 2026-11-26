@@ -13,7 +13,7 @@ func TestExecuteStepsKeepsBrowserAcrossLoginSteps(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /login", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		io.WriteString(w, `<form onsubmit="event.preventDefault(); if (this.email.value === 'qa@example.com' && this.password.value === 'test') setTimeout(() => this.replaceWith('Dashboard'), 350)">
+		io.WriteString(w, `<form onsubmit="event.preventDefault(); if (this.email.value === 'qa@example.com' && this.password.value === 'test') setTimeout(() => { history.pushState(null, '', '/generate'); setTimeout(() => this.replaceWith('Dashboard'), 350) }, 350)">
 			<input name="email"><input name="password" type="password"><button>Login</button>
 		</form>`)
 	})
@@ -25,6 +25,7 @@ func TestExecuteStepsKeepsBrowserAcrossLoginSteps(t *testing.T) {
 		`I fill "Email" with "<email>"`,
 		`I fill "Password" with "<password>"`,
 		`I click "Login"`,
+		`the URL contains "/generate"`,
 		`I see "Dashboard"`,
 	}, map[string]string{"email": "qa@example.com", "password": "test"})
 	if err != nil {
