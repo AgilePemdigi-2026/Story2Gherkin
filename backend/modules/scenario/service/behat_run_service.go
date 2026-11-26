@@ -347,11 +347,18 @@ func executeSteps(
 	defer cancelBrowser()
 
 	results := make([]entities.BehatStepResult, 0, len(steps))
+	if len(steps) == 0 {
+		return results, ""
+	}
+	// The first Do owns the Chrome session for the lifetime of its context.
+	err := chromedp.Do(browserCtx)
 	for index, step := range steps {
 		result := entities.BehatStepResult{Index: index + 1, Text: step.Text, Status: "PASS"}
-		stepCtx, cancelStep := context.WithTimeout(browserCtx, behatStepTimeout)
-		err := runStep(stepCtx, base, step)
-		cancelStep()
+		if err == nil {
+			stepCtx, cancelStep := context.WithTimeout(browserCtx, behatStepTimeout)
+			err = runStep(stepCtx, base, step)
+			cancelStep()
+		}
 
 		if err != nil {
 			log.Printf("behat step %d failed: %v", index+1, err)
