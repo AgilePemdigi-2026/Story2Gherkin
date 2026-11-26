@@ -377,28 +377,25 @@ func executeSteps(
 func runStep(ctx context.Context, base string, step behatStep) error {
 	switch step.Action {
 	case "open":
-		return chromedp.Run(ctx, chromedp.Navigate(base+step.Target))
+		return chromedp.Do(ctx, chromedp.Navigate(base+step.Target))
 
 	case "fill":
 		selector := inputXPath(step.Target)
-		return chromedp.Run(ctx,
-			chromedp.WaitVisible(selector, chromedp.BySearch),
-			chromedp.SendKeys(selector, step.Value, chromedp.BySearch),
+		return chromedp.Do(ctx,
+			chromedp.WaitVisible(selector),
+			chromedp.SendKeys(selector, step.Value),
 		)
 
 	case "click":
 		selector := clickXPath(step.Target)
-		return chromedp.Run(ctx,
-			chromedp.WaitVisible(selector, chromedp.BySearch),
-			chromedp.Click(selector, chromedp.BySearch),
+		return chromedp.Do(ctx,
+			chromedp.WaitVisible(selector),
+			chromedp.Click(selector),
 		)
 
 	case "assert_text":
-		var body string
-		if err := chromedp.Run(ctx,
-			chromedp.WaitVisible("body", chromedp.ByQuery),
-			chromedp.Text("body", &body, chromedp.ByQuery),
-		); err != nil {
+		body, err := chromedp.Run(ctx, chromedp.Text("body"))
+		if err != nil {
 			return err
 		}
 		if !strings.Contains(body, step.Target) {
@@ -407,8 +404,8 @@ func runStep(ctx context.Context, base string, step behatStep) error {
 		return nil
 
 	case "assert_url":
-		var location string
-		if err := chromedp.Run(ctx, chromedp.Location(&location)); err != nil {
+		location, err := chromedp.Run(ctx, chromedp.Location())
+		if err != nil {
 			return err
 		}
 		if !strings.Contains(location, step.Target) {
