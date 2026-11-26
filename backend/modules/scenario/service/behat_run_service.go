@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"regexp"
@@ -140,7 +141,7 @@ func (s *behatRunService) Run(
 	}
 
 	started := time.Now()
-	results, message := executeSteps(ctx, base, steps)
+	results, message := executeSteps(context.Background(), base, steps)
 	run.Steps = results
 	run.Message = message
 	run.DurationMS = time.Since(started).Milliseconds()
@@ -353,6 +354,7 @@ func executeSteps(
 		cancelStep()
 
 		if err != nil {
+			log.Printf("behat step %d failed: %v", index+1, err)
 			result.Status = "ERROR"
 			var assertion assertionError
 			if errors.As(err, &assertion) {
