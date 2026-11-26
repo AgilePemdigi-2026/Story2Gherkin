@@ -403,14 +403,25 @@ func runStep(ctx context.Context, base string, step behatStep) error {
 		)
 
 	case "assert_text":
-		body, err := chromedp.Run(ctx, chromedp.Text("body"))
-		if err != nil {
-			return err
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			body, err := chromedp.Run(ctx, chromedp.Text("body"))
+			if err == nil && strings.Contains(body, step.Target) {
+				return nil
+			}
+			if err != nil && !errors.Is(err, context.DeadlineExceeded) {
+				return err
+			}
+			select {
+			case <-ctx.Done():
+				if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+					return assertionError{fmt.Sprintf("text %q not found on the page before timeout", step.Target)}
+				}
+				return ctx.Err()
+			case <-ticker.C:
+			}
 		}
-		if !strings.Contains(body, step.Target) {
-			return assertionError{fmt.Sprintf("text %q not found on the page", step.Target)}
-		}
-		return nil
 
 	case "assert_url":
 		location, err := chromedp.Run(ctx, chromedp.Location())
